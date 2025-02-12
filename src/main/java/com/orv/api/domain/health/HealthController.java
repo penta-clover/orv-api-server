@@ -11,7 +11,7 @@ public class HealthController {
     @GetMapping
     public HealthStatus getHealth() {
         HealthStatus status = new HealthStatus();
-        status.setMsg("i'm health hahaha!");
+        status.setMsg("i'm healthy hahaha!");
         return status;
     }
 }
