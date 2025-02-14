@@ -46,7 +46,7 @@ public class KakaoAuthService implements SocialAuthService {
 
         if (!tokenResponseEntity.getStatusCode().is2xxSuccessful() ||
             tokenResponseEntity.getBody() == null ||
-            tokenResponseEntity.getBody().get("access_code") == null) {
+            tokenResponseEntity.getBody().get("access_token") == null) {
             throw new RuntimeException("Kakao로부터 access token을 받아오지 못했습니다.");
         }
 
