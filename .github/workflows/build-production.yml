@@ -12,6 +12,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build Spring project with Gradle
+        run: ./gradlew clean build
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
