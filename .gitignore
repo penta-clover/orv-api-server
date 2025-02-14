@@ -46,6 +46,7 @@
 
 # .env file
 .env
+.env.*
 
 # CMake
 cmake-build-*/

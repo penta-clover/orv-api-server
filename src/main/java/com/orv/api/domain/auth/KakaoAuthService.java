@@ -23,7 +23,7 @@ public class KakaoAuthService implements SocialAuthService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
-    public Map<String, Object> getUserInfo(String code) {
+    public SocialUserInfo getUserInfo(String code) {
         HttpHeaders tokenHeaders = new HttpHeaders();
         tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -68,7 +68,16 @@ public class KakaoAuthService implements SocialAuthService {
             throw new RuntimeException("Kakao로부터 사용자 정보를 불러오지 못했습니다.");
         }
 
-        return userInfoResponse.getBody();
+        Map<String, Object> body = userInfoResponse.getBody();
+        Map<String, Object> properties = (Map<String, Object>) body.get("properties");
+
+        SocialUserInfo userInfo = new SocialUserInfo();
+        userInfo.setProvider("kakao");
+        userInfo.setId(String.valueOf(body.get("id")));
+        userInfo.setNickname((String) properties.get("nickname"));
+        userInfo.setEmail(null);
+
+        return userInfo;
     }
 
     @Override

@@ -6,7 +6,7 @@ import java.util.Map;
 
 @Service
 public interface SocialAuthService {
-    Map<String, Object> getUserInfo(String code);
+    SocialUserInfo getUserInfo(String code);
     default String getAuthorizationUrl(String state) {
         throw new UnsupportedOperationException("Not implemented");
     }

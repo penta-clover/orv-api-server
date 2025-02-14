@@ -22,7 +22,7 @@ public class GoogleAuthService implements SocialAuthService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public Map<String, Object> getUserInfo(String code) {
+    public SocialUserInfo getUserInfo(String code) {
         HttpHeaders tokenHeaders = new HttpHeaders();
         tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -64,7 +64,15 @@ public class GoogleAuthService implements SocialAuthService {
             throw new RuntimeException("사용자 정보를 불러오는 데 실패했습니다.");
         }
 
-        return userInfoResponse.getBody();
+        Map<String, Object> body = userInfoResponse.getBody();
+
+        SocialUserInfo userInfo = new SocialUserInfo();
+        userInfo.setProvider("google");
+        userInfo.setId((String) body.get("sub"));
+        userInfo.setNickname((String) body.get("name"));
+        userInfo.setEmail((String) body.get("email"));
+
+        return userInfo;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.orv.api.domain.auth;
 
+import com.orv.api.global.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,7 @@ public class AuthController {
         String code = req.getParameter("code");
 
         SocialAuthService socialAuthService = socialAuthServiceFactory.getSocialAuthService(provider);
-        Map<String, Object> userInfo = socialAuthService.getUserInfo(code);
-        return ResponseEntity.ok(userInfo);
+        SocialUserInfo userInfo = socialAuthService.getUserInfo(code);
+        return ApiResponse.success(userInfo, 200);
     }
 }
