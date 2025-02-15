@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: test  # 배포할 환경 지정
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
