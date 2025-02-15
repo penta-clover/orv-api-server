@@ -1,8 +1,7 @@
 package com.orv.api.domain.auth;
 
+import com.orv.api.domain.auth.dto.SocialUserInfo;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 public interface SocialAuthService {

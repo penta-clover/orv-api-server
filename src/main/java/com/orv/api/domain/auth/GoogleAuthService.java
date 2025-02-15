@@ -1,5 +1,6 @@
 package com.orv.api.domain.auth;
 
+import com.orv.api.domain.auth.dto.SocialUserInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;

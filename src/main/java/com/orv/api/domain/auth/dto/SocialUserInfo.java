@@ -1,4 +1,4 @@
-package com.orv.api.domain.auth;
+package com.orv.api.domain.auth.dto;
 
 import lombok.Data;
 
