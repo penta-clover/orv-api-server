@@ -44,8 +44,8 @@
 # *.iml
 # *.ipr
 
-# .env file
-.env
+# .env.test file
+.env.test
 .env.*
 
 # CMake
