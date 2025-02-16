@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.2'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.asciidoctor.jvm.convert' version '3.3.2'
 }
 
 group = 'com.orv'
@@ -43,8 +44,45 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
 	runtimeOnly('io.jsonwebtoken:jjwt-jackson:0.11.5')
+
+	// REST Docs
+	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+}
+
+ext {
+	snippetsDir = file("build/generated-snippets")
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	outputs.dir snippetsDir
+}
+
+asciidoctor {
+	inputs.dir snippetsDir
+	dependsOn test  // 테스트 후에 Asciidoctor가 실행되도록 설정
+	sources {
+		include 'index.adoc'
+	}
+	attributes(
+			'snippets': snippetsDir.toString()
+	)
+	outputDir = layout.buildDirectory.dir("asciidoc/html5").get().asFile
+}
+
+task copyDocs(type: Copy) {
+	from layout.buildDirectory.dir("asciidoc/html5").get().asFile
+	into file("src/main/resources/static/docs")
+}
+
+bootJar {
+	dependsOn copyDocs
+}
+
+bootRun {
+	dependsOn copyDocs
+}
+
+processResources {
+	dependsOn copyDocs
 }

@@ -9,8 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.restdocs.payload.PayloadDocumentation;
+import org.springframework.restdocs.request.RequestDocumentation;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,11 +25,17 @@ import java.util.UUID;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+
 @WebMvcTest(AuthController.class)
+@AutoConfigureRestDocs(outputDir = "build/generated-snippets")
 public class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -64,9 +73,16 @@ public class AuthControllerTest {
         when(socialAuthServiceFactory.getSocialAuthService(provider)).thenReturn(socialAuthService);
 
         // when & then
-        mockMvc.perform(get("/api/v0/auth/login/" + provider))
+        mockMvc.perform(get("/api/v0/auth/login/{provider}", provider))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl(expectedAuthUrl));
+                .andExpect(redirectedUrl(expectedAuthUrl))
+                .andDo(document("auth/login-redirect",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        RequestDocumentation.pathParameters(
+                                RequestDocumentation.parameterWithName("provider").description("소셜 로그인 공급자 (예: kakao)")
+                        )
+                ));
     }
 
     @Test
@@ -95,10 +111,20 @@ public class AuthControllerTest {
         String expectedRedirectUrl = callbackUrl + "?isNewUser=false&jwtToken=" + token;
 
         // when & then
-        mockMvc.perform(get("/api/v0/auth/callback/" + provider)
+        mockMvc.perform(get("/api/v0/auth/callback/{provider}", provider)
                         .param("code", code))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl(expectedRedirectUrl));
+                .andExpect(redirectedUrl(expectedRedirectUrl))
+                .andDo(document("auth/callback-existing-user",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        RequestDocumentation.pathParameters(
+                                RequestDocumentation.parameterWithName("provider").description("소셜 로그인 공급자 (예: kakao)")
+                        ),
+                        RequestDocumentation.queryParameters(
+                                RequestDocumentation.parameterWithName("code").description("소셜 로그인 인증 코드")
+                        )
+                ));
     }
 
 
@@ -125,10 +151,20 @@ public class AuthControllerTest {
         String expectedRedirectUrl = callbackUrl + "?isNewUser=true&jwtToken=" + token;
 
         // when & then
-        mockMvc.perform(get("/api/v0/auth/callback/" + provider)
+        mockMvc.perform(get("/api/v0/auth/callback/{provider}", provider)
                         .param("code", code))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl(expectedRedirectUrl));
+                .andExpect(redirectedUrl(expectedRedirectUrl))
+                .andDo(document("auth/callback-new-user",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        RequestDocumentation.pathParameters(
+                                RequestDocumentation.parameterWithName("provider").description("소셜 로그인 공급자 (예: kakao)")
+                        ),
+                        RequestDocumentation.queryParameters(
+                                RequestDocumentation.parameterWithName("code").description("소셜 로그인 인증 코드")
+                        )
+                ));
     }
 
     @Test
@@ -149,7 +185,21 @@ public class AuthControllerTest {
                 .andExpect(jsonPath("$.statusCode").value("200"))
                 .andExpect(jsonPath("$.data.nickname").value(nickname))
                 .andExpect(jsonPath("$.data.isValid").value(true))
-                .andExpect(jsonPath("$.data.isExists").value(false));
+                .andExpect(jsonPath("$.data.isExists").value(false))
+                .andDo(document("auth/validate-nickname",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        RequestDocumentation.queryParameters(
+                                RequestDocumentation.parameterWithName("nickname").description("검증할 닉네임")
+                        ),
+                        PayloadDocumentation.responseFields(
+                                PayloadDocumentation.fieldWithPath("statusCode").description("응답 상태 코드"),
+                                PayloadDocumentation.fieldWithPath("message").description("응답 상태 메시지"),
+                                PayloadDocumentation.fieldWithPath("data.nickname").description("입력된 닉네임"),
+                                PayloadDocumentation.fieldWithPath("data.isValid").description("닉네임 유효성 여부"),
+                                PayloadDocumentation.fieldWithPath("data.isExists").description("닉네임 중복 여부")
+                        )
+                ));
     }
 
 
@@ -184,7 +234,24 @@ public class AuthControllerTest {
                 .andExpect(status().isOk())
                 // ApiResponse의 결과가 null로 반환되지만, 성공 코드 200을 전달한다고 가정
                 .andExpect(jsonPath("$.statusCode", equalTo("200")))
-                .andExpect(jsonPath("$.data").doesNotExist());
-        // data가 null인 경우, 또는 다른 형태라면 적절하게 검증
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andDo(document("auth/join",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        requestHeaders(
+                                headerWithName("Authorization").description("JWT 토큰 (Bearer 타입)")
+                        ),
+                        PayloadDocumentation.requestFields(
+                                PayloadDocumentation.fieldWithPath("nickname").description("회원 가입 시 사용할 닉네임"),
+                                PayloadDocumentation.fieldWithPath("gender").description("회원 성별 (예: MALE, FEMALE)"),
+                                PayloadDocumentation.fieldWithPath("birthDay").description("생년월일 (YYYY-MM-DD 형식)")
+                        ),
+                        PayloadDocumentation.responseFields(
+                                PayloadDocumentation.fieldWithPath("statusCode").description("응답 상태 코드"),
+                                PayloadDocumentation.fieldWithPath("message").description("응답 상태 메시지"),
+                                PayloadDocumentation.fieldWithPath("data").description("null")
+                                // data가 없거나 null인 경우 생략 가능
+                        )
+                ));
     }
 }
