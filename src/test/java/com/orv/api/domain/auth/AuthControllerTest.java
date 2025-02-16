@@ -1,9 +1,12 @@
 package com.orv.api.domain.auth;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orv.api.domain.auth.dto.JoinForm;
 import com.orv.api.domain.auth.dto.Member;
 import com.orv.api.domain.auth.dto.SocialUserInfo;
 import com.orv.api.domain.auth.dto.ValidationResult;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -11,20 +14,25 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
 public class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper; // JSON 변환용
 
     // AuthController가 의존하는 빈들을 모킹합니다.
     @MockitoBean
@@ -142,5 +150,41 @@ public class AuthControllerTest {
                 .andExpect(jsonPath("$.data.nickname").value(nickname))
                 .andExpect(jsonPath("$.data.isValid").value(true))
                 .andExpect(jsonPath("$.data.isExists").value(false));
+    }
+
+
+    @Test
+    public void testJoinEndpoint() throws Exception {
+        // given: 요청에 사용할 JoinForm 데이터
+        JoinForm joinForm = new JoinForm();
+        joinForm.setNickname("testNick");
+        joinForm.setGender("MALE");
+        joinForm.setBirthDay(LocalDate.of(2002, 5, 31));
+
+        // Authorization 헤더에서 추출할 토큰과 페이로드 설정
+        String token = "dummyToken";
+        String bearerToken = "Bearer " + token;
+        Map<String, Object> payload = Map.of(
+                "id", UUID.randomUUID().toString(),
+                "provider", "testProvider",
+                "socialId", "testSocialId"
+        );
+
+        // jwtTokenProvider.getPayload() 모킹
+        Mockito.when(jwtTokenProvider.getPayload(eq(token))).thenReturn(payload);
+        // memberService.join() 호출시 성공했다고 가정
+        Mockito.when(memberService.join(anyString(), anyString(), any(), anyString(), anyString()))
+                .thenReturn(true);
+
+        // when & then
+        mockMvc.perform(post("/api/v0/auth/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", bearerToken)
+                        .content(objectMapper.writeValueAsString(joinForm)))
+                .andExpect(status().isOk())
+                // ApiResponse의 결과가 null로 반환되지만, 성공 코드 200을 전달한다고 가정
+                .andExpect(jsonPath("$.statusCode", equalTo("200")))
+                .andExpect(jsonPath("$.data").doesNotExist());
+        // data가 null인 경우, 또는 다른 형태라면 적절하게 검증
     }
 }

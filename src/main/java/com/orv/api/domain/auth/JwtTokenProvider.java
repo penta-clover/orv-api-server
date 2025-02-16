@@ -46,7 +46,7 @@ public class JwtTokenProvider {
         }
     }
 
-    public Map<String, ?> getPayload(String token) {
+    public Map<String, Object> getPayload(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(parseJwtSecretKey(secretKey))
                 .build()

@@ -1,5 +1,6 @@
 package com.orv.api.domain.auth;
 
+import com.orv.api.domain.auth.dto.JoinForm;
 import com.orv.api.domain.auth.dto.Member;
 import com.orv.api.domain.auth.dto.SocialUserInfo;
 import com.orv.api.domain.auth.dto.ValidationResult;
@@ -69,4 +70,15 @@ public class AuthController {
         return ApiResponse.success(validationResult, 200);
     }
 
+    @PostMapping("/join")
+    public ApiResponse<Object> join(@RequestBody JoinForm joinForm, @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+        Map<String, ?> payload = jwtTokenProvider.getPayload(token);
+        String provider = (String) payload.get("provider");
+        String socialId = (String) payload.get("socialId");
+
+        memberService.join(joinForm.getNickname(), joinForm.getGender(), joinForm.getBirthDay(), provider, socialId);
+
+        return ApiResponse.success(null, 200);
+    }
 }
