@@ -45,6 +45,7 @@
 # *.ipr
 
 # .env.test file
+.env
 .env.test
 .env.*
 
