@@ -42,14 +42,14 @@ public class MemoryMemberRepository implements MemberRepository {
 
     @Override
     public Member save(Member member) {
-        String id = member.getId();
+        UUID id = member.getId();
 
         if (id == null) {
-            id = UUID.randomUUID().toString();
+            id = UUID.randomUUID();
         }
 
         member.setId(id);
-        store.put(id, member);
+        store.put(id.toString(), member);
 
         return member;
     }

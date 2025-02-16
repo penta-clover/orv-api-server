@@ -38,6 +38,7 @@ class JdbcMemberRepositoryTest {
         member.setProvider("testProvider");
         member.setSocialId("socialId123");
         member.setEmail("test@example.com");
+        member.setRole("USER");
 
         // when
         Member savedMember = memberRepository.save(member);
@@ -72,6 +73,7 @@ class JdbcMemberRepositoryTest {
         member.setProvider("testProvider");
         member.setSocialId("socialId123");
         member.setEmail("test@example.com");
+        member.setRole("USER");
 
         // when
         Member savedMember = memberRepository.save(member);
@@ -92,6 +94,7 @@ class JdbcMemberRepositoryTest {
         member.setProvider("testProvider");
         member.setSocialId("socialId123");
         member.setEmail("test@example.com");
+        member.setRole("USER");
 
         // when
         Member savedMember = memberRepository.save(member);

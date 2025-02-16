@@ -72,7 +72,7 @@ public class AuthControllerTest {
         socialUserInfo.setId("12345");
 
         Member existingMember = new Member();
-        existingMember.setId("memberId123");
+        existingMember.setId(UUID.randomUUID());
         existingMember.setProvider(provider);
         existingMember.setSocialId("12345");
 
@@ -81,7 +81,7 @@ public class AuthControllerTest {
         when(socialAuthServiceFactory.getSocialAuthService(provider)).thenReturn(socialAuthService);
         when(socialAuthService.getUserInfo(code)).thenReturn(socialUserInfo);
         when(memberRepository.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.of(existingMember));
-        when(jwtTokenProvider.createToken(eq(existingMember.getId()), any(Map.class))).thenReturn(token);
+        when(jwtTokenProvider.createToken(eq(existingMember.getId().toString()), any(Map.class))).thenReturn(token);
 
         // 가입된 유저일 경우, isNewUser는 false
         String expectedRedirectUrl = callbackUrl + "?isNewUser=false&jwtToken=" + token;

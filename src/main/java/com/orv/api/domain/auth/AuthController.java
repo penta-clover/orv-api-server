@@ -52,7 +52,7 @@ public class AuthController {
         if (isRegistered) {
             // 가입된 사용자
             Member mem = member.get();
-            token = jwtTokenProvider.createToken(mem.getId(), Map.of("provider", mem.getProvider(), "socialId", mem.getSocialId()));
+            token = jwtTokenProvider.createToken(mem.getId().toString(), Map.of("provider", mem.getProvider(), "socialId", mem.getSocialId()));
         } else {
             // 미가입 사용자
             String temporaryId = UUID.randomUUID().toString();
