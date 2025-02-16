@@ -2,6 +2,7 @@ package com.orv.api.domain.auth.dto;
 
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -16,7 +17,7 @@ public class Member {
     private LocalDateTime createdAt;
     private String role;
     private String phoneNumber;
-    private Integer birthYear;
+    private LocalDate birthday;
     private String gender;
     private String name;
 }

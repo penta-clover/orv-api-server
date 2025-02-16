@@ -29,13 +29,13 @@ public class JdbcMemberRepository implements MemberRepository {
         this.jdbcTemplate = jdbcTemplate;
         this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("member")
-                .usingColumns("nickname", "provider", "social_id", "email", "profile_image_url", "role", "phone_number", "birth_year", "gender", "name")
+                .usingColumns("nickname", "provider", "social_id", "email", "profile_image_url", "role", "phone_number", "birthday", "gender", "name")
                 .usingGeneratedKeyColumns("id");
     }
 
     @Override
     public Optional<Member> findByProviderAndSocialId(String provider, String socialId) {
-        String sql = "SELECT id, nickname, provider, social_id, email, profile_image_url, created_at, role, phone_number, birth_year, gender, name FROM member WHERE provider = ? AND social_id = ?";
+        String sql = "SELECT id, nickname, provider, social_id, email, profile_image_url, created_at, role, phone_number, birthday, gender, name FROM member WHERE provider = ? AND social_id = ?";
 
         try {
             Member member = jdbcTemplate.queryForObject(sql, new Object[]{provider, socialId}, new BeanPropertyRowMapper<>(Member.class));
@@ -47,7 +47,7 @@ public class JdbcMemberRepository implements MemberRepository {
 
     @Override
     public Optional<Member> findByNickname(String nickname) {
-        String sql = "SELECT id, nickname, provider, social_id, email, profile_image_url, created_at, role, phone_number, birth_year, gender, name FROM member WHERE nickname = ?";
+        String sql = "SELECT id, nickname, provider, social_id, email, profile_image_url, created_at, role, phone_number, birthday, gender, name FROM member WHERE nickname = ?";
 
         try {
             Member member = jdbcTemplate.queryForObject(sql, new Object[]{nickname}, new BeanPropertyRowMapper<>(Member.class));
@@ -67,7 +67,7 @@ public class JdbcMemberRepository implements MemberRepository {
         parameters.put("profile_image_url", member.getProfileImageUrl());
         parameters.put("role", member.getRole());
         parameters.put("phone_number", member.getPhoneNumber());
-        parameters.put("birth_year", member.getBirthYear());
+        parameters.put("birthday", member.getBirthday());
         parameters.put("gender", member.getGender());
         parameters.put("name", member.getName());
 
