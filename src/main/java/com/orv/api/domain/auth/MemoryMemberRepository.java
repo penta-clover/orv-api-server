@@ -27,6 +27,18 @@ public class MemoryMemberRepository implements MemberRepository {
         return Optional.empty();
     }
 
+    @Override
+    public Optional<Member> findByNickname(String nickname) {
+        for (Map.Entry<String, Member> keyAndValue : store.entrySet()) {
+            Member member = keyAndValue.getValue();
+
+            if (member.getNickname().equals(nickname)) {
+                return Optional.of(member);
+            }
+        }
+
+        return Optional.empty();
+    }
 
     @Override
     public Member save(Member member) {

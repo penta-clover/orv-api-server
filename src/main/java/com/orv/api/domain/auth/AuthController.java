@@ -2,14 +2,13 @@ package com.orv.api.domain.auth;
 
 import com.orv.api.domain.auth.dto.Member;
 import com.orv.api.domain.auth.dto.SocialUserInfo;
+import com.orv.api.domain.auth.dto.ValidationResult;
+import com.orv.api.global.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Map;
@@ -22,6 +21,7 @@ import java.util.UUID;
 public class AuthController {
     private final SocialAuthServiceFactory socialAuthServiceFactory;
     private final MemberRepository memberRepository;
+    private final MemberService memberService;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${security.frontend.callback-url}")
@@ -62,4 +62,11 @@ public class AuthController {
         String redirectUrl = callbackUrl + "?isNewUser=" + !isRegistered + "&jwtToken=" + token;
         response.sendRedirect(redirectUrl);
     }
+
+    @GetMapping("/nicknames")
+    public ApiResponse<ValidationResult> validNickname(@RequestParam("nickname") String nickname) {
+        ValidationResult validationResult = memberService.validateNickname(nickname);
+        return ApiResponse.success(validationResult, 200);
+    }
+
 }

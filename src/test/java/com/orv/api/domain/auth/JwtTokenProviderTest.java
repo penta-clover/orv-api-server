@@ -18,18 +18,8 @@ import static org.junit.jupiter.api.Assertions.*;
         "security.jwt.secret=my-very-secret-key-that-is-at-least-32-bytes-long!"
 })
 class JwtTokenProviderTest {
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
-
-    @BeforeEach
-    void cleanDatabase() {
-        // member 테이블의 데이터를 모두 삭제 (필요 시 RESTART IDENTITY 옵션 추가)
-        jdbcTemplate.execute("TRUNCATE TABLE member RESTART IDENTITY CASCADE");
-    }
 
     @Test
     void testCreateAndValidateToken() {

@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -60,7 +61,47 @@ class JdbcMemberRepositoryTest {
         Optional<Member> retrievedOpt = memberRepository.findByProviderAndSocialId(provider, socialId);
 
         // then
-        assertFalse(retrievedOpt.isPresent(), "조회 결과가 없어야 합니다.");
+        assertTrue(retrievedOpt.isEmpty(), "조회 결과가 없어야 합니다.");
     }
 
+    @Test
+    void testSaveAndFindByNickname_userFound() {
+        // given
+        Member member = new Member();
+        member.setNickname("abc가나123");
+        member.setProvider("testProvider");
+        member.setSocialId("socialId123");
+        member.setEmail("test@example.com");
+
+        // when
+        Member savedMember = memberRepository.save(member);
+        assertNotNull(savedMember.getId(), "저장된 멤버의 id는 null이 아니어야 합니다.");
+
+        // then
+        Optional<Member> retrievedOpt = memberRepository.findByNickname("abc가나123");
+        assertTrue(retrievedOpt.isPresent(), "조회 결과가 있어야 합니다.");
+        Member retrieved = retrievedOpt.get();
+        assertEquals(savedMember.getId(), retrieved.getId(), "저장된 멤버와 조회된 멤버의 id가 동일해야 합니다.");
+    }
+
+    @Test
+    void testSaveAndFindByNickname_userNotFound() {
+        // given
+        Member member = new Member();
+        member.setNickname("abc가나123");
+        member.setProvider("testProvider");
+        member.setSocialId("socialId123");
+        member.setEmail("test@example.com");
+
+        // when
+        Member savedMember = memberRepository.save(member);
+        assertNotNull(savedMember.getId(), "저장된 멤버의 id는 null이 아니어야 합니다.");
+
+        // then
+        List<String> testNicknames = List.of("abc가나12", "", "abc", "123");
+        for (String testNickname: testNicknames) {
+            Optional<Member> retrieved = memberRepository.findByNickname(testNickname);
+            assertTrue(retrieved.isEmpty(), String.format("닉네임 '%s'에 대한 조회 결과가 없어야 합니다.", testNickname));
+        }
+    }
 }

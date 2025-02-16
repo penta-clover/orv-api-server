@@ -2,13 +2,16 @@ package com.orv.api.domain.auth;
 
 import com.orv.api.domain.auth.dto.Member;
 import com.orv.api.domain.auth.dto.SocialUserInfo;
+import com.orv.api.domain.auth.dto.ValidationResult;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +31,9 @@ public class AuthControllerTest {
     private SocialAuthServiceFactory socialAuthServiceFactory;
 
     @MockitoBean
+    private MemberService memberService;
+
+    @MockitoBean
     private MemberRepository memberRepository;
 
     @MockitoBean
@@ -44,7 +50,7 @@ public class AuthControllerTest {
     public void testLoginRedirect() throws Exception {
         //given
         String provider = "kakao";
-        String expectedAuthUrl = "http://kauth.kakao.com/oauth/authorize?state=testState";
+        String expectedAuthUrl = "https://kauth.kakao.com/oauth/authorize?state=testState";
 
         when(socialAuthService.getAuthorizationUrl(anyString())).thenReturn(expectedAuthUrl);
         when(socialAuthServiceFactory.getSocialAuthService(provider)).thenReturn(socialAuthService);
@@ -115,5 +121,26 @@ public class AuthControllerTest {
                         .param("code", code))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(expectedRedirectUrl));
+    }
+
+    @Test
+    public void testValidNickname_whenNicknameValid() throws Exception {
+        // given
+        String nickname = "abc가나123";
+        ValidationResult validationResult = new ValidationResult();
+        validationResult.setNickname(nickname);
+        validationResult.setIsValid(true);
+        validationResult.setIsExists(false);
+
+        when(memberService.validateNickname(nickname)).thenReturn(validationResult);
+
+        // when
+        mockMvc.perform(get("/api/v0/auth/nicknames").param("nickname", nickname))
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.statusCode").value("200"))
+                .andExpect(jsonPath("$.data.nickname").value(nickname))
+                .andExpect(jsonPath("$.data.isValid").value(true))
+                .andExpect(jsonPath("$.data.isExists").value(false));
     }
 }

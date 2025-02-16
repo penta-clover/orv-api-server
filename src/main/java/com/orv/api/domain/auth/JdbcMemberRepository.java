@@ -43,6 +43,19 @@ public class JdbcMemberRepository implements MemberRepository {
     }
 
     @Override
+    public Optional<Member> findByNickname(String nickname) {
+        String sql = "SELECT id, nickname, provider, social_id, email FROM member " +
+                "WHERE nickname = ?";
+
+        try {
+            Member member = jdbcTemplate.queryForObject(sql, new Object[]{nickname}, new MemberRowMapper());
+            return Optional.of(member);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public Member save(Member member) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("nickname", member.getNickname());
