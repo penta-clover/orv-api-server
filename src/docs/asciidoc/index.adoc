@@ -24,16 +24,10 @@ ORV API는 소셜 로그인을 사용하여 JWT 토큰 기반 인증을 지원�
 사용자가 소셜 로그인 버튼을 클릭하면, 지정된 소셜 공급자(예: kakao)의 인증 URL로 리다이렉트됩니다.
 
 ==== 요청 예시
-[source,adoc]
-----
 include::{snippets}/auth/login-redirect/http-request.adoc[]
-----
 
 ==== 응답 예시
-[source,adoc]
-----
 include::{snippets}/auth/login-redirect/http-response.adoc[]
-----
 
 === 2. 인증 콜백 - 기존 회원
 
@@ -43,16 +37,10 @@ include::{snippets}/auth/login-redirect/http-response.adoc[]
 이미 가입된 회원의 경우, 인증 후 JWT 토큰과 함께 프론트엔드로 리다이렉트됩니다.
 
 ==== 요청 예시
-[source,adoc]
-----
 include::{snippets}/auth/callback-existing-user/http-request.adoc[]
-----
 
 ==== 응답 예시
-[source,adoc]
-----
 include::{snippets}/auth/callback-existing-user/http-response.adoc[]
-----
 
 === 3. 인증 콜백 - 신규 회원
 
@@ -62,16 +50,10 @@ include::{snippets}/auth/callback-existing-user/http-response.adoc[]
 가입되지 않은 신규 회원의 경우, 임시 ID를 생성한 후 JWT 토큰과 함께 신규 가입 처리를 진행합니다.
 
 ==== 요청 예시
-[source,adoc]
-----
 include::{snippets}/auth/callback-new-user/http-request.adoc[]
-----
 
 ==== 응답 예시
-[source,adoc]
-----
 include::{snippets}/auth/callback-new-user/http-response.adoc[]
-----
 
 == 닉네임 검증
 
@@ -81,16 +63,10 @@ include::{snippets}/auth/callback-new-user/http-response.adoc[]
 입력한 닉네임의 유효성과 중복 여부를 확인합니다.
 
 ==== 요청 예시
-[source,adoc]
-----
 include::{snippets}/auth/validate-nickname/http-request.adoc[]
-----
 
 ==== 응답 예시
-[source,adoc]
-----
 include::{snippets}/auth/validate-nickname/http-response.adoc[]
-----
 
 == 회원 가입
 
@@ -101,16 +77,10 @@ include::{snippets}/auth/validate-nickname/http-response.adoc[]
 회원 가입 요청을 처리하며, 성공 시 상태 코드와 결과를 반환합니다.
 
 ==== 요청 예시
-[source,adoc]
-----
 include::{snippets}/auth/join/http-request.adoc[]
-----
 
 ==== 응답 예시
-[source,adoc]
-----
 include::{snippets}/auth/join/http-response.adoc[]
-----
 
 == 에러 처리 및 상태 코드
 
@@ -126,6 +96,5 @@ API 호출 시 반환되는 주요 상태 코드는 다음과 같습니다:
 * 스니펫 파일은 `{snippets}` 속성에 지정된 경로를 기준으로 포함됩니다.
 * 문서에 포함된 예시는 테스트 실행 후 자동 생성된 스니펫을 기반으로 합니다.
 
-----
 
 이 문서를 통해 ORV API의 사용법을 쉽게 이해하고, 통합 테스트와 문서화를 동시에 달성할 수 있기를 바랍니다.
