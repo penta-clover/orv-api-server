@@ -1,7 +1,8 @@
 package com.orv.api.global.dto;
 
 public enum ErrorCode {
-    UNKNOWN(500, "Z000", "Unknown server error occured");
+    UNKNOWN(500, "A000", "Unknown server error occured"),
+    NOT_FOUND(404, "A001", "Resource not found");
 
     private final int statusCode;
     private final String tag;

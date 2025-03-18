@@ -33,7 +33,7 @@ public class MemberService {
         member.setBirthday(birthday);
         member.setProvider(provider);
         member.setSocialId(socialId);
-        member.setRole("USER");
+        member.setName("USER");
 
         Member savedMember = memberRepository.save(member);
         return true;

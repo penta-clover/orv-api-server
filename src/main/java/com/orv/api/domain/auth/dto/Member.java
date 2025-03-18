@@ -15,7 +15,6 @@ public class Member {
     private String email;
     private String profileImageUrl;
     private LocalDateTime createdAt;
-    private String role;
     private String phoneNumber;
     private LocalDate birthday;
     private String gender;
