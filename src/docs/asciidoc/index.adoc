@@ -7,5 +7,6 @@ v0.0.1-SNAPSHOT
 :imagesdir: images
 
 == v0
+* link:archive.html[Archive]
 * link:auth.html[Authentication]
 * link:storyboard.html[Storyboard]

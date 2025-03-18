@@ -10,10 +10,12 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.PayloadDocumentation;
 import org.springframework.restdocs.request.RequestDocumentation;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -36,6 +38,7 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.headerWit
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureRestDocs(outputDir = "build/generated-snippets")
+@AutoConfigureMockMvc(addFilters = false)
 public class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -204,6 +207,7 @@ public class AuthControllerTest {
 
 
     @Test
+    @WithMockUser(username = "1fae8d62-fdfb-47b2-a91d-182bec52ef47")
     public void testJoinEndpoint() throws Exception {
         // given: 요청에 사용할 JoinForm 데이터
         JoinForm joinForm = new JoinForm();
@@ -223,7 +227,7 @@ public class AuthControllerTest {
         // jwtTokenProvider.getPayload() 모킹
         Mockito.when(jwtTokenProvider.getPayload(eq(token))).thenReturn(payload);
         // memberService.join() 호출시 성공했다고 가정
-        Mockito.when(memberService.join(anyString(), anyString(), any(), anyString(), anyString()))
+        Mockito.when(memberService.join(anyString(), anyString(), anyString(), any(), anyString(), anyString()))
                 .thenReturn(true);
 
         // when & then

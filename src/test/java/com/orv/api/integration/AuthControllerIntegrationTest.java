@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -42,7 +43,7 @@ public class AuthControllerIntegrationTest {
     @Autowired
     private MemberRepository memberRepository;
 
-    @MockitoBean
+    @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
     @AfterEach
@@ -52,20 +53,20 @@ public class AuthControllerIntegrationTest {
 
     @Test
     void joinEndpoint_insertsMemberIntoDb() throws Exception {
+
+
         // given
         JoinForm joinForm = new JoinForm();
         joinForm.setNickname("testNick");
         joinForm.setGender("MALE");
         joinForm.setBirthDay(LocalDate.of(2002, 5, 31));
 
-        String dummyToken = "dummyToken";
+        String dummyToken = jwtTokenProvider.createToken(UUID.randomUUID().toString(), Map.of(
+                "provider", "google",
+                "socialId", "google-social-id"
+        ));
+
         String bearerToken = "Bearer " + dummyToken;
-        Map<String, Object> dummyPayload = Map.of(
-                "provider", "dummyProvider",
-                "socialId", "dummySocialId"
-        );
-        
-        when(jwtTokenProvider.getPayload(eq(dummyToken))).thenReturn(dummyPayload);
 
         // when: POST /api/v0/auth/join 엔드포인트에 요청 전송
         MvcResult mvcResult = mockMvc.perform(post("/api/v0/auth/join")
@@ -83,8 +84,8 @@ public class AuthControllerIntegrationTest {
         assertThat(member.getGender()).isEqualTo("MALE");
         assertThat(member.getBirthday()).isEqualTo(LocalDate.of(2002, 5, 31));
         // JWT 페이로드에서 추출한 provider, socialId가 제대로 저장되었는지 검증
-        assertThat(member.getProvider()).isEqualTo("dummyProvider");
-        assertThat(member.getSocialId()).isEqualTo("dummySocialId");
+        assertThat(member.getProvider()).isEqualTo("google");
+        assertThat(member.getSocialId()).isEqualTo("google-social-id");
 
     }
 }

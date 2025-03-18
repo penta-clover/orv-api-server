@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -76,8 +77,9 @@ public class AuthController {
         Map<String, ?> payload = jwtTokenProvider.getPayload(token);
         String provider = (String) payload.get("provider");
         String socialId = (String) payload.get("socialId");
+        String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        memberService.join(joinForm.getNickname(), joinForm.getGender(), joinForm.getBirthDay(), provider, socialId);
+        memberService.join(memberId, joinForm.getNickname(), joinForm.getGender(), joinForm.getBirthDay(), provider, socialId);
 
         return ApiResponse.success(null, 200);
     }

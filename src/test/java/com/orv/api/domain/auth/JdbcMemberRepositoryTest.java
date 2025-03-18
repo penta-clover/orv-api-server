@@ -4,6 +4,7 @@ import com.orv.api.domain.auth.dto.Member;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,6 +36,7 @@ class JdbcMemberRepositoryTest {
     void testSaveAndFindByProviderAndSocialId_userFound() {
         // given
         Member member = new Member();
+        member.setId(UUID.randomUUID());
         member.setNickname("testUser");
         member.setProvider("testProvider");
         member.setSocialId("socialId123");
@@ -69,6 +72,7 @@ class JdbcMemberRepositoryTest {
     void testSaveAndFindByNickname_userFound() {
         // given
         Member member = new Member();
+        member.setId(UUID.randomUUID());
         member.setNickname("abc가나123");
         member.setProvider("testProvider");
         member.setSocialId("socialId123");
@@ -90,6 +94,7 @@ class JdbcMemberRepositoryTest {
     void testSaveAndFindByNickname_userNotFound() {
         // given
         Member member = new Member();
+        member.setId(UUID.randomUUID());
         member.setNickname("abc가나123");
         member.setProvider("testProvider");
         member.setSocialId("socialId123");

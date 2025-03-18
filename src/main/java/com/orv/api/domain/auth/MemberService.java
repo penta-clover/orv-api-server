@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,8 +27,9 @@ public class MemberService {
         return nickname.matches("^[가-힣ㄱ-ㅎㅏ-ㅣA-Za-z0-9]{1,8}$");
     }
 
-    public boolean join(String nickname, String gender, LocalDate birthday, String provider, String socialId) {
+    public boolean join(String id, String nickname, String gender, LocalDate birthday, String provider, String socialId) {
         Member member = new Member();
+        member.setId(UUID.fromString(id));
         member.setNickname(nickname);
         member.setGender(gender);
         member.setBirthday(birthday);

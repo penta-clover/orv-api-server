@@ -3,6 +3,7 @@ package com.orv.api.domain.auth;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,9 +19,18 @@ public class JwtTokenProvider {
     @Value("${security.jwt.secret}")
     private String secretKey;
 
-    private long validityInMilliseconds = 604800000; // 1 week
+    private long validityInMilliseconds = 604800000L; // 1 week
+
+    @PostConstruct
+    protected void init() {
+        log.info("jwt token only for test: {}", createToken("054c3e8a-3387-4eb3-ac8a-31a48221f192", Map.of("provider", "google", "socialId", "111622496717434972547"), 604800000L * 52 * 10));
+    }
 
     public String createToken(String subject, Map<String, ?> claims) {
+        return createToken(subject, claims, this.validityInMilliseconds);
+    }
+
+    public String createToken(String subject, Map<String, ?> claims, long validityInMilliseconds) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + validityInMilliseconds);
 

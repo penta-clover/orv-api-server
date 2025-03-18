@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS member;
 CREATE TABLE IF NOT EXISTS member
 (
     id                UUID         NOT NULL DEFAULT uuid_generate_v4(),
@@ -62,3 +61,19 @@ CREATE TABLE IF NOT EXISTS video
     CONSTRAINT fk_video_member_id FOREIGN KEY (member_id) REFERENCES member (id)
 );
 
+-- 테스트용 스토리보드와 scene 추가
+BEGIN;
+
+INSERT INTO storyboard (id, title, start_scene_id)
+VALUES
+    ('e5895e70-7713-4a35-b12f-2521af77524b', '테스트 스토리보드', '50c4dfc2-8bec-4d77-849f-57462d50d393');
+
+
+INSERT INTO scene (id, storyboard_id, name, scene_type, content)
+VALUES
+    ('95f081ce-baa4-418d-8398-db77a764227d', 'e5895e70-7713-4a35-b12f-2521af77524b', '테스트 씬', 'QUESTION', '{"question": "테스트 질문", "next": "1cf0980f-baa4-418d-8398-db7137529002"}'::json),
+    ('8ee9980f-81a8-438c-8b64-3fd413752900', 'e5895e70-7713-4a35-b12f-2521af77524b', '테스트 씬', 'QUESTION', '{"question": "살아오며 가장 기뻤던 순간은 언제인가요?", "next": "95f081ce-baa4-418d-8398-db77a764227d"}'::json),
+    ('50c4dfc2-8bec-4d77-849f-57462d50d393', 'e5895e70-7713-4a35-b12f-2521af77524b', '테스트 씬', 'QUESTION', '{"question": "당신에게 가장 소중한 것은 무엇인가요?", "next": "8ee9980f-81a8-438c-8b64-3fd413752900"}'::json),
+    ('1cf0980f-baa4-418d-8398-db7137529002', 'e5895e70-7713-4a35-b12f-2521af77524b', '종료 씬', 'END', '{}'::json);
+
+COMMIT;

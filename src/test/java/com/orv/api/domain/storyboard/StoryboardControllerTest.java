@@ -5,6 +5,7 @@ import com.orv.api.domain.storyboard.dto.Storyboard;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(StoryboardController.class)
 @AutoConfigureRestDocs(outputDir = "build/generated-snippets")
+@AutoConfigureMockMvc(addFilters = false)
 public class StoryboardControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -38,8 +40,8 @@ public class StoryboardControllerTest {
         // given
         Storyboard storyboard = new Storyboard();
         storyboard.setTitle("test title");
-        storyboard.setId(UUID.randomUUID());
-        storyboard.setStartSceneId(UUID.randomUUID());
+        storyboard.setId(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"));
+        storyboard.setStartSceneId(UUID.fromString("50c4dfc2-8bec-4d77-849f-57462d50d393"));
 
         when(storyboardRepository.findById(storyboard.getId())).thenReturn(Optional.of(storyboard));
 
@@ -85,8 +87,8 @@ public class StoryboardControllerTest {
     public void testGetScene_whenSceneExists() throws Exception {
         // given
         Scene scene = new Scene();
-        scene.setId(UUID.randomUUID());
-        scene.setName("가장 소중한 것");
+        scene.setId(UUID.fromString("50c4dfc2-8bec-4d77-849f-57462d50d393"));
+        scene.setName("테스트 3");
         scene.setSceneType("QUESTION");
         scene.setContent("{ \"question\": \"당신에게 가장 소중한 것은 무엇인가요?\", \"nextSceneId\": \"" + UUID.randomUUID() + "\" }");
         scene.setStoryboardId(UUID.randomUUID());

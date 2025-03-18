@@ -29,8 +29,7 @@ public class JdbcMemberRepository implements MemberRepository {
         this.jdbcTemplate = jdbcTemplate;
         this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("member")
-                .usingColumns("nickname", "provider", "social_id", "email", "profile_image_url", "phone_number", "birthday", "gender", "name")
-                .usingGeneratedKeyColumns("id");
+                .usingColumns("id", "nickname", "provider", "social_id", "email", "profile_image_url", "phone_number", "birthday", "gender", "name");
     }
 
     @Override
@@ -60,6 +59,8 @@ public class JdbcMemberRepository implements MemberRepository {
     @Override
     public Member save(Member member) {
         Map<String, Object> parameters = new HashMap<>();
+
+        parameters.put("id", member.getId());
         parameters.put("nickname", member.getNickname());
         parameters.put("provider", member.getProvider());
         parameters.put("social_id", member.getSocialId());
@@ -70,13 +71,7 @@ public class JdbcMemberRepository implements MemberRepository {
         parameters.put("gender", member.getGender());
         parameters.put("name", member.getName());
 
-        KeyHolder keyHolder = (KeyHolder) simpleJdbcInsert.executeAndReturnKeyHolder(parameters);
-        Map<String, Object> keys = keyHolder.getKeys();
-
-        if (keys != null && keys.containsKey("id")) {
-            UUID generatedId = (UUID) keys.get("id");
-            member.setId(generatedId);
-        }
+        simpleJdbcInsert.execute(parameters);
 
         return member;
     }

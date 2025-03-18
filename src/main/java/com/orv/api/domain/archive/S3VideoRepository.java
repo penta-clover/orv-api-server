@@ -2,9 +2,13 @@ package com.orv.api.domain.archive;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.orv.api.domain.archive.dto.Video;
 import com.orv.api.domain.archive.dto.VideoMetadata;
+import com.orv.api.domain.storyboard.dto.Storyboard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -65,5 +69,33 @@ public class S3VideoRepository implements VideoRepository {
             e.printStackTrace();
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Optional<Video> findById(UUID videoId) {
+        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, title FROM storyboard WHERE id = ?";
+
+        try {
+            Video video = jdbcTemplate.queryForObject(sql, new Object[]{videoId}, new BeanPropertyRowMapper<>(Video.class));
+            return Optional.of(video);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public boolean updateTitle(String videoId, String title) {
+        try {
+            jdbcTemplate.update("UPDATE video SET title = ? WHERE id = ?", title, UUID.fromString(videoId));
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateThumbnail(InputStream inputStream, String videoId) {
+        return false;
     }
 }
