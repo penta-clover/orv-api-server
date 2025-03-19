@@ -11,6 +11,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -134,5 +135,51 @@ public class StoryboardControllerTest {
 
         // then
         resultActions.andExpect(jsonPath("$.statusCode").value(404));
+    }
+
+    @Test
+    public void testGetStoryboardPreview_whenDataExists() throws Exception {
+        // given
+        UUID storyboardId = UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b");
+
+        // Scene 목록 생성 - QUESTION 타입인 Scene 3개로 questionCount가 3이 되도록 함
+        Scene scene1 = new Scene();
+        scene1.setSceneType("QUESTION");
+        Scene scene2 = new Scene();
+        scene2.setSceneType("QUESTION");
+        Scene scene3 = new Scene();
+        scene3.setSceneType("QUESTION");
+        List<Scene> scenes = List.of(scene1, scene2, scene3);
+        when(storyboardRepository.findScenesByStoryboardId(storyboardId)).thenReturn(Optional.of(scenes));
+
+        // storyboard_preview의 예시 데이터 - 예제 응답에서 questions 배열에 해당
+        String[] examples = new String[] { "나는 어떤 사람으로 기억되고 싶나요?", "유언장에는 어떤 내용을 적고 싶나요?" };
+        when(storyboardRepository.getStoryboardPreview(storyboardId)).thenReturn(Optional.of(examples));
+
+        // when
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/storyboard/{storyboardId}/preview", storyboardId.toString()));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value("200"))
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.data.storyboardId").value(storyboardId.toString()))
+                .andExpect(jsonPath("$.data.questionCount").value(scenes.size()))
+                .andExpect(jsonPath("$.data.questions[0]").value(examples[0]))
+                .andExpect(jsonPath("$.data.questions[1]").value(examples[1]))
+                .andDo(document("storyboard/get-storyboard-preview-success",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        pathParameters(
+                                parameterWithName("storyboardId").description("Storyboard의 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("statusCode").description("응답 상태 코드"),
+                                fieldWithPath("message").description("응답 상태 메시지"),
+                                fieldWithPath("data.storyboardId").description("Storyboard의 ID"),
+                                fieldWithPath("data.questionCount").description("스토리보드에 포함된 질문 개수"),
+                                fieldWithPath("data.questions").description("예시 질문 목록")
+                        )
+                ));
     }
 }

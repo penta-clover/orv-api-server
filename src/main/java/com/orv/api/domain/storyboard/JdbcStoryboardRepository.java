@@ -2,6 +2,8 @@ package com.orv.api.domain.storyboard;
 
 import com.orv.api.domain.storyboard.dto.Scene;
 import com.orv.api.domain.storyboard.dto.Storyboard;
+import com.orv.api.domain.storyboard.dto.StoryboardPreview;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -10,12 +12,11 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.sql.SQLException;
+import java.util.*;
 
 @Repository
+@Slf4j
 public class JdbcStoryboardRepository implements StoryboardRepository {
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsertStoryboard;
@@ -59,6 +60,18 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
     }
 
     @Override
+    public Optional<List<Scene>> findScenesByStoryboardId(UUID id) {
+        String sql = "SELECT id, name, scene_type, content, storyboard_id FROM scene WHERE storyboard_id = ?";
+
+        try {
+            List<Scene> scenes = jdbcTemplate.query(sql, new Object[]{id}, new BeanPropertyRowMapper<>(Scene.class));
+            return Optional.of(scenes);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public Storyboard save(Storyboard storyboard) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("title", storyboard.getTitle());
@@ -92,5 +105,19 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
         }
 
         return scene;
+    }
+
+    @Override
+    public Optional<String[]> getStoryboardPreview(UUID storyboardId) {
+        String sql = "SELECT storyboard_id, examples FROM storyboard_preview WHERE storyboard_id = ?";
+
+        try {
+            log.warn("HIHI");
+            StoryboardPreview storyboardPreview = jdbcTemplate.queryForObject(sql, new Object[]{storyboardId}, new BeanPropertyRowMapper<>(StoryboardPreview.class));
+            return Optional.of((String[]) storyboardPreview.getExamples().getArray());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
     }
 }

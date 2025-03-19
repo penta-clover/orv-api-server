@@ -3,6 +3,7 @@ package com.orv.api.domain.storyboard;
 import com.orv.api.domain.storyboard.dto.Scene;
 import com.orv.api.domain.storyboard.dto.Storyboard;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,7 +12,11 @@ public interface StoryboardRepository {
 
     Optional<Scene> findSceneById(UUID id);
 
+    Optional<List<Scene>> findScenesByStoryboardId(UUID id);
+
     Storyboard save(Storyboard storyboard);
 
     Scene saveScene(Scene scene);
+
+    Optional<String[]> getStoryboardPreview(UUID storyboardId);
 }

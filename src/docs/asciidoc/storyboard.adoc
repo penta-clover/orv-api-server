@@ -14,6 +14,9 @@ Storyboard 관련 엔드포인트로, Storyboard와 Scene 정보를 조회할 �
 
 지정한 Storyboard ID에 해당하는 Storyboard 정보를 조회합니다.
 
+==== 응답 데이터 설명
+include::{snippets}/storyboard/get-storyboard-success/response-fields.adoc[]
+
 ==== 요청 예시
 include::{snippets}/storyboard/get-storyboard-success/http-request.adoc[]
 
@@ -26,11 +29,29 @@ include::{snippets}/storyboard/get-storyboard-success/http-response.adoc[]
 
 지정한 Scene ID에 해당하는 Scene 정보를 조회합니다.
 
+==== 응답 데이터 설명
+include::{snippets}/storyboard/get-scene-success/response-fields.adoc[]
+
 ==== 요청 예시
 include::{snippets}/storyboard/get-scene-success/http-request.adoc[]
 
 ==== 응답 예시
 include::{snippets}/storyboard/get-scene-success/http-response.adoc[]
+
+=== Storyboard 미리보기 조회
+
+**엔드포인트:** `/api/v0/storyboard/{storyboardId}/preview`
+
+지정한 Storyboard의 미리보기 데이터를 불러옵니다.
+
+==== 응답 데이터 설명
+include::{snippets}/storyboard/get-storyboard-preview-success/response-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/storyboard/get-storyboard-preview-success/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/storyboard/get-storyboard-preview-success/http-response.adoc[]
 
 == 에러 처리 및 상태 코드
 

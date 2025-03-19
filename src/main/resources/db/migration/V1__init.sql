@@ -27,6 +27,15 @@ CREATE TABLE IF NOT EXISTS term_agreement
     CONSTRAINT fk_member_agreement_member_id FOREIGN KEY (member_id) REFERENCES member (id)
 );
 
+CREATE TABLE IF NOT EXISTS storyboard_preview
+(
+    storyboard_id UUID   NOT NULL,
+    examples      TEXT[] NOT NULL,
+    CONSTRAINT pk_storyboard_preview PRIMARY KEY (storyboard_id),
+    CONSTRAINT fk_storyboard_preview_storyboard FOREIGN KEY (storyboard_id)
+        REFERENCES storyboard(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS storyboard
 (
     id             UUID         NOT NULL DEFAULT uuid_generate_v4(),
@@ -49,13 +58,13 @@ CREATE TABLE IF NOT EXISTS scene
 
 CREATE TABLE IF NOT EXISTS video
 (
-    id               UUID        NOT NULL DEFAULT uuid_generate_v4(),
-    storyboard_id    UUID        NOT NULL,
-    member_id        UUID        NOT NULL,
-    video_url        TEXT        NOT NULL,
-    created_at       TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    thumbnail_url    TEXT        NOT NULL,
-    title            VARCHAR(50) NULL,
+    id            UUID        NOT NULL DEFAULT uuid_generate_v4(),
+    storyboard_id UUID        NOT NULL,
+    member_id     UUID        NOT NULL,
+    video_url     TEXT        NOT NULL,
+    created_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    thumbnail_url TEXT        NOT NULL,
+    title         VARCHAR(50) NULL,
     CONSTRAINT pk_video_id PRIMARY KEY (id),
     CONSTRAINT fk_video_storyboard_id FOREIGN KEY (storyboard_id) REFERENCES storyboard (id),
     CONSTRAINT fk_video_member_id FOREIGN KEY (member_id) REFERENCES member (id)
