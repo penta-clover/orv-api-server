@@ -11,3 +11,4 @@ v0.0.1-SNAPSHOT
 * link:auth.html[Authentication]
 * link:storyboard.html[Storyboard]
 * link:term.html[Term]
+* link:topic.html[Topic]
