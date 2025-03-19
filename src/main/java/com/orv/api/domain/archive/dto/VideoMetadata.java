@@ -12,5 +12,6 @@ public class VideoMetadata {
     private UUID ownerId;
     private String title;
     private String contentType;
+    private Integer runningTime;
     private long contentLength;
 }

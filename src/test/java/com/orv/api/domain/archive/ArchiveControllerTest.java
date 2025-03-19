@@ -4,19 +4,21 @@ package com.orv.api.domain.archive;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orv.api.domain.archive.dto.Video;
 import com.orv.api.domain.archive.dto.VideoMetadataUpdateForm;
-import com.orv.api.domain.storyboard.dto.Storyboard;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.restdocs.payload.PayloadDocumentation;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
@@ -26,8 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.net.URI;
-import java.sql.Timestamp;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,20 +47,24 @@ public class ArchiveControllerTest {
     @WithMockUser(username = "1fae8d62-fdfb-47b2-a91d-182bec52ef47")
     public void testUploadRecordedVideo() throws Exception {
         // given
-        MockMultipartFile video = new MockMultipartFile("video", "test.mp4", "video/mp4", "test".getBytes());
-        String storyboardId = "3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
+        InputStream videoStream = getClass().getResourceAsStream("/videos/upload-test-video.mp4");
+        assertNotNull(videoStream, "테스트 비디오 파일을 찾을 수 없습니다.");
+        MockMultipartFile video = new MockMultipartFile("video", "test.mp4", "video/mp4", videoStream);
 
-        String videoUrl = "http://localhost:8080/api/v0/archive/recorded-video/3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
-        when(videoRepository.save(any(), any())).thenReturn(Optional.of(videoUrl));
+        // storyboardId를 MultipartFile로 생성
+        String storyboardIdValue = "3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
+
+        String videoId = "3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
+        when(videoRepository.save(any(), any())).thenReturn(Optional.of(videoId));
 
         // when
         ResultActions resultActions = mockMvc.perform(multipart("/api/v0/archive/recorded-video")
                 .file(video)
-                .param("storyboardId", storyboardId));
+                .param("storyboardId", storyboardIdValue));
 
         // then
         resultActions
-                .andExpect(jsonPath("$.data").value(videoUrl))
+                .andExpect(jsonPath("$.data").value(videoId))
                 .andDo(document("archive/upload-recorded-video",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -69,14 +74,14 @@ public class ArchiveControllerTest {
                         responseFields(
                                 fieldWithPath("statusCode").description("응답 상태 코드"),
                                 fieldWithPath("message").description("응답 상태 메시지"),
-                                fieldWithPath("data").description("업로드된 비디오의 URL")
+                                fieldWithPath("data").description("업로드된 비디오의 ID")
                         )
                 ));
     }
 
 
     @Test
-    @WithMockUser(username = "1fae8d62-fdfb-47b2-a91d-182bec52ef47")
+    @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
     public void testGetStoryboard_whenStoryboardExists() throws Exception {
         // given
         Video video = new Video();
@@ -86,6 +91,7 @@ public class ArchiveControllerTest {
         video.setTitle("video title");
         video.setVideoUrl("https://api.orv.im/test-video.url.mp4");
         video.setCreatedAt(LocalDateTime.now());
+        video.setRunningTime(523);
         video.setThumbnailUrl("https://api.orv.im/test-thumbnail.url.jpg");
 
         when(videoRepository.findById(video.getId())).thenReturn(Optional.of(video));
@@ -101,6 +107,8 @@ public class ArchiveControllerTest {
                 .andExpect(jsonPath("$.data.title").value(video.getTitle()))
                 .andExpect(jsonPath("$.data.videoUrl").value(video.getVideoUrl()))
                 .andExpect(jsonPath("$.data.thumbnailUrl").value(video.getThumbnailUrl()))
+                .andExpect(jsonPath("$.data.runningTime").value(video.getRunningTime()))
+                .andExpect(jsonPath("$.data.title").value(video.getTitle()))
                 .andDo(document("archive/get-video-by-id",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -113,10 +121,11 @@ public class ArchiveControllerTest {
                                 fieldWithPath("data.id").description("비디오의 ID"),
                                 fieldWithPath("data.storyboardId").description("비디오가 속한 스토리보드의 ID"),
                                 fieldWithPath("data.memberId").description("비디오를 업로드한 회원의 ID"),
-                                fieldWithPath("data.title").description("비디오의 제목"),
                                 fieldWithPath("data.videoUrl").description("비디오의 URL"),
                                 fieldWithPath("data.createdAt").description("비디오의 생성 시각"),
-                                fieldWithPath("data.thumbnailUrl").description("비디오의 썸네일 URL")
+                                fieldWithPath("data.thumbnailUrl").description("비디오의 썸네일 URL"),
+                                fieldWithPath("data.runningTime").description("비디오의 재생 시간(초)"),
+                                fieldWithPath("data.title").description("비디오의 제목 (default: null)")
                         )
                 ));
     }
@@ -129,7 +138,7 @@ public class ArchiveControllerTest {
         String title = "test title";
         VideoMetadataUpdateForm updateForm = new VideoMetadataUpdateForm(title);
 
-        when(videoRepository.updateTitle(videoId, title)).thenReturn(true);
+        when(videoRepository.updateTitle(UUID.fromString(videoId), title)).thenReturn(true);
 
         // when
         ResultActions resultActions = mockMvc.perform(patch("/api/v0/archive/video/{videoId}", videoId)
@@ -146,12 +155,48 @@ public class ArchiveControllerTest {
                                 parameterWithName("videoId").description("수정할 비디오의 ID")
                         ),
                         requestFields(
-                                fieldWithPath("title").description("수정할 비디오의 제목")
+                                fieldWithPath("title").description("수정할 비디오 제목")
                         ),
                         responseFields(
-                                fieldWithPath("statusCode").description("응답 상태 코드"),
+                                fieldWithPath("statusCode").description("응답 상태 코드 (optional)"),
                                 fieldWithPath("message").description("응답 상태 메시지"),
-                                fieldWithPath("data").description("업로드된 비디오의 URL")
+                                fieldWithPath("data").description("null")
+                        )
+                ));
+    }
+
+    @Test
+    @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
+    public void testUpdateThumbnail() throws Exception {
+        // given
+        String videoId = "3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
+        InputStream thumbnailStream = getClass().getResourceAsStream("/images/test-thumbnail.png");
+        assertNotNull(thumbnailStream, "테스트 썸네일 파일을 찾을 수 없습니다.");
+
+        MockMultipartFile thumbnail = new MockMultipartFile("thumbnail", "test-thumbnail.png", "image/png", thumbnailStream);
+
+        when(videoRepository.updateThumbnail(any(), any(), any())).thenReturn(true);
+
+        // when
+        ResultActions resultActions = mockMvc.perform(multipart(HttpMethod.PUT, "/api/v0/archive/video/{videoId}/thumbnail", videoId)
+                .file(thumbnail));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").doesNotExist())
+                .andDo(document("archive/update-thumbnail",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        pathParameters(
+                                parameterWithName("videoId").description("썸네일을 변경할 비디오의 ID")
+                        ),
+                        requestParts(
+                                partWithName("thumbnail").description("변경할 썸네일 이미지 파일")
+                        ),
+                        responseFields(
+                                fieldWithPath("statusCode").description("응답 상태 코드 (optional)"),
+                                fieldWithPath("message").description("응답 상태 메시지"),
+                                fieldWithPath("data").description("null")
                         )
                 ));
     }

@@ -1,5 +1,6 @@
 package com.orv.api.domain.archive;
 
+import com.orv.api.domain.archive.dto.ImageMetadata;
 import com.orv.api.domain.archive.dto.Video;
 import com.orv.api.domain.archive.dto.VideoMetadata;
 
@@ -13,7 +14,7 @@ public interface VideoRepository {
 
     Optional<Video> findById(UUID videoId);
 
-    boolean updateTitle(String videoId, String title);
+    boolean updateTitle(UUID videoId, String title);
 
-    boolean updateThumbnail(InputStream inputStream, String videoId);
+    boolean updateThumbnail(UUID videoId, InputStream thumbnail, ImageMetadata imageMetadata);
 }

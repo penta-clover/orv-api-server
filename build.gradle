@@ -56,6 +56,10 @@ dependencies {
 
 	// AWS
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+	// For FFmpeg Frame Grabber
+	implementation 'org.bytedeco:javacv:1.5.11'
+	implementation 'org.bytedeco:javacv-platform:1.5.11'
 }
 
 ext {

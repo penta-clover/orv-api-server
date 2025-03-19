@@ -18,5 +18,6 @@ public class Video {
     private String videoUrl;
     private LocalDateTime createdAt;
     private String thumbnailUrl;
+    private Integer runningTime;
     private String title;
 }

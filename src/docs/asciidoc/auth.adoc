@@ -24,7 +24,90 @@ include::{snippets}/auth/login-redirect/http-response.adoc[]
 === 2. 인증 콜백 - 기존 회원
 
 **엔드포인트:** `/api/v0/auth/callback/{provider}`
+**쿼리 파라미터:** `code` (소셜 로그인 인증 코드)= 인증 및 로그인 API 문서
+Author Name <author@example.com>
+v0.0.1-SNAPSHOT
+:snippets: {snippets}
+:imagesdir: images
+
+== 인증 및 로그인
+
+ORV API는 소셜 로그인을 사용하여 JWT 토큰 기반 인증을 지원합니다.
+아래는 주요 인증 관련 엔드포인트에 대한 설명입니다.
+
+=== 1. 소셜 로그인 리다이렉트
+
+**엔드포인트:** `/api/v0/auth/login/{provider}`
+
+사용자가 소셜 로그인 버튼을 클릭하면, 지정된 소셜 공급자(예: kakao)의 인증 URL로 리다이렉트됩니다.
+
+==== 요청 예시
+include::{snippets}/auth/login-redirect/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/auth/login-redirect/http-response.adoc[]
+
+=== 2. 인증 콜백 - 기존 회원
+
+**엔드포인트:** `/api/v0/auth/callback/{provider}`
 **쿼리 파라미터:** `code` (소셜 로그인 인증 코드)
+
+이미 가입된 회원의 경우, 인증 후 JWT 토큰과 함께 프론트엔드로 리다이렉트됩니다.
+
+==== 요청 예시
+include::{snippets}/auth/callback-existing-user/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/auth/callback-existing-user/http-response.adoc[]
+
+=== 3. 인증 콜백 - 신규 회원
+
+**엔드포인트:** `/api/v0/auth/callback/{provider}`
+**쿼리 파라미터:** `code` (소셜 로그인 인증 코드)
+
+가입되지 않은 신규 회원의 경우, 임시 ID를 생성한 후 JWT 토큰과 함께 신규 가입 처리를 진행합니다.
+
+==== 요청 예시
+include::{snippets}/auth/callback-new-user/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/auth/callback-new-user/http-response.adoc[]
+
+=== 닉네임 검증
+
+**엔드포인트:** `/api/v0/auth/nicknames`
+**쿼리 파라미터:** `nickname` (검증할 닉네임)
+
+입력한 닉네임의 유효성과 중복 여부를 확인합니다.
+
+==== 요청 예시
+include::{snippets}/auth/validate-nickname/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/auth/validate-nickname/http-response.adoc[]
+
+=== 회원 가입
+
+**엔드포인트:** `/api/v0/auth/join`
+**헤더:** `Authorization` (JWT 토큰, Bearer 형식)
+**요청 본문:** 회원 가입 정보 (닉네임, 성별, 생년월일 등)
+
+회원 가입 요청을 처리하며, 성공 시 상태 코드와 결과를 반환합니다.
+
+==== 요청 예시
+include::{snippets}/auth/join/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/auth/join/http-response.adoc[]
+
+== 에러 처리 및 상태 코드
+
+API 호출 시 반환되는 주요 상태 코드는 다음과 같습니다:
+
+* **200:** 성공
+* **3xx:** 리다이렉션 (예: 소셜 로그인 리다이렉트)
+* **4xx, 5xx:** 클라이언트 또는 서버 오류 (자세한 내용은 개별 스니펫 참고)
+
 
 이미 가입된 회원의 경우, 인증 후 JWT 토큰과 함께 프론트엔드로 리다이렉트됩니다.
 

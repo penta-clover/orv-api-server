@@ -4,36 +4,87 @@ v0.0.1-SNAPSHOT
 :snippets: {snippets}
 :imagesdir: images
 
-== Archive API
+== Archive API 개요
 
-Archive 관련 엔드포인트로, 인터뷰 영상에 대한 CRUD 작업을 포함합니다.
+Archive API는 비디오 업로드, 조회, 및 메타데이터 업데이트 기능을 제공합니다.
+아래는 주요 archive 관련 엔드포인트에 대한 설명입니다.
 
-=== Archive 조회
-= **엔드포인트:** `/api/v0/storyboard/{storyboardId}`
+=== 1. 녹화 비디오 업로드
 
-지정한 Archive ID에 해당하는 Archive 정보를 조회합니다.
+**엔드포인트:** `/api/v0/archive/recorded-video`
 
-==== 요청 예시
-include::{snippets}/storyboard/get-storyboard-success/http-request.adoc[]
+사용자가 녹화된 비디오 파일을 업로드하면, 해당 비디오의 URL이 반환됩니다.
+비디오 파일은 multipart 형식으로 전송하며, 스토리보드 ID를 함께 전달합니다.
 
-==== 응답 예시
-include::{snippets}/storyboard/get-storyboard-success/http-response.adoc[]
+==== 요청 데이터 설명
+include::{snippets}/archive/upload-recorded-video/request-parts.adoc[]
+* storyboardId(영상이 속하는 스토리보드 ID, String)를 함께 보내주세요
 
-=== Scene 조회
-
-**엔드포인트:** `/api/v0/storyboard/scene/{sceneId}`
-
-지정한 Scene ID에 해당하는 Scene 정보를 조회합니다.
+==== 응답 데이터 설명
+include::{snippets}/archive/upload-recorded-video/response-fields.adoc[]
 
 ==== 요청 예시
-include::{snippets}/storyboard/get-scene-success/http-request.adoc[]
+생략
 
 ==== 응답 예시
-include::{snippets}/storyboard/get-scene-success/http-response.adoc[]
+include::{snippets}/archive/upload-recorded-video/http-response.adoc[]
+
+=== 2. 비디오 상세 조회
+
+**엔드포인트:** `/api/v0/archive/video/{videoId}`
+
+비디오의 ID를 경로 파라미터로 전달하여 해당 비디오의 상세 정보를 조회합니다.
+
+==== 응답 데이터 설명
+include::{snippets}/archive/get-video-by-id/response-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/archive/get-video-by-id/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/archive/get-video-by-id/http-response.adoc[]
+
+=== 3. 비디오 메타데이터 변경
+
+**엔드포인트:** `/api/v0/archive/video/{videoId}`
+
+비디오의 제목 등 메타데이터를 업데이트합니다.
+요청 본문은 JSON 형식으로 전송됩니다.
+
+==== 요청 데이터 설명
+include::{snippets}/archive/change-video-metadata/request-fields.adoc[]
+
+==== 응답 데이터 설명
+include::{snippets}/archive/change-video-metadata/response-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/archive/change-video-metadata/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/archive/change-video-metadata/http-response.adoc[]
+
+=== 4. 썸네일 업데이트
+
+**엔드포인트:** `/api/v0/archive/video/{videoId}/thumbnail`
+
+비디오의 썸네일 이미지를 업데이트합니다.
+요청은 multipart 형식으로 전송되며, 변경할 썸네일 이미지 파일은 `thumbnail` 파트로 전달됩니다.
+
+==== 요청 데이터 설명
+include::{snippets}/archive/update-thumbnail/request-parts.adoc[]
+
+==== 응답 데이터 설명
+include::{snippets}/archive/update-thumbnail/response-fields.adoc[]
+
+==== 요청 예시
+생략
+
+==== 응답 예시
+include::{snippets}/archive/update-thumbnail/http-response.adoc[]
 
 == 에러 처리 및 상태 코드
 
 API 호출 시 반환되는 주요 상태 코드는 다음과 같습니다:
 
 * **200:** 성공
-* **4xx, 5xx:** 클라이언트 또는 서버 오류 (자세한 내용은 개별 스니펫 참고)
+* **4xx, 5xx:** 클라이언트 또는 서버 오류 (자세한 내용은 개별 스니펫을 참조)

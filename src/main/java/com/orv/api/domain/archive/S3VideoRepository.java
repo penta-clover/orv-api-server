@@ -2,6 +2,7 @@ package com.orv.api.domain.archive;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.orv.api.domain.archive.dto.ImageMetadata;
 import com.orv.api.domain.archive.dto.Video;
 import com.orv.api.domain.archive.dto.VideoMetadata;
 import com.orv.api.domain.storyboard.dto.Storyboard;
@@ -39,7 +40,7 @@ public class S3VideoRepository implements VideoRepository {
         this.jdbcTemplate = jdbcTemplate;
         this.simpleJdbcInsertVideo = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("video")
-                .usingColumns("id", "storyboard_id", "member_id", "video_url", "thumbnail_url", "title");
+                .usingColumns("id", "storyboard_id", "member_id", "video_url", "thumbnail_url", "running_time", "title");
     }
 
     public Optional<String> save(InputStream inputStream, VideoMetadata videoMetadata) {
@@ -61,6 +62,7 @@ public class S3VideoRepository implements VideoRepository {
             parameters.put("member_id", videoMetadata.getOwnerId().toString());
             parameters.put("video_url", downloadUri.toString());
             parameters.put("thumbnail_url", cloudfrontDomain + "/static/images/default-archive-video-thumbnail.png");
+            parameters.put("running_time", videoMetadata.getRunningTime());
             parameters.put("title", videoMetadata.getTitle());
             simpleJdbcInsertVideo.execute(new MapSqlParameterSource(parameters));
 
@@ -73,7 +75,7 @@ public class S3VideoRepository implements VideoRepository {
 
     @Override
     public Optional<Video> findById(UUID videoId) {
-        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, title FROM storyboard WHERE id = ?";
+        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title FROM video WHERE id = ?";
 
         try {
             Video video = jdbcTemplate.queryForObject(sql, new Object[]{videoId}, new BeanPropertyRowMapper<>(Video.class));
@@ -84,9 +86,9 @@ public class S3VideoRepository implements VideoRepository {
     }
 
     @Override
-    public boolean updateTitle(String videoId, String title) {
+    public boolean updateTitle(UUID videoId, String title) {
         try {
-            jdbcTemplate.update("UPDATE video SET title = ? WHERE id = ?", title, UUID.fromString(videoId));
+            jdbcTemplate.update("UPDATE video SET title = ? WHERE id = ?", title, videoId);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -95,7 +97,25 @@ public class S3VideoRepository implements VideoRepository {
     }
 
     @Override
-    public boolean updateThumbnail(InputStream inputStream, String videoId) {
-        return false;
+    public boolean updateThumbnail(UUID videoId, InputStream thumbnail, ImageMetadata imageMetadata) {
+        try {
+            String fileId = UUID.randomUUID().toString();
+
+            // AWS S3에 영상 업로드
+            String fileUrl = "archive/images/" + fileId;
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType(imageMetadata.getContentType());
+            metadata.setContentLength(imageMetadata.getContentLength());
+            amazonS3Client.putObject(bucket, fileUrl, thumbnail, metadata);
+            URI downloadUri = URI.create(cloudfrontDomain + "/" + fileUrl);
+
+            // DB에 썸네일 url 업데이트
+            jdbcTemplate.update("UPDATE video SET thumbnail_url = ? WHERE id = ?", downloadUri.toString(), videoId);
+
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

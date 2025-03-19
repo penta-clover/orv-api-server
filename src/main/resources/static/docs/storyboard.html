@@ -465,7 +465,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h4 id="_요청_예시">요청 예시</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/v0/storyboard/1811d38e-9505-43b9-a5d6-1e253332e415 HTTP/1.1
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/v0/storyboard/e5895e70-7713-4a35-b12f-2521af77524b HTTP/1.1
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -485,9 +485,9 @@ Content-Length: 208
   "statusCode" : "200",
   "message" : "success",
   "data" : {
-    "id" : "1811d38e-9505-43b9-a5d6-1e253332e415",
+    "id" : "e5895e70-7713-4a35-b12f-2521af77524b",
     "title" : "test title",
-    "startSceneId" : "eb1eab97-136e-48a3-988d-1b3b6e52117a"
+    "startSceneId" : "50c4dfc2-8bec-4d77-849f-57462d50d393"
   }
 }</code></pre>
 </div>
@@ -506,7 +506,7 @@ Content-Length: 208
 <h4 id="_요청_예시_2">요청 예시</h4>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/v0/storyboard/scene/2ef50943-8de2-4e6c-af32-a4fc37b37e11 HTTP/1.1
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/v0/storyboard/scene/50c4dfc2-8bec-4d77-849f-57462d50d393 HTTP/1.1
 Host: localhost:8080</code></pre>
 </div>
 </div>
@@ -520,17 +520,17 @@ Vary: Origin
 Vary: Access-Control-Request-Method
 Vary: Access-Control-Request-Headers
 Content-Type: application/json
-Content-Length: 401
+Content-Length: 392
 
 {
   "statusCode" : "200",
   "message" : "success",
   "data" : {
-    "id" : "2ef50943-8de2-4e6c-af32-a4fc37b37e11",
-    "name" : "가장 소중한 것",
+    "id" : "50c4dfc2-8bec-4d77-849f-57462d50d393",
+    "name" : "테스트 3",
     "sceneType" : "QUESTION",
-    "content" : "{ \"question\": \"당신에게 가장 소중한 것은 무엇인가요?\", \"nextSceneId\": \"6763090c-8d72-4dba-8b07-60fb32441952\" }",
-    "storyboardId" : "3e248f46-bed3-47f0-b90b-9804d19d376a"
+    "content" : "{ \"question\": \"당신에게 가장 소중한 것은 무엇인가요?\", \"nextSceneId\": \"b05a6d85-794e-4062-bf60-45e5cdb33d1c\" }",
+    "storyboardId" : "def11c26-65e5-406a-81a3-625cc709c7fe"
   }
 }</code></pre>
 </div>
