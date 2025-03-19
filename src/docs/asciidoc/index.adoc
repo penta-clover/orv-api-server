@@ -10,3 +10,4 @@ v0.0.1-SNAPSHOT
 * link:archive.html[Archive]
 * link:auth.html[Authentication]
 * link:storyboard.html[Storyboard]
+* link:term.html[Term]

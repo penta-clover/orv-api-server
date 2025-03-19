@@ -1,0 +1,34 @@
+= Term API 문서
+Author Name <author@example.com>
+v0.0.1-SNAPSHOT
+:snippets: {snippets}
+:imagesdir: images
+
+== 약관 동의
+
+Term 관련 엔드포인트입니다.
+
+=== Term 동의 내역 저장
+
+**엔드포인트:** `/api/v0/term/agreement`
+
+임의의 약관에 대한 동의/거부 여부를 저장합니다.
+
+==== 요청 데이터 설명
+include::{snippets}/term/add-agreement/request-fields.adoc[]
+
+==== 응답 데이터 설명
+include::{snippets}/term/add-agreement/response-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/term/add-agreement/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/term/add-agreement/http-response.adoc[]
+
+== 에러 처리 및 상태 코드
+
+API 호출 시 반환되는 주요 상태 코드는 다음과 같습니다:
+
+* **200:** 성공
+* **4xx, 5xx:** 클라이언트 또는 서버 오류 (자세한 내용은 개별 스니펫 참고)

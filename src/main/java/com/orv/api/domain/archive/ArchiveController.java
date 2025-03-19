@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -66,6 +67,13 @@ public class ArchiveController {
 
         Video video = foundVideo.get();
         return ApiResponse.success(video, 200);
+    }
+
+    @GetMapping("/videos/my")
+    public ApiResponse getMyVideos() {
+        String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<Video> videos = videoRepository.findByMemberId(UUID.fromString(memberId), 0, 30);
+        return ApiResponse.success(videos, 200);
     }
 
     @PatchMapping("/video/{videoId}")

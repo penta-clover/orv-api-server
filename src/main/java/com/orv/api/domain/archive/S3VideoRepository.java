@@ -17,10 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 public class S3VideoRepository implements VideoRepository {
@@ -82,6 +79,18 @@ public class S3VideoRepository implements VideoRepository {
             return Optional.of(video);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<Video> findByMemberId(UUID memberId, int offset, int limit) {
+        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title FROM video WHERE member_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?";
+
+        try {
+            List<Video> videos = jdbcTemplate.query(sql, new Object[]{memberId, limit, offset}, new BeanPropertyRowMapper<>(Video.class));
+            return videos;
+        } catch (EmptyResultDataAccessException e) {
+            return Collections.emptyList();
         }
     }
 

@@ -30,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -199,5 +200,75 @@ public class ArchiveControllerTest {
                                 fieldWithPath("data").description("null")
                         )
                 ));
+    }
+
+
+    @Test
+    @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
+    public void testGetMyVideos() throws Exception {
+        // given
+        Video video1 = new Video();
+        video1.setId(UUID.fromString("24c4dfc2-8bec-4d77-849f-57462d50d36e"));
+        video1.setStoryboardId(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"));
+        video1.setMemberId(UUID.fromString("1fae8d62-fdfb-47b2-a91d-182bec52ef47"));
+        video1.setTitle("video title");
+        video1.setVideoUrl("https://api.orv.im/test-video.url.mp4");
+        video1.setCreatedAt(LocalDateTime.now());
+        video1.setRunningTime(523);
+        video1.setThumbnailUrl("https://api.orv.im/test-thumbnail.url.jpg");
+
+
+        Video video2 = new Video();
+        video2.setId(UUID.fromString("24c4dfc2-8bec-4d77-849f-57462d50d36e"));
+        video2.setStoryboardId(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"));
+        video2.setMemberId(UUID.fromString("1fae8d62-fdfb-47b2-a91d-182bec52ef47"));
+        video2.setTitle("video title");
+        video2.setVideoUrl("https://api.orv.im/test-video.url.mp4");
+        video2.setCreatedAt(LocalDateTime.now());
+        video2.setRunningTime(523);
+        video2.setThumbnailUrl("https://api.orv.im/test-thumbnail.url.jpg");
+
+        when(videoRepository.findByMemberId(any(), anyInt(), anyInt())).thenReturn(List.of(video1, video2));
+
+        // when
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/archive/videos/my"));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].id").value(video1.getId().toString()))
+                .andExpect(jsonPath("$.data[0].storyboardId").value(video1.getStoryboardId().toString()))
+                .andExpect(jsonPath("$.data[0].memberId").value(video1.getMemberId().toString()))
+                .andExpect(jsonPath("$.data[0].title").value(video1.getTitle()))
+                .andExpect(jsonPath("$.data[0].videoUrl").value(video1.getVideoUrl()))
+                .andExpect(jsonPath("$.data[0].thumbnailUrl").value(video1.getThumbnailUrl()))
+                .andExpect(jsonPath("$.data[0].runningTime").value(video1.getRunningTime()))
+                .andExpect(jsonPath("$.data[0].title").value(video1.getTitle())
+                )
+                .andExpect(jsonPath("$.data[1].id").value(video2.getId().toString()))
+                .andExpect(jsonPath("$.data[1].storyboardId").value(video2.getStoryboardId().toString()))
+                .andExpect(jsonPath("$.data[1].memberId").value(video2.getMemberId().toString()))
+                .andExpect(jsonPath("$.data[1].title").value(video2.getTitle()))
+                .andExpect(jsonPath("$.data[1].videoUrl").value(video2.getVideoUrl()))
+                .andExpect(jsonPath("$.data[1].thumbnailUrl").value(video2.getThumbnailUrl()))
+                .andExpect(jsonPath("$.data[1].runningTime").value(video2.getRunningTime()))
+                .andExpect(jsonPath("$.data[1].title").value(video2.getTitle())
+                )
+                .andDo(document("archive/get-my-videos",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        responseFields(
+                                fieldWithPath("statusCode").description("응답 상태 코드"),
+                                fieldWithPath("message").description("응답 상태 메시지"),
+                                fieldWithPath("data[].id").description("비디오의 ID"),
+                                fieldWithPath("data[].storyboardId").description("비디오가 속한 스토리보드의 ID"),
+                                fieldWithPath("data[].memberId").description("비디오를 업로드한 회원의 ID"),
+                                fieldWithPath("data[].videoUrl").description("비디오의 URL"),
+                                fieldWithPath("data[].createdAt").description("비디오의 생성 시각"),
+                                fieldWithPath("data[].thumbnailUrl").description("비디오의 썸네일 URL"),
+                                fieldWithPath("data[].runningTime").description("비디오의 재생 시간(초)"),
+                                fieldWithPath("data[].title").description("비디오의 제목 (default: null)")
+                        )
+                ));
+
     }
 }
