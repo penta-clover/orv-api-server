@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS storyboard_preview
     examples      TEXT[] NOT NULL,
     CONSTRAINT pk_storyboard_preview PRIMARY KEY (storyboard_id),
     CONSTRAINT fk_storyboard_preview_storyboard FOREIGN KEY (storyboard_id)
-        REFERENCES storyboard(id) ON DELETE CASCADE
+        REFERENCES storyboard (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS storyboard
@@ -70,6 +70,25 @@ CREATE TABLE IF NOT EXISTS video
     CONSTRAINT fk_video_member_id FOREIGN KEY (member_id) REFERENCES member (id)
 );
 
+CREATE TABLE IF NOT EXISTS topic
+(
+    id          UUID        NOT NULL DEFAULT uuid_generate_v4(),
+    name        VARCHAR(30) NOT NULL,
+    description TEXT,
+    CONSTRAINT pk_topic_id PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS storyboard_topic
+(
+    storyboard_id UUID   NOT NULL,
+    topic_id      UUID   NOT NULL,
+    CONSTRAINT pk_storyboard_topic_storyboard_id PRIMARY KEY (storyboard_id, topic_id),
+    CONSTRAINT fk_storyboard_topic_storyboard FOREIGN KEY (storyboard_id)
+        REFERENCES storyboard (id) ON DELETE CASCADE,
+    CONSTRAINT fk_storyboard_topic_topic FOREIGN KEY (topic_id)
+        REFERENCES topic (id) ON DELETE CASCADE
+);
+
 ALTER TABLE video
     ADD COLUMN running_time INTEGER NOT NULL DEFAULT 0;
 
@@ -94,5 +113,12 @@ VALUES ('95f081ce-baa4-418d-8398-db77a764227d', 'e5895e70-7713-4a35-b12f-2521af7
          "next": "8ee9980f-81a8-438c-8b64-3fd413752900"
        }'::json),
        ('1cf0980f-baa4-418d-8398-db7137529002', 'e5895e70-7713-4a35-b12f-2521af77524b', '종료 씬', 'END', '{}'::json);
+
+COMMIT;
+
+BEGIN;
+
+INSERT INTO topic (name, description)
+VALUES ('죽음', '죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거');
 
 COMMIT;

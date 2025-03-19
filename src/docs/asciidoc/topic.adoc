@@ -1,0 +1,47 @@
+= Topic API 문서
+Author Name <author@example.com>
+v0.0.1-SNAPSHOT
+:snippets: {snippets}
+:imagesdir: images
+
+== Topic API 개요
+
+Topic API는 주제(Topic) 관련 정보를 제공합니다.
+아래는 Topic API의 엔드포인트에 대한 설명입니다.
+
+=== 1. Topic 목록 조회
+
+**엔드포인트:** `/api/v0/topic/list`
+
+등록된 모든 Topic 정보를 조회합니다.
+
+==== 응답 데이터 설명
+include::{snippets}/topic/get-topics/response-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/topic/get-topics/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/topic/get-topics/http-response.adoc[]
+
+=== 2. Topic의 storyboard 조회
+
+**엔드포인트:** `/api/v0/topic/{topicId}/storyboard/next`
+
+특정 주제를 선택했을 때, 사용자가 사용하게 될 storyboard 정보를 조회합니다.
+
+==== 응답 데이터 설명
+include::{snippets}/topic/get-next-storyboard-success/response-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/topic/get-next-storyboard-success/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/topic/get-next-storyboard-success/http-response.adoc[]
+
+== 에러 처리 및 상태 코드
+
+API 호출 시 반환되는 주요 상태 코드는 다음과 같습니다:
+
+* **200:** 성공
+* **4xx, 5xx:** 클라이언트 또는 서버 오류 (자세한 내용은 개별 스니펫을 참조)
