@@ -19,4 +19,6 @@ public interface StoryboardRepository {
     Scene saveScene(Scene scene);
 
     Optional<String[]> getStoryboardPreview(UUID storyboardId);
+
+    boolean updateUsageHistory(UUID storyboardId, UUID memberId, String status);
 }

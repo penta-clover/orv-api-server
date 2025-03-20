@@ -1,11 +1,13 @@
 package com.orv.api.domain.auth;
 
 import com.orv.api.domain.auth.dto.Member;
+import com.orv.api.domain.auth.dto.MemberInfo;
 import com.orv.api.domain.auth.dto.ValidationResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -39,6 +41,23 @@ public class MemberService {
 
         Member savedMember = memberRepository.save(member);
         return true;
+    }
+
+    public MemberInfo getMyInfo(UUID memberId) {
+        Optional<Member> myInfoOrEmpty = memberRepository.findById(memberId);
+
+        if (myInfoOrEmpty.isEmpty()) {
+            return null;
+        }
+
+        Member me = myInfoOrEmpty.get();
+        MemberInfo info = new MemberInfo();
+        info.setId(me.getId());
+        info.setNickname(me.getNickname());
+        info.setProfileImageUrl(me.getProfileImageUrl());
+        info.setCreatedAt(me.getCreatedAt());
+
+        return info;
     }
 
     private boolean isNicknameExists(String nickname) {

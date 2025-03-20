@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="author" content="Author Name">
-<title>ORV API 문서</title>
+<title>Member API 문서</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -439,42 +439,126 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>ORV API 문서</h1>
+<h1>Member API 문서</h1>
 <div class="details">
 <span id="author" class="author">Author Name</span><br>
 <span id="email" class="email"><a href="mailto:author@example.com">author@example.com</a></span><br>
 <span id="revnumber">version 0.0.1-SNAPSHOT</span>
 </div>
-<div id="toc" class="toc">
-<div id="toctitle">Table of Contents</div>
-<ul class="sectlevel1">
-<li><a href="#_v0">v0</a></li>
-</ul>
-</div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_v0">v0</h2>
+<h2 id="_회원_정보_조회">회원 정보 조회</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>회원의 정보를 조회할 수 있는 엔드포인트들입니다.</p>
+</div>
+<div class="sect2">
+<h3 id="_내_회원_정보_조회">내 회원 정보 조회</h3>
+<div class="paragraph">
+<p><strong>엔드포인트:</strong> <code>/api/v0/member/my-info</code></p>
+</div>
+<div class="paragraph">
+<p>요청자의 회원 정보를 조회합니다.</p>
+</div>
+<div class="sect3">
+<h4 id="_응답_데이터_설명">응답 데이터 설명</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>statusCode</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">응답 상태 코드</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">응답 상태 메시지</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data.id</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">(DB 상에 저장된) 나의 id</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data.nickname</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">나의 닉네임</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data.profileImageUrl</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">나의 프로필 이미지 주소</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data.createdAt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">서비스 가입 일시</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_요청_예시">요청 예시</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/v0/member/my-info HTTP/1.1
+Host: localhost:8080</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_응답_예시">응답 예시</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Vary: Origin
+Vary: Access-Control-Request-Method
+Vary: Access-Control-Request-Headers
+Content-Type: application/json
+Content-Length: 255
+
+{
+  "statusCode" : "200",
+  "message" : "success",
+  "data" : {
+    "id" : "054c3e8a-3387-4eb3-ac8a-31a48221f192",
+    "nickname" : "현준",
+    "profileImageUrl" : "https://www.naver.com/favicon.ico",
+    "createdAt" : "2025-03-20T21:49:37.234773"
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_에러_처리_및_상태_코드">에러 처리 및 상태 코드</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>API 호출 시 반환되는 주요 상태 코드는 다음과 같습니다:</p>
+</div>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="archive.html">Archive</a></p>
+<p><strong>200:</strong> 성공</p>
 </li>
 <li>
-<p><a href="auth.html">Authentication</a></p>
-</li>
-<li>
-<p><a href="member.html">Member</a></p>
-</li>
-<li>
-<p><a href="storyboard.html">Storyboard</a></p>
-</li>
-<li>
-<p><a href="term.html">Term</a></p>
-</li>
-<li>
-<p><a href="topic.html">Topic</a></p>
+<p><strong>4xx, 5xx:</strong> 클라이언트 또는 서버 오류 (자세한 내용은 개별 스니펫 참고)</p>
 </li>
 </ul>
 </div>
@@ -484,7 +568,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version 0.0.1-SNAPSHOT<br>
-Last updated 2025-03-20 21:47:23 +0900
+Last updated 2025-03-20 21:49:24 +0900
 </div>
 </div>
 </body>

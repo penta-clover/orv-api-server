@@ -21,6 +21,7 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsertStoryboard;
     private final SimpleJdbcInsert simpleJdbcInsertScene;
+    private final SimpleJdbcInsert simpleJdbcInsertUsageHistory;
 
     public JdbcStoryboardRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -32,6 +33,11 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
         this.simpleJdbcInsertScene = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("scene")
                 .usingColumns("name", "scene_type", "content", "storyboard_id")
+                .usingGeneratedKeyColumns("id");
+
+        this.simpleJdbcInsertUsageHistory = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("storyboard_usage_history")
+                .usingColumns("storyboard_id", "member_id", "status")
                 .usingGeneratedKeyColumns("id");
     }
 
@@ -118,6 +124,39 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
         } catch (Exception e) {
             e.printStackTrace();
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public boolean updateUsageHistory(UUID storyboardId, UUID memberId, String status) {
+        // 조건에 맞는 기존 레코드 조회
+        String selectSql = "SELECT id FROM storyboard_usage_history " +
+                "WHERE storyboard_id = ? AND member_id = ? " +
+                "  AND status <> 'COMPLETED' " +
+                "  AND created_at >= (CURRENT_TIMESTAMP - INTERVAL '1 hour') " +
+                "LIMIT 1";
+
+        List<UUID> existingIds = jdbcTemplate.query(selectSql, new Object[]{storyboardId, memberId},
+                (rs, rowNum) -> (UUID) rs.getObject("id"));
+
+        if (!existingIds.isEmpty()) {
+            // 조건에 맞는 레코드가 존재하면 UPDATE
+            UUID recordId = existingIds.get(0);
+            String updateSql = "UPDATE storyboard_usage_history " +
+                    "SET updated_at = CURRENT_TIMESTAMP, status = ? " +
+                    "WHERE id = ?";
+            int updatedRows = jdbcTemplate.update(updateSql, status, recordId);
+            return updatedRows > 0;
+        } else {
+            // 해당 조건의 레코드가 없으면 INSERT
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("storyboard_id", storyboardId);
+            parameters.put("member_id", memberId);
+            parameters.put("status", status);
+
+            // updated_at, created_at은 DEFAULT로 CURRENT_TIMESTAMP가 들어감
+            KeyHolder keyHolder = simpleJdbcInsertUsageHistory.executeAndReturnKeyHolder(new MapSqlParameterSource(parameters));
+            return keyHolder.getKeys() != null;
         }
     }
 }

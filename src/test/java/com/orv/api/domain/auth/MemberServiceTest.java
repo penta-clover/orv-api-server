@@ -1,6 +1,7 @@
 package com.orv.api.domain.auth;
 
 import com.orv.api.domain.auth.dto.Member;
+import com.orv.api.domain.auth.dto.MemberInfo;
 import com.orv.api.domain.auth.dto.ValidationResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -111,6 +113,42 @@ public class MemberServiceTest {
 
         // 반환된 savedMember의 id가 null이 아니어야 함
         assertThat(savedMember.getId()).isNotNull();
+    }
+
+    @Test
+    void testGetMyInfo() {
+        // given
+        String id = UUID.randomUUID().toString();
+        String nickname = "test123";
+        String gender = "MALE"; // CHECK 제약조건에 따라 "MALE" 또는 "FEMALE" 사용
+        LocalDateTime createdAt = LocalDateTime.now().minusDays(3);
+        LocalDate birthday = LocalDate.of(1990, 1, 1);
+        String provider = "testProvider";
+        String socialId = "social123";
+        String profileImageUrl = "https://naver.com/blabla";
+
+        // repository.findById()가 호출될 때 반환할 Member 객체 생성
+        Member foundMember = new Member();
+        UUID generatedId = UUID.randomUUID();
+        foundMember.setId(generatedId);
+        foundMember.setNickname(nickname);
+        foundMember.setCreatedAt(createdAt);
+        foundMember.setGender(gender);
+        foundMember.setBirthday(birthday);
+        foundMember.setProvider(provider);
+        foundMember.setSocialId(socialId);
+        foundMember.setProfileImageUrl(profileImageUrl);
+
+        when(memberRepository.findById(any())).thenReturn(Optional.of(foundMember));
+
+        // when
+        MemberInfo memberInfo = memberService.getMyInfo(UUID.fromString(id));
+
+        // then
+        assertEquals(memberInfo.getId(), foundMember.getId());
+        assertEquals(memberInfo.getNickname(), foundMember.getNickname());
+        assertEquals(memberInfo.getProfileImageUrl(), foundMember.getProfileImageUrl());
+        assertEquals(memberInfo.getCreatedAt(), foundMember.getCreatedAt());
     }
 }
 

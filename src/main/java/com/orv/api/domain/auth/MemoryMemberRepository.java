@@ -53,4 +53,10 @@ public class MemoryMemberRepository implements MemberRepository {
 
         return member;
     }
+
+    @Override
+    public Optional<Member> findById(UUID memberId) {
+        Member member = store.get(memberId.toString());
+        return Optional.of(member);
+    }
 }

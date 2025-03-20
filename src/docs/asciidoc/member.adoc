@@ -1,0 +1,31 @@
+= Member API 문서
+Author Name <author@example.com>
+v0.0.1-SNAPSHOT
+:snippets: {snippets}
+:imagesdir: images
+
+== 회원 정보 조회
+
+회원의 정보를 조회할 수 있는 엔드포인트들입니다.
+
+=== 내 회원 정보 조회
+
+**엔드포인트:** `/api/v0/member/my-info`
+
+요청자의 회원 정보를 조회합니다.
+
+==== 응답 데이터 설명
+include::{snippets}/member/get-my-info/response-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/member/get-my-info/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/member/get-my-info/http-response.adoc[]
+
+== 에러 처리 및 상태 코드
+
+API 호출 시 반환되는 주요 상태 코드는 다음과 같습니다:
+
+* **200:** 성공
+* **4xx, 5xx:** 클라이언트 또는 서버 오류 (자세한 내용은 개별 스니펫 참고)

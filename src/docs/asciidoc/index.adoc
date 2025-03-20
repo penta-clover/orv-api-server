@@ -9,6 +9,7 @@ v0.0.1-SNAPSHOT
 == v0
 * link:archive.html[Archive]
 * link:auth.html[Authentication]
+* link:member.html[Member]
 * link:storyboard.html[Storyboard]
 * link:term.html[Term]
 * link:topic.html[Topic]

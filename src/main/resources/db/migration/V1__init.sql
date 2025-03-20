@@ -80,13 +80,26 @@ CREATE TABLE IF NOT EXISTS topic
 
 CREATE TABLE IF NOT EXISTS storyboard_topic
 (
-    storyboard_id UUID   NOT NULL,
-    topic_id      UUID   NOT NULL,
+    storyboard_id UUID NOT NULL,
+    topic_id      UUID NOT NULL,
     CONSTRAINT pk_storyboard_topic_storyboard_id PRIMARY KEY (storyboard_id, topic_id),
     CONSTRAINT fk_storyboard_topic_storyboard FOREIGN KEY (storyboard_id)
         REFERENCES storyboard (id) ON DELETE CASCADE,
     CONSTRAINT fk_storyboard_topic_topic FOREIGN KEY (topic_id)
         REFERENCES topic (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS storyboard_usage_history
+(
+    id            UUID        NOT NULL DEFAULT uuid_generate_v4(),
+    storyboard_id UUID        NOT NULL,
+    member_id     UUID        NOT NULL,
+    updated_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status        VARCHAR(30) NOT NULL,
+    CONSTRAINT pk_storyboard_usage_history_id PRIMARY KEY (id),
+    CONSTRAINT fk_storyboard_usage_history_storyboard_id FOREIGN KEY (storyboard_id) REFERENCES storyboard (id),
+    CONSTRAINT fk_storyboard_usage_history_member_id FOREIGN KEY (member_id) REFERENCES member (id)
 );
 
 ALTER TABLE video

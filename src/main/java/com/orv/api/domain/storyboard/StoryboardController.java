@@ -7,6 +7,7 @@ import com.orv.api.domain.storyboard.dto.StoryboardPreviewResponse;
 import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,6 +38,7 @@ public class StoryboardController {
 
     @GetMapping("/scene/{sceneId}")
     public ApiResponse getScene(@PathVariable String sceneId) {
+        String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<Scene> foundScene = storyboardRepository.findSceneById(UUID.fromString(sceneId));
 
         if (foundScene.isEmpty()) {
@@ -44,6 +46,10 @@ public class StoryboardController {
         }
 
         Scene scene = foundScene.get();
+
+        String status = scene.getSceneType().equals("END") ? "COMPLETED" : "STARTED";
+        storyboardRepository.updateUsageHistory(scene.getStoryboardId(), UUID.fromString(memberId), status);
+
         return ApiResponse.success(scene, 200);
     }
 

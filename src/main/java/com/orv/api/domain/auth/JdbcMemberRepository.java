@@ -75,4 +75,16 @@ public class JdbcMemberRepository implements MemberRepository {
 
         return member;
     }
+
+    @Override
+    public Optional<Member> findById(UUID memberId) {
+        String sql = "SELECT id, nickname, provider, social_id, email, profile_image_url, created_at, phone_number, birthday, gender, name FROM member WHERE id = ?";
+
+        try {
+            Member member = jdbcTemplate.queryForObject(sql, new Object[]{memberId}, new BeanPropertyRowMapper<>(Member.class));
+            return Optional.of(member);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
 }
