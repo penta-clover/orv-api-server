@@ -4,6 +4,7 @@ import com.orv.api.domain.term.dto.TermAgreementForm;
 import com.orv.api.global.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v0/term")
+@Slf4j
 public class TermController {
     private final TermRepository termRepository;
 
@@ -24,7 +26,7 @@ public class TermController {
         try {
             String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
             InetAddress ipAddress = InetAddress.getByName(request.getRemoteAddr());
-            Optional<String> agreementId = termRepository.saveAgreement(UUID.fromString(memberId), termAgreementForm.getTerm(), termAgreementForm.getValue(), LocalDateTime.now(), ipAddress);
+            Optional<String> agreementId = termRepository.saveAgreement(UUID.fromString(memberId), termAgreementForm.getTerm(), termAgreementForm.getValue(), ipAddress);
 
             if (agreementId.isEmpty()) {
                 return ApiResponse.fail(null, 500);

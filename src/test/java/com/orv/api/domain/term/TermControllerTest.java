@@ -49,7 +49,7 @@ public class TermControllerTest {
         termAgreementForm.setValue("Y");
 
         String agreementId = UUID.randomUUID().toString();
-        when(termRepository.saveAgreement(any(), any(), any(), any(), any())).thenReturn(Optional.of(agreementId));
+        when(termRepository.saveAgreement(any(), any(), any(), any())).thenReturn(Optional.of(agreementId));
 
         // when
         mockMvc.perform(post("/api/v0/term/agreement")

@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS member
     CONSTRAINT uq_provider_social_id UNIQUE (provider, social_id)
 );
 
+DROP TABLE term_agreement;
 CREATE TABLE IF NOT EXISTS term_agreement
 (
     id         UUID        NOT NULL DEFAULT uuid_generate_v4(),
@@ -22,7 +23,7 @@ CREATE TABLE IF NOT EXISTS term_agreement
     term       VARCHAR(50) NOT NULL,
     value      VARCHAR(50) NOT NULL,
     agreed_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ip_address inet        NOT NULL,
+    ip_address inet,
     CONSTRAINT pk_member_agreement_id PRIMARY KEY (id),
     CONSTRAINT fk_member_agreement_member_id FOREIGN KEY (member_id) REFERENCES member (id)
 );

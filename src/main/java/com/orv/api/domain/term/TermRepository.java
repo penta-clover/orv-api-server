@@ -9,5 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface TermRepository {
-    Optional<String> saveAgreement(UUID memberId, String term, String value, LocalDateTime agreed_at, InetAddress ip);
+    Optional<String> saveAgreement(UUID memberId, String term, String value, InetAddress ip);
 }
