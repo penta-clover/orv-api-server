@@ -9,6 +9,7 @@ import com.orv.api.global.dto.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.Frame;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -112,25 +113,45 @@ public class ArchiveController {
 
     private Double calculateRunningTime(MultipartFile video) {
         File tempFile = null;
-
         try {
             tempFile = File.createTempFile("upload-" + System.currentTimeMillis(), ".tmp");
             video.transferTo(tempFile);
 
-            double durationInSeconds;
-
+            double durationInSeconds = 0.0;
             try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(tempFile)) {
+                // 웹m 파일임을 명시적으로 설정
+                grabber.setFormat("webm");
                 grabber.start();
-                durationInSeconds = grabber.getLengthInTime() / 1_000_000.0;
+
+                long lengthInTime = grabber.getLengthInTime();
+                if (lengthInTime > 0) {
+                    // 메타데이터에 duration 정보가 있을 경우 사용
+                    durationInSeconds = lengthInTime / 1_000_000.0;
+                } else {
+                    // 메타데이터가 없을 경우, 첫 프레임과 마지막 프레임의 timestamp를 이용해 계산
+                    Frame frame;
+                    long firstTimestamp = -1;
+                    long lastTimestamp = -1;
+                    while ((frame = grabber.grabFrame()) != null) {
+                        if (frame.timestamp > 0) {
+                            if (firstTimestamp == -1) {
+                                firstTimestamp = frame.timestamp;
+                            }
+                            lastTimestamp = frame.timestamp;
+                        }
+                    }
+                    if (firstTimestamp != -1 && lastTimestamp != -1) {
+                        durationInSeconds = (lastTimestamp - firstTimestamp) / 1_000_000.0;
+                    }
+                }
                 grabber.stop();
             }
-
             return durationInSeconds;
         } catch (Exception e) {
             e.printStackTrace();
             return 0.0;
         } finally {
-            if (tempFile != null) {
+            if (tempFile != null && tempFile.exists()) {
                 tempFile.delete();
             }
         }
