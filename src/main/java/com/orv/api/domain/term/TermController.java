@@ -25,7 +25,7 @@ public class TermController {
     public ApiResponse createAgreement(@RequestBody TermAgreementForm termAgreementForm, HttpServletRequest request) {
         try {
             String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
-            InetAddress ipAddress = InetAddress.getByName(request.getRemoteAddr());
+            InetAddress ipAddress = InetAddress.getByName(getClientIp(request));
             Optional<String> agreementId = termRepository.saveAgreement(UUID.fromString(memberId), termAgreementForm.getTerm(), termAgreementForm.getValue(), ipAddress);
 
             if (agreementId.isEmpty()) {
@@ -37,5 +37,18 @@ public class TermController {
             e.printStackTrace();
             return ApiResponse.fail(null, 500);
         }
+    }
+    private String getClientIp(HttpServletRequest request) {
+        String ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress != null && !ipAddress.isEmpty() && !"unknown".equalsIgnoreCase(ipAddress)) {
+            // 여러 IP가 있을 경우 첫 번째 IP가 클라이언트 IP입니다.
+            ipAddress = ipAddress.split(",")[0].trim();
+        } else {
+            ipAddress = request.getHeader("X-Real-IP");
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = request.getRemoteAddr();
+            }
+        }
+        return ipAddress;
     }
 }
