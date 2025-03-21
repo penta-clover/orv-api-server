@@ -32,6 +32,7 @@ public class TermController {
 
             return ApiResponse.success(agreementId.get(), 201);
         } catch (Exception e) {
+            e.printStackTrace();
             return ApiResponse.fail(null, 500);
         }
     }
