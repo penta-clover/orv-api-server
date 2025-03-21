@@ -45,7 +45,7 @@ public class ArchiveControllerTest {
     private VideoRepository videoRepository;
 
     @Test
-    @WithMockUser(username = "1fae8d62-fdfb-47b2-a91d-182bec52ef47")
+    @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
     public void testUploadRecordedVideo() throws Exception {
         // given
         InputStream videoStream = getClass().getResourceAsStream("/videos/upload-test-video.mp4");

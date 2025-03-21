@@ -60,6 +60,9 @@ dependencies {
 	// For FFmpeg Frame Grabber
 	implementation 'org.bytedeco:javacv:1.5.11'
 	implementation 'org.bytedeco:javacv-platform:1.5.11'
+
+	// Quartz
+	implementation 'org.springframework.boot:spring-boot-starter-quartz'
 }
 
 ext {
