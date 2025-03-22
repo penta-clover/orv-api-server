@@ -1,5 +1,6 @@
 package com.orv.api;
 
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
@@ -10,21 +11,27 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile("prod") // production 환경에서만 로드됩니다.
-public class S3Config {
+@Profile({"staging", "dev"}) // staging 또는 dev 환경에서만 로드됩니다.
+public class LocalStackS3Config {
+
     @Value("${cloud.aws.credentials.accessKey}")
     private String accessKey;
+
     @Value("${cloud.aws.credentials.secretKey}")
     private String secretKey;
+
+    // LocalStack 사용시 region을 동일하게 설정하거나, 필요에 따라 변경
     @Value("${cloud.aws.region.static}")
     private String region;
 
     @Bean
     public AmazonS3 amazonS3Client() {
-        BasicAWSCredentials awsCredentials= new BasicAWSCredentials(accessKey, secretKey);
+        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
         return AmazonS3ClientBuilder.standard()
-                .withRegion(region)
+                .withEndpointConfiguration(
+                        new AwsClientBuilder.EndpointConfiguration("http://localhost:4566", region))
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                .withPathStyleAccessEnabled(true) // LocalStack은 path-style access를 사용합니다.
                 .build();
     }
 }

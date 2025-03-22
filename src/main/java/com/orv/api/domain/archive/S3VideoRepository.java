@@ -1,5 +1,6 @@
 package com.orv.api.domain.archive;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.orv.api.domain.archive.dto.ImageMetadata;
@@ -21,7 +22,7 @@ import java.util.*;
 
 @Repository
 public class S3VideoRepository implements VideoRepository {
-    private final AmazonS3Client amazonS3Client;
+    private final AmazonS3 amazonS3Client;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -32,7 +33,7 @@ public class S3VideoRepository implements VideoRepository {
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsertVideo;
 
-    public S3VideoRepository(AmazonS3Client amazonS3Client, JdbcTemplate jdbcTemplate) {
+    public S3VideoRepository(AmazonS3 amazonS3Client, JdbcTemplate jdbcTemplate) {
         this.amazonS3Client = amazonS3Client;
         this.jdbcTemplate = jdbcTemplate;
         this.simpleJdbcInsertVideo = new SimpleJdbcInsert(jdbcTemplate)

@@ -25,10 +25,55 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 12345678
     ports:
-      - "4322:5432"
+      - "4321:5432"services:
+  api:
+    image: chj7239/orv-api-server:staging
+    container_name: orv_api_server
+    ports:
+      - "80:8080"
+    env_file:
+      - .env.staging
+    depends_on:
+      - postgres
+
+  nginx:
+    build: nginx
+    container_name: orv_nginx
+    ports:
+      - "443:443"
+    depends_on:
+      - api
+
+  postgres:
+    image: postgres:16.4
+    container_name: orv_postgres
+    environment:
+      POSTGRES_DB: orv_staging
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345678
+    ports:
+      - "4321:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    ports:
+      - "4566:4566"  # 모든 서비스의 엔드포인트 포트 (특히 S3는 4566)
+    environment:
+      - SERVICES=s3   # S3만 활성화 (여러 서비스를 동시에 활성화할 수도 있음)
+      - DEFAULT_REGION=ap-northeast-2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  localstack-proxy:
+    build: ./localstack-proxy
+    container_name: localstack_proxy
+    ports:
+      - "4565:443"  # 외부 포트 4565를 컨테이너의 443(https)로 매핑
+    depends_on:
+      - localstack
 
   watchtower:
     image: containrrr/watchtower
