@@ -13,8 +13,8 @@ RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /etc/nginx/certs/staging.api.orv.im.key \
     -out /etc/nginx/certs/staging.api.orv.im.crt
 
-# 필요하다면 nginx 설정 파일을 복사 (로컬의 nginx.conf 사용)
-COPY nginx.conf /etc/nginx/nginx.conf
+# nginx 설정 파일을 복사 (로컬의 staging.conf 사용)
+COPY staging.conf /etc/nginx/conf.d/
 
 EXPOSE 443
 
