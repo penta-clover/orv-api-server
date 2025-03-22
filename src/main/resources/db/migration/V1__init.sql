@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS member
     CONSTRAINT uq_provider_social_id UNIQUE (provider, social_id)
 );
 
-DROP TABLE term_agreement;
 CREATE TABLE IF NOT EXISTS term_agreement
 (
     id         UUID        NOT NULL DEFAULT uuid_generate_v4(),

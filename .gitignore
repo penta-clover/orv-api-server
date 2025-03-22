@@ -44,9 +44,9 @@
 # *.iml
 # *.ipr
 
-# .env.test file
+# .env.staging file
 .env
-.env.test
+docker/staging/.env.staging
 .env.*
 
 # CMake
