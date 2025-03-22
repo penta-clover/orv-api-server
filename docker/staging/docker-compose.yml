@@ -25,33 +25,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 12345678
     ports:
-      - "4321:5432"services:
-  api:
-    image: chj7239/orv-api-server:staging
-    container_name: orv_api_server
-    ports:
-      - "80:8080"
-    env_file:
-      - .env.staging
-    depends_on:
-      - postgres
-
-  nginx:
-    build: nginx
-    container_name: orv_nginx
-    ports:
-      - "443:443"
-    depends_on:
-      - api
-
-  postgres:
-    image: postgres:16.4
-    container_name: orv_postgres
-    environment:
-      POSTGRES_DB: orv_staging
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 12345678
-    ports:
       - "4321:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -71,7 +44,7 @@ services:
     build: ./localstack-proxy
     container_name: localstack_proxy
     ports:
-      - "4565:443"  # 외부 포트 4565를 컨테이너의 443(https)로 매핑
+      - "4565:443"
     depends_on:
       - localstack
 
@@ -83,6 +56,5 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     # --cleanup: 사용하지 않는 이전 이미지들을 제거, --interval: 30초마다 업데이트 체크
     command: --cleanup --interval 30 orv_api_server
-
 volumes:
   postgres_data:
