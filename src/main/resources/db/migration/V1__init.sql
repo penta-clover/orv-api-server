@@ -15,6 +15,14 @@ CREATE TABLE IF NOT EXISTS member
     CONSTRAINT uq_provider_social_id UNIQUE (provider, social_id)
 );
 
+CREATE TABLE IF NOT EXISTS storyboard
+(
+    id             UUID         NOT NULL DEFAULT uuid_generate_v4(),
+    title          VARCHAR(255) NOT NULL,
+    start_scene_id UUID,
+    CONSTRAINT pk_storyboard_id PRIMARY KEY (id)
+);
+
 CREATE TABLE IF NOT EXISTS term_agreement
 (
     id         UUID        NOT NULL DEFAULT uuid_generate_v4(),
@@ -34,14 +42,6 @@ CREATE TABLE IF NOT EXISTS storyboard_preview
     CONSTRAINT pk_storyboard_preview PRIMARY KEY (storyboard_id),
     CONSTRAINT fk_storyboard_preview_storyboard FOREIGN KEY (storyboard_id)
         REFERENCES storyboard (id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS storyboard
-(
-    id             UUID         NOT NULL DEFAULT uuid_generate_v4(),
-    title          VARCHAR(255) NOT NULL,
-    start_scene_id UUID,
-    CONSTRAINT pk_storyboard_id PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS scene
