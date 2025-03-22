@@ -40,6 +40,17 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
+  localstack-s3-init:
+    image: amazon/aws-cli:latest
+    container_name: s3_init
+    depends_on:
+      - localstack
+    environment:
+      - AWS_ACCESS_KEY_ID=test-access
+      - AWS_SECRET_ACCESS_KEY=test-secret
+      - AWS_DEFAULT_REGION=ap-northeast-2
+    entrypoint: ["sh", "-c", "sleep 10 && aws --endpoint-url=http://localstack:4566 s3 mb s3://orv-s3"]
+
   localstack-proxy:
     build: ./localstack-proxy
     container_name: localstack_proxy
