@@ -59,7 +59,7 @@ public class S3VideoRepository implements VideoRepository {
             parameters.put("storyboard_id", videoMetadata.getStoryboardId().toString());
             parameters.put("member_id", videoMetadata.getOwnerId().toString());
             parameters.put("video_url", downloadUri.toString());
-            parameters.put("thumbnail_url", cloudfrontDomain + "/static/images/default-archive-video-thumbnail.png");
+            parameters.put("thumbnail_url", "https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-archive-video-thumbnail.png");
             parameters.put("running_time", videoMetadata.getRunningTime());
             parameters.put("title", videoMetadata.getTitle());
             simpleJdbcInsertVideo.execute(new MapSqlParameterSource(parameters));
