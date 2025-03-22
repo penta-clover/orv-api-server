@@ -29,7 +29,7 @@ public class LocalStackS3Config {
         BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
         return AmazonS3ClientBuilder.standard()
                 .withEndpointConfiguration(
-                        new AwsClientBuilder.EndpointConfiguration("http://localhost:4566", region))
+                        new AwsClientBuilder.EndpointConfiguration("http://localstack:4566", region))
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
                 .withPathStyleAccessEnabled(true) // LocalStack은 path-style access를 사용합니다.
                 .build();
