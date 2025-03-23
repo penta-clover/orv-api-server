@@ -1,6 +1,0 @@
-BEGIN;
-
-ALTER TABLE topic
-    ADD COLUMN topic INTEGER;
-
-COMMIT;

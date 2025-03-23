@@ -11,4 +11,5 @@ public class Topic {
     private UUID id;
     private String name;
     private String description;
+    private String thumbnailUrl;
 }

@@ -241,15 +241,17 @@ SET start_scene_id = 'C0CF41B6-E6F6-4E40-B3DA-B49E83A133D3'
 WHERE id = 'C81D9417-5797-4B11-A8EA-C161CACFE9D1';
 
 -- topic INSERT
-INSERT INTO topic (id, name, description)
+INSERT INTO topic (id, name, description, thumbnail_url)
 VALUES ('03240B15-F080-4A6F-BEDA-608ED5429249',
         '여행의 특별한 순간을 기억하며',
-        '주제설명주세설명주제설명주세설명주제설명주세설명');
+        '주제설명주세설명주제설명주세설명주제설명주세설명',
+        'https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-topic-thumbnail.png');
 
-INSERT INTO topic (id, name, description)
+INSERT INTO topic (id, name, description, thumbnail_url)
 VALUES ('0CF8CFBC-23D0-488B-BB8A-C8459F8F5C58',
         '흔들리지 않고 피는 꽃은 없다',
-        '주제설명주세설명주제설명주세설명주제설명주세설명');
+        '주제설명주세설명주제설명주세설명주제설명주세설명',
+        'https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-topic-thumbnail.png');
 
 -- storyboard_topic INSERT
 INSERT INTO storyboard_topic (storyboard_id, topic_id)

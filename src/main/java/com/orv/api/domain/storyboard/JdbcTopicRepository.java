@@ -18,7 +18,7 @@ public class JdbcTopicRepository implements TopicRepository {
 
     @Override
     public List<Topic> findTopics() {
-        String sql = "SELECT id, name, description FROM topic";
+        String sql = "SELECT id, name, description, thumbnail_url FROM topic";
 
         try {
             List<Topic> topics = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Topic.class));

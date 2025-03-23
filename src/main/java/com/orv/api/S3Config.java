@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile("prod") // production 환경에서만 로드됩니다.
+@Profile({"prod", "default"}) // production 환경에서만 로드됩니다.
 public class S3Config {
     @Value("${cloud.aws.credentials.accessKey}")
     private String accessKey;
