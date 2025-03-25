@@ -10,14 +10,14 @@ VALUES ('C81D9417-5797-4B11-A8EA-C161CACFE9D1', '흔들리지 않고 피는 꽃�
 -- storyboard_preview INSERT
 INSERT INTO storyboard_preview (storyboard_id, examples)
 VALUES ('E5E9B7DC-EFA4-43F9-B428-03769AABDAFC', ARRAY [
-    '지금까지의 여행 일정 중 가장 기억에 남는 순간은 언제였나요?',
+    '이렇게 여행을 떠나게 된 계기는 무엇인가요?',
     '이번 여행을 하나의 문장으로 표현한다면 어떤 문장이 될 것 같나요?'
     ]);
 
 INSERT INTO storyboard_preview (storyboard_id, examples)
 VALUES ('C81D9417-5797-4B11-A8EA-C161CACFE9D1', ARRAY [
-    '올해가 마무리 되었을 때, 나는 어떤 모습이기를 바라나요?',
-    '2025년 어느 날, 지쳐있는 나를 위해 한마디를 해주세요.'
+    '올해가 마무리 되기까지 꼭 이루고 싶은 목표가 있나요?',
+    '요즘 부단히 노력하고 있지만 어려움을 느끼는 일이 있나요?'
     ]);
 
 -- storyboard 'E5E9B7DC-EFA4-43F9-B428-03769AABDAFC' 관련 scene INSERT
@@ -141,7 +141,7 @@ VALUES ('C0CF41B6-E6F6-4E40-B3DA-B49E83A133D3',
         (
                             '{ ' ||
                             '   "question": "가벼운 인사 한마디 부탁 드립니다.",' ||
-                            '   "hint": "시간이 지난 후에 이 영상을 다시 보았을 때, &#39;나는 이런 사람이었구나&#39;라는 생각이 들 수 있게 표현해주세요. 나이, 이름, 나를 표현하는 말 등을 추가하는 것을 추천 드려요.",' ||
+                            E'   "hint": "시간이 지난 후에 이 영상을 다시 보았을 때, \\"나는 이런 사람이었구나\\"라는 생각이 들 수 있게 표현해주세요. 나이, 이름, 나를 표현하는 말 등을 추가하는 것을 추천 드려요.",' ||
                             '   "nextSceneId": "7035A40E-276B-4CF8-AAC1-BC1ECCAFA0B1"' ||
                             '}'
             )::json);
@@ -218,8 +218,8 @@ VALUES ('07564719-63E7-4EC2-8E86-4EB2E5F2F978',
         'EPILOGUE',
         (
                             '{ ' ||
-                            '   "question": "아래 문구를 따라 읽어주세요<br/>&#34;{date} 오늘은 여기까지&#34;",' ||
-                            '   "hint": "가장 예쁜 꽃은 우여곡절 끝에 피는 꽃이라고 합니다. OO님도 예쁜 꽃을 피우기를 바라며 오늘 인터뷰를 마치겠습니다.",' ||
+                            '   "question": "아래 문구를 따라 읽어주세요",' ||
+                            '   "hint": "\"오늘은 여기까지\"",' ||
                             '   "nextSceneId": "1BB17C6E-58F2-4903-97B1-28091DD66641"' ||
                             '}'
             )::json);
@@ -244,13 +244,13 @@ WHERE id = 'C81D9417-5797-4B11-A8EA-C161CACFE9D1';
 INSERT INTO topic (id, name, description, thumbnail_url)
 VALUES ('03240B15-F080-4A6F-BEDA-608ED5429249',
         '여행의 특별한 순간을 기억하며',
-        '주제설명주세설명주제설명주세설명주제설명주세설명',
+        '지금까지 여행을 사진으로만 기록해오셨나요? 이번 여행에서는 인터뷰를 하며 목소리, 분위기까지 담아보세요. 여행자로서의 나는 어떤 모습인지 알아갈 수 있는 주제입니다.',
         'https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-topic-thumbnail.png');
 
 INSERT INTO topic (id, name, description, thumbnail_url)
 VALUES ('0CF8CFBC-23D0-488B-BB8A-C8459F8F5C58',
         '흔들리지 않고 피는 꽃은 없다',
-        '주제설명주세설명주제설명주세설명주제설명주세설명',
+        '세상에 쉬운 일은 없다고 하지만 유독 더 힘든 하루가 가끔 있어요. 때로는 ‘나는 괜찮은지’ ‘어느 정도로 힘들어하고 있는지’를 스스로에게 물어봐야 해요. 인터뷰 질문에 답변하면서 스스로를 마주하는 시간을 가져보세요.',
         'https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-topic-thumbnail.png');
 
 -- storyboard_topic INSERT
