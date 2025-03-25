@@ -1,5 +1,6 @@
 package com.orv.api.domain.reservation;
 
+import com.orv.api.domain.reservation.dto.InterviewReservation;
 import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
 import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
@@ -11,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -19,6 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReservationController {
     private final NotificationSchedulerService notificationService;
+    private final ReservationRepository reservationRepository;
 
     @PostMapping("/interview")
     public ApiResponse reserveInterview(@RequestBody InterviewReservationRequest request) {
@@ -27,8 +31,15 @@ public class ReservationController {
             UUID storyboardId = UUID.fromString(request.getStoryboardId());
             ZonedDateTime reservedAt = request.getReservedAt();
 
+            Optional<UUID> id = reservationRepository.reserveInterview(memberId, storyboardId,  reservedAt.toLocalDateTime());
+
+            if (id.isEmpty()) {
+                return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
+            }
+
             notificationService.scheduleInterviewNotificationCall(memberId, storyboardId, reservedAt);
-            return ApiResponse.success(null, 201);
+
+            return ApiResponse.success(new InterviewReservation(id.get(), memberId, storyboardId, reservedAt.toLocalDateTime(), LocalDateTime.now()), 201);
         } catch (SchedulerException e) {
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }

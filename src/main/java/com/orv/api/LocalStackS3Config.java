@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile({"staging", "dev"}) // staging 또는 dev 환경에서만 로드됩니다.
+@Profile({"staging"}) // staging 환경에서만 로드됩니다.
 public class LocalStackS3Config {
 
     @Value("${cloud.aws.credentials.accessKey}")

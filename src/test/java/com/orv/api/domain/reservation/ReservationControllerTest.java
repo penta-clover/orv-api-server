@@ -13,7 +13,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -32,6 +37,8 @@ public class ReservationControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @MockitoBean
+    private ReservationRepository reservationRepository;
 
     @MockitoBean
     private NotificationSchedulerService notificationService;
@@ -43,13 +50,22 @@ public class ReservationControllerTest {
         InterviewReservationRequest request = new InterviewReservationRequest();
         request.setStoryboardId("e5895e70-7713-4a35-b12f-2521af77524b");
         request.setReservedAt(ZonedDateTime.parse("2028-03-22T00:36:00+09:00"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        String formattedTime = request.getReservedAt().format(formatter);
+
+        String generatedId = "e5895e70-7713-4a35-b12f-2521af77524b";
+        when(reservationRepository.reserveInterview(any(), any(), any())).thenReturn(Optional.of(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b")));
 
         // when
         mockMvc.perform(post("/api/v0/reservation/interview")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").doesNotExist())
+                .andExpect(jsonPath("$.data.id").value(generatedId))
+                .andExpect(jsonPath("$.data.memberId").value("054c3e8a-3387-4eb3-ac8a-31a48221f192"))
+                .andExpect(jsonPath("$.data.storyboardId").value(request.getStoryboardId()))
+                .andExpect(jsonPath("$.data.scheduledAt").value(formattedTime))
+                .andExpect(jsonPath("$.data.createdAt").isString())
                 .andDo(
                         document("reservation/interview-success",
                                 preprocessRequest(prettyPrint()),
@@ -61,7 +77,11 @@ public class ReservationControllerTest {
                                 responseFields(
                                         fieldWithPath("statusCode").description("응답 상태 코드"),
                                         fieldWithPath("message").description("응답 상태 메시지"),
-                                        fieldWithPath("data").description("null")
+                                        fieldWithPath("data.id").description("예약 ID"),
+                                        fieldWithPath("data.memberId").description("예약한 회원 ID"),
+                                        fieldWithPath("data.storyboardId").description("예약한 스토리보드 ID"),
+                                        fieldWithPath("data.scheduledAt").description("예약 대상 일시"),
+                                        fieldWithPath("data.createdAt").description("예약을 생성한 일시")
                                 )
                         )
                 );

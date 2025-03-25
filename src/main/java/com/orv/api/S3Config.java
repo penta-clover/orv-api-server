@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile({"prod", "default"}) // production 환경에서만 로드됩니다.
+@Profile({"prod", "dev", "default"}) // production, dev 환경에서만 로드됩니다.
 public class S3Config {
     @Value("${cloud.aws.credentials.accessKey}")
     private String accessKey;
@@ -21,7 +21,7 @@ public class S3Config {
 
     @Bean
     public AmazonS3 amazonS3Client() {
-        BasicAWSCredentials awsCredentials= new BasicAWSCredentials(accessKey, secretKey);
+        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
         return AmazonS3ClientBuilder.standard()
                 .withRegion(region)
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))

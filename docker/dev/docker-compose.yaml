@@ -10,17 +10,5 @@ services:
       - "4321:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-
-  localstack:
-    image: localstack/localstack
-    container_name: localstack
-    ports:
-      - "4566:4566"  # 모든 서비스의 엔드포인트 포트 (특히 S3는 4566)
-    environment:
-      - SERVICES=s3   # S3만 활성화 (여러 서비스를 동시에 활성화할 수도 있음)
-      - DEFAULT_REGION=ap-northeast-2
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
 volumes:
   pgdata:
