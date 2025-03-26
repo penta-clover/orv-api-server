@@ -503,6 +503,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Topic의 설명</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data[].thumbnailUrl</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Topic의 thumbnail 이미지 주소</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -524,7 +529,7 @@ Vary: Origin
 Vary: Access-Control-Request-Method
 Vary: Access-Control-Request-Headers
 Content-Type: application/json
-Content-Length: 257
+Content-Length: 315
 
 {
   "statusCode" : "200",
@@ -532,7 +537,8 @@ Content-Length: 257
   "data" : [ {
     "id" : "1be07a77-4c5b-4661-b0d4-d80502fbea98",
     "name" : "죽음",
-    "description" : "죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거"
+    "description" : "죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거",
+    "thumbnailUrl" : "https://www.naver.com/favicon.ico"
   } ]
 }</code></pre>
 </div>

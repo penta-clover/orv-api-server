@@ -1,6 +1,7 @@
 package com.orv.api.domain.reservation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orv.api.domain.reservation.dto.InterviewReservation;
 import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +12,12 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -57,10 +61,12 @@ public class ReservationControllerTest {
         when(reservationRepository.reserveInterview(any(), any(), any())).thenReturn(Optional.of(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b")));
 
         // when
-        mockMvc.perform(post("/api/v0/reservation/interview")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+        ResultActions resultActions = mockMvc.perform(post("/api/v0/reservation/interview")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+
+        // then
+        resultActions.andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(generatedId))
                 .andExpect(jsonPath("$.data.memberId").value("054c3e8a-3387-4eb3-ac8a-31a48221f192"))
                 .andExpect(jsonPath("$.data.storyboardId").value(request.getStoryboardId()))
@@ -85,8 +91,41 @@ public class ReservationControllerTest {
                                 )
                         )
                 );
+    }
+
+    @Test
+    @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
+    public void testGetReservedInterviews() throws Exception {
+        // given
+        when(reservationRepository.getReservedInterviews(any())).thenReturn(Optional.of(List.of(
+                new InterviewReservation(UUID.fromString("e5895e70-7713-4a32-b15f-2521af77524b"), UUID.fromString("054c3e8a-3387-4eb3-ac8a-31a48221f192"), UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"), LocalDateTime.now().plusHours(5), LocalDateTime.now())
+        )));
+
+        // when
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/interview/forward"));
 
         // then
-
+        resultActions.andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$.data[0].id").value("e5895e70-7713-4a32-b15f-2521af77524b"))
+                .andExpect(jsonPath("$.data[0].memberId").value("054c3e8a-3387-4eb3-ac8a-31a48221f192"))
+                .andExpect(jsonPath("$.data[0].storyboardId").value("e5895e70-7713-4a35-b12f-2521af77524b"))
+                .andExpect(jsonPath("$.data[0].scheduledAt").isString())
+                .andExpect(jsonPath("$.data[0].createdAt").isString())
+                .andDo(
+                        document("reservation/interview-forward",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                responseFields(
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("message").description("응답 상태 메시지"),
+                                        fieldWithPath("data[].id").description("예약 ID"),
+                                        fieldWithPath("data[].memberId").description("예약한 회원 ID"),
+                                        fieldWithPath("data[].storyboardId").description("예약한 스토리보드 ID"),
+                                        fieldWithPath("data[].scheduledAt").description("예약 대상 일시"),
+                                        fieldWithPath("data[].createdAt").description("예약을 생성한 일시")
+                                )
+                        )
+                );
     }
+
 }

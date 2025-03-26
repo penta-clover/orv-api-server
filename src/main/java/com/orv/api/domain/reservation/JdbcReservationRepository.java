@@ -1,5 +1,7 @@
 package com.orv.api.domain.reservation;
 
+import com.orv.api.domain.reservation.dto.InterviewReservation;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -7,10 +9,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 public class JdbcReservationRepository implements ReservationRepository {
@@ -41,5 +40,19 @@ public class JdbcReservationRepository implements ReservationRepository {
         }
 
         return Optional.of(null);
+    }
+
+    @Override
+    public Optional<List<InterviewReservation>> getReservedInterviews(UUID memberId) {
+        // 현재 시간으로부터 이후에 위치한 인터뷰
+        String sql = "SELECT id, member_id, storyboard_id, scheduled_at, created_at FROM interview_reservation WHERE member_id = ? AND scheduled_at >= NOW() ORDER BY scheduled_at ASC LIMIT 100";
+
+        try {
+            List<InterviewReservation> reservations = jdbcTemplate.query(sql, new Object[]{memberId}, new BeanPropertyRowMapper<>(InterviewReservation.class));
+            return Optional.of(reservations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
     }
 }
