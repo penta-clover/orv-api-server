@@ -49,7 +49,7 @@ public class JdbcReservationRepository implements ReservationRepository {
         String sql = "SELECT r.id, r.member_id, r.storyboard_id, r.scheduled_at, r.created_at " +
                 "FROM interview_reservation r " +
                 "WHERE r.member_id = ? " +
-                "  AND r.scheduled_at >= CONVERT_TZ(NOW(), 'UTC', 'Asia/Seoul')" +
+                "  AND r.scheduled_at >= timezone('Asia/Seoul', now())" +
                 "  AND NOT EXISTS ( " +
                 "      SELECT 1 " +
                 "      FROM storyboard_usage_history suh " +
