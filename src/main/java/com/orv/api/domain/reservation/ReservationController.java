@@ -80,6 +80,7 @@ public class ReservationController {
 
             return ApiResponse.success(new RecapReservationResponse(id.get(), memberId, videoId, scheduledAt.toLocalDateTime(), LocalDateTime.now()), 201);
         } catch (Exception e) {
+            e.printStackTrace();
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
     }
