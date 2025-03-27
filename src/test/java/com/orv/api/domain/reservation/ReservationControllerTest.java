@@ -3,6 +3,7 @@ package com.orv.api.domain.reservation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orv.api.domain.reservation.dto.InterviewReservation;
 import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
+import com.orv.api.domain.reservation.dto.RecapReservationRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
@@ -46,6 +47,9 @@ public class ReservationControllerTest {
 
     @MockitoBean
     private NotificationSchedulerService notificationService;
+
+    @MockitoBean
+    private RecapRepository recapRepository;
 
     @Test
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
@@ -126,6 +130,53 @@ public class ReservationControllerTest {
                                 )
                         )
                 );
+    }
+
+    @Test
+    @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
+    public void testReserveRecap() throws Exception {
+        // given
+        RecapReservationRequest request = new RecapReservationRequest();
+        request.setVideoId("e5895e70-7713-4a35-b12f-2521af77524b");
+        request.setScheduledAt(ZonedDateTime.parse("2028-03-22T00:36:00+09:00"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        String formattedTime = request.getScheduledAt().format(formatter);
+
+        String generatedId = "d23abc70-7713-4a35-b12f-2521af77524b";
+        when(recapRepository.reserveRecap(any(), any(), any())).thenReturn(Optional.of(UUID.fromString(generatedId)));
+
+        // when
+        ResultActions resultActions = mockMvc.perform(post("/api/v0/reservation/recap/video")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(generatedId))
+                .andExpect(jsonPath("$.data.memberId").value("054c3e8a-3387-4eb3-ac8a-31a48221f192"))
+                .andExpect(jsonPath("$.data.videoId").value(request.getVideoId()))
+                .andExpect(jsonPath("$.data.scheduledAt").value(formattedTime))
+                .andExpect(jsonPath("$.data.createdAt").isString())
+                .andDo(
+                        document("reservation/recap-success",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                requestFields(
+                                        fieldWithPath("videoId").description("에약할 비디오 ID"),
+                                        fieldWithPath("scheduledAt").description("예약할 날짜와 시간 (ISO-8601, 시간대 포함)")
+                                ),
+                                responseFields(
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("message").description("응답 상태 메시지"),
+                                        fieldWithPath("data.id").description("예약 ID"),
+                                        fieldWithPath("data.memberId").description("예약한 회원 ID"),
+                                        fieldWithPath("data.videoId").description("예약한 비디오 ID"),
+                                        fieldWithPath("data.scheduledAt").description("예약 대상 일시"),
+                                        fieldWithPath("data.createdAt").description("예약을 생성한 일시")
+                                )
+                        )
+                );
+
     }
 
 }

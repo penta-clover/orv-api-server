@@ -45,7 +45,21 @@ public class JdbcReservationRepository implements ReservationRepository {
     @Override
     public Optional<List<InterviewReservation>> getReservedInterviews(UUID memberId) {
         // 현재 시간으로부터 이후에 위치한 인터뷰
-        String sql = "SELECT id, member_id, storyboard_id, scheduled_at, created_at FROM interview_reservation WHERE member_id = ? AND scheduled_at >= NOW() ORDER BY scheduled_at ASC LIMIT 100";
+//        String sql = "SELECT id, member_id, storyboard_id, scheduled_at, created_at FROM interview_reservation WHERE member_id = ? AND scheduled_at >= NOW() ORDER BY scheduled_at ASC LIMIT 100";
+        String sql = "SELECT r.id, r.member_id, r.storyboard_id, r.scheduled_at, r.created_at " +
+                "FROM interview_reservation r " +
+                "WHERE r.member_id = ? " +
+                "  AND r.scheduled_at >= NOW() " +
+                "  AND NOT EXISTS ( " +
+                "      SELECT 1 " +
+                "      FROM storyboard_usage_history suh " +
+                "      WHERE suh.storyboard_id = r.storyboard_id " +
+                "        AND suh.member_id = r.member_id " +
+                "        AND suh.status = 'completed' " +
+                "        AND suh.created_at > r.created_at " +
+                "  ) " +
+                "ORDER BY r.scheduled_at ASC " +
+                "LIMIT 100";
 
         try {
             List<InterviewReservation> reservations = jdbcTemplate.query(sql, new Object[]{memberId}, new BeanPropertyRowMapper<>(InterviewReservation.class));

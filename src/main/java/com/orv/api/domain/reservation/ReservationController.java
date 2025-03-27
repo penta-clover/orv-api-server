@@ -2,6 +2,8 @@ package com.orv.api.domain.reservation;
 
 import com.orv.api.domain.reservation.dto.InterviewReservation;
 import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
+import com.orv.api.domain.reservation.dto.RecapReservationRequest;
+import com.orv.api.domain.reservation.dto.RecapReservationResponse;
 import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
 import lombok.AllArgsConstructor;
@@ -22,6 +24,7 @@ import java.util.UUID;
 public class ReservationController {
     private final NotificationSchedulerService notificationService;
     private final ReservationRepository reservationRepository;
+    private final RecapRepository recapRepository;
 
     @PostMapping("/interview")
     public ApiResponse reserveInterview(@RequestBody InterviewReservationRequest request) {
@@ -60,6 +63,24 @@ public class ReservationController {
             e.printStackTrace();
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
+    }
 
+    @PostMapping("/recap/video")
+    public ApiResponse reserveRecap(@RequestBody RecapReservationRequest request) {
+        try {
+            UUID memberId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
+            UUID videoId = UUID.fromString(request.getVideoId());
+            ZonedDateTime scheduledAt = request.getScheduledAt();
+
+            Optional<UUID> id = recapRepository.reserveRecap(memberId, videoId, scheduledAt.toLocalDateTime());
+
+            if (id.isEmpty()) {
+                return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
+            }
+
+            return ApiResponse.success(new RecapReservationResponse(id.get(), memberId, videoId, scheduledAt.toLocalDateTime(), LocalDateTime.now()), 201);
+        } catch (Exception e) {
+            return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
+        }
     }
 }
