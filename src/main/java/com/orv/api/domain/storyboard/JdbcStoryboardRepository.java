@@ -118,7 +118,6 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
         String sql = "SELECT storyboard_id, examples FROM storyboard_preview WHERE storyboard_id = ?";
 
         try {
-            log.warn("HIHI");
             StoryboardPreview storyboardPreview = jdbcTemplate.queryForObject(sql, new Object[]{storyboardId}, new BeanPropertyRowMapper<>(StoryboardPreview.class));
             return Optional.of((String[]) storyboardPreview.getExamples().getArray());
         } catch (Exception e) {
