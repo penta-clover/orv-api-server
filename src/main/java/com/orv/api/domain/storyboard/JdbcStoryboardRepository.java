@@ -49,6 +49,7 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
             Storyboard storyboard = jdbcTemplate.queryForObject(sql, new Object[]{id}, new BeanPropertyRowMapper<>(Storyboard.class));
             return Optional.of(storyboard);
         } catch (EmptyResultDataAccessException e) {
+            e.printStackTrace();
             return Optional.empty();
         }
     }
@@ -61,6 +62,7 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
             Scene scene = jdbcTemplate.queryForObject(sql, new Object[]{id}, new BeanPropertyRowMapper<>(Scene.class));
             return Optional.of(scene);
         } catch (EmptyResultDataAccessException e) {
+            e.printStackTrace();
             return Optional.empty();
         }
     }
@@ -73,6 +75,7 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
             List<Scene> scenes = jdbcTemplate.query(sql, new Object[]{id}, new BeanPropertyRowMapper<>(Scene.class));
             return Optional.of(scenes);
         } catch (Exception e) {
+            e.printStackTrace();
             return Optional.empty();
         }
     }

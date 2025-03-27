@@ -43,6 +43,7 @@ public class ReservationController {
 
             return ApiResponse.success(new InterviewReservation(id.get(), memberId, storyboardId, reservedAt.toLocalDateTime(), LocalDateTime.now()), 201);
         } catch (SchedulerException e) {
+            e.printStackTrace();
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
     }

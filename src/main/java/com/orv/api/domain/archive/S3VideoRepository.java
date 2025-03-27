@@ -79,6 +79,7 @@ public class S3VideoRepository implements VideoRepository {
             Video video = jdbcTemplate.queryForObject(sql, new Object[]{videoId}, new BeanPropertyRowMapper<>(Video.class));
             return Optional.of(video);
         } catch (EmptyResultDataAccessException e) {
+            e.printStackTrace();
             return Optional.empty();
         }
     }
@@ -91,6 +92,7 @@ public class S3VideoRepository implements VideoRepository {
             List<Video> videos = jdbcTemplate.query(sql, new Object[]{memberId, limit, offset}, new BeanPropertyRowMapper<>(Video.class));
             return videos;
         } catch (EmptyResultDataAccessException e) {
+            e.printStackTrace();
             return Collections.emptyList();
         }
     }

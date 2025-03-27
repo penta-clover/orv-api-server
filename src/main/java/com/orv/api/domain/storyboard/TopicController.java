@@ -25,6 +25,7 @@ public class TopicController {
             List<Topic> topics = topicRepository.findTopics();
             return ApiResponse.success(topics, 200);
         } catch (Exception e) {
+            e.printStackTrace();
             return ApiResponse.fail(null, 500);
         }
     }
@@ -40,6 +41,7 @@ public class TopicController {
 
             return ApiResponse.success(storyboards.get(0), 200);
         } catch (Exception e) {
+            e.printStackTrace();
             return ApiResponse.fail(null, 500);
         }
     }
