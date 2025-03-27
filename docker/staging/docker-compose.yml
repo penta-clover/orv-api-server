@@ -70,5 +70,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     # --cleanup: 사용하지 않는 이전 이미지들을 제거, --interval: 30초마다 업데이트 체크
     command: --cleanup --interval 30 orv_api_server
+
 volumes:
   postgres_data:
+
+networks:
+  custom_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
