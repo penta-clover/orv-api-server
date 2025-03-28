@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS video
     video_url     TEXT        NOT NULL,
     created_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     thumbnail_url TEXT        NOT NULL,
-    title         VARCHAR(50) NULL,
+    title         VARCHAR(255) NULL,
     CONSTRAINT pk_video_id PRIMARY KEY (id),
     CONSTRAINT fk_video_storyboard_id FOREIGN KEY (storyboard_id) REFERENCES storyboard (id),
     CONSTRAINT fk_video_member_id FOREIGN KEY (member_id) REFERENCES member (id)
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS video
 CREATE TABLE IF NOT EXISTS topic
 (
     id          UUID        NOT NULL DEFAULT uuid_generate_v4(),
-    name        VARCHAR(30) NOT NULL,
+    name        VARCHAR(255) NOT NULL,
     description TEXT,
     CONSTRAINT pk_topic_id PRIMARY KEY (id)
 );
