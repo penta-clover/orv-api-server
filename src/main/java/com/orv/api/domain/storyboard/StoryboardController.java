@@ -1,9 +1,6 @@
 package com.orv.api.domain.storyboard;
 
-import com.orv.api.domain.storyboard.dto.Scene;
-import com.orv.api.domain.storyboard.dto.Storyboard;
-import com.orv.api.domain.storyboard.dto.StoryboardPreview;
-import com.orv.api.domain.storyboard.dto.StoryboardPreviewResponse;
+import com.orv.api.domain.storyboard.dto.*;
 import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -77,5 +74,18 @@ public class StoryboardController {
 
         return ApiResponse.success(new StoryboardPreviewResponse(
                 storyboardUUID, Integer.valueOf((int) questionCount), Arrays.stream(examples).toList()), 200);
+    }
+
+    @GetMapping("/{storyboardId}/topic/list")
+    public ApiResponse getTopicsOfStoryboard(@PathVariable String storyboardId) {
+        UUID storyboardUUID = UUID.fromString(storyboardId);
+        Optional<List<Topic>> topicsOrEmpty = storyboardRepository.findTopicsOfStoryboard(storyboardUUID);
+
+        if (topicsOrEmpty.isEmpty()) {
+            return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
+        }
+
+        List<Topic> topics = topicsOrEmpty.get();
+        return ApiResponse.success(topics, 200);
     }
 }

@@ -3,6 +3,7 @@ package com.orv.api.domain.storyboard;
 import com.orv.api.domain.storyboard.dto.Scene;
 import com.orv.api.domain.storyboard.dto.Storyboard;
 import com.orv.api.domain.storyboard.dto.StoryboardPreview;
+import com.orv.api.domain.storyboard.dto.Topic;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -159,6 +160,22 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
             // updated_at, created_at은 DEFAULT로 CURRENT_TIMESTAMP가 들어감
             KeyHolder keyHolder = simpleJdbcInsertUsageHistory.executeAndReturnKeyHolder(new MapSqlParameterSource(parameters));
             return keyHolder.getKeys() != null;
+        }
+    }
+
+    @Override
+    public Optional<List<Topic>> findTopicsOfStoryboard(UUID storyboardId) {
+        String sql = "SELECT t.id, t.name, t.description " +
+                "FROM topic t " +
+                "JOIN storyboard_topic st ON t.id = st.topic_id " +
+                "WHERE st.storyboard_id = ?";
+
+        try {
+            List<Topic> topics = jdbcTemplate.query(sql, new Object[]{storyboardId}, new BeanPropertyRowMapper<>(Topic.class));
+            return Optional.of(topics);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Optional.empty();
         }
     }
 }

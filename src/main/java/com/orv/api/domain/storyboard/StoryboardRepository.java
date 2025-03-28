@@ -2,6 +2,7 @@ package com.orv.api.domain.storyboard;
 
 import com.orv.api.domain.storyboard.dto.Scene;
 import com.orv.api.domain.storyboard.dto.Storyboard;
+import com.orv.api.domain.storyboard.dto.Topic;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,4 +22,6 @@ public interface StoryboardRepository {
     Optional<String[]> getStoryboardPreview(UUID storyboardId);
 
     boolean updateUsageHistory(UUID storyboardId, UUID memberId, String status);
+
+    Optional<List<Topic>> findTopicsOfStoryboard(UUID storyboardId);
 }
