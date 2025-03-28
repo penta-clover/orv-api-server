@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -40,6 +41,22 @@ public class TopicController {
             }
 
             return ApiResponse.success(storyboards.get(0), 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.fail(null, 500);
+        }
+    }
+
+    @GetMapping("/{topicId}")
+    public ApiResponse getTopic(@PathVariable("topicId") String topicId) {
+        try {
+            Optional<Topic> topicOrEmpty = topicRepository.findTopicById(UUID.fromString(topicId));
+
+            if (topicOrEmpty.isEmpty()) {
+                return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);
+            }
+
+            return ApiResponse.success(topicOrEmpty.get(), 200);
         } catch (Exception e) {
             e.printStackTrace();
             return ApiResponse.fail(null, 500);

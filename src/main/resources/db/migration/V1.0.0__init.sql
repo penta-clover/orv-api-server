@@ -101,6 +101,3 @@ CREATE TABLE IF NOT EXISTS storyboard_usage_history
     CONSTRAINT fk_storyboard_usage_history_storyboard_id FOREIGN KEY (storyboard_id) REFERENCES storyboard (id),
     CONSTRAINT fk_storyboard_usage_history_member_id FOREIGN KEY (member_id) REFERENCES member (id)
 );
-
-ALTER TABLE video
-    ADD COLUMN running_time INTEGER NOT NULL DEFAULT 0;

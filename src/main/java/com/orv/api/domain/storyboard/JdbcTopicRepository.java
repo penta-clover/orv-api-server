@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -35,6 +36,18 @@ public class JdbcTopicRepository implements TopicRepository {
 
         try {
             return jdbcTemplate.query(sql, new Object[]{topicId}, new BeanPropertyRowMapper<>(Storyboard.class));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+
+    @Override
+    public Optional<Topic> findTopicById(UUID topicId) {
+        String sql = "SELECT id, name, description, thumbnail_url FROM topic WHERE id = ?";
+
+        try {
+            return Optional.of(jdbcTemplate.queryForObject(sql, new Object[]{topicId}, new BeanPropertyRowMapper<>(Topic.class)));
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException();
