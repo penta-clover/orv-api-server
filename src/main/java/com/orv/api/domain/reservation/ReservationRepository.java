@@ -13,5 +13,5 @@ import java.util.UUID;
 
 public interface ReservationRepository {
     Optional<UUID> reserveInterview(UUID memberId, UUID storyboardId, LocalDateTime scheduledAt);
-    Optional<List<InterviewReservation>> getReservedInterviews(UUID member);
+    Optional<List<InterviewReservation>> getReservedInterviews(UUID member, LocalDateTime from);
 }

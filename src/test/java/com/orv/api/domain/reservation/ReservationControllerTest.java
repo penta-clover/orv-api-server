@@ -101,12 +101,13 @@ public class ReservationControllerTest {
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
     public void testGetReservedInterviews() throws Exception {
         // given
-        when(reservationRepository.getReservedInterviews(any())).thenReturn(Optional.of(List.of(
+        when(reservationRepository.getReservedInterviews(any(), any())).thenReturn(Optional.of(List.of(
                 new InterviewReservation(UUID.fromString("e5895e70-7713-4a32-b15f-2521af77524b"), UUID.fromString("054c3e8a-3387-4eb3-ac8a-31a48221f192"), UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"), LocalDateTime.now().plusHours(5), LocalDateTime.now())
         )));
 
         // when
-        ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/interview/forward"));
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/interview/forward")
+                .param("from", "2025-03-29T12:00:00+09:00"));
 
         // then
         resultActions.andExpect(status().is2xxSuccessful())

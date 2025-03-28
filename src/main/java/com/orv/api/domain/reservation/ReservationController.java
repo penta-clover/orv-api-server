@@ -50,10 +50,11 @@ public class ReservationController {
 
 
     @GetMapping("/interview/forward")
-    public ApiResponse getForwardInterviews() {
+    public ApiResponse getForwardInterviews(@RequestParam(value = "from", required = false) ZonedDateTime from) {
         try {
             UUID memberId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
-            Optional<List<InterviewReservation>> interviewsOrEmpty = reservationRepository.getReservedInterviews(memberId);
+            LocalDateTime fromTime = (from != null) ? from.toLocalDateTime() : LocalDateTime.now();
+            Optional<List<InterviewReservation>> interviewsOrEmpty = reservationRepository.getReservedInterviews(memberId, fromTime);
 
             if (interviewsOrEmpty.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
