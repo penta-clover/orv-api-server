@@ -395,7 +395,7 @@ VALUES ('0CF8CFBC-23D0-488B-BB8A-C8459F8F5C58',
 
 INSERT INTO topic (id, name, description, thumbnail_url)
 VALUES ('4D7035EA-3A4B-4C06-944C-EEA954C17C1F',
-        '흔들리지 않고 피는 꽃은 없다',
+        '네가 나를 사랑하지 않아도, 너를 사랑하는 나를 사랑한다.',
         '사랑이라는 감정이 찾아온 나는 어떤 표정을 짓고 있을까요? 지금 이 주제를 읽으며 떠오르는 그 사람에 대한 내 마음을 확인해보세요.',
         'https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-topic-thumbnail.png');
 
