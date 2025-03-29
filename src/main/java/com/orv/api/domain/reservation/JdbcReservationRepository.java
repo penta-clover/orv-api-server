@@ -9,6 +9,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 @Repository
@@ -43,20 +44,13 @@ public class JdbcReservationRepository implements ReservationRepository {
     }
 
     @Override
-    public Optional<List<InterviewReservation>> getReservedInterviews(UUID memberId, LocalDateTime from) {
+    public Optional<List<InterviewReservation>> getReservedInterviews(UUID memberId, OffsetDateTime from) {
         // 특정 시간 이후에 위치한 인터뷰
         String sql = "SELECT r.id, r.member_id, r.storyboard_id, r.scheduled_at, r.created_at " +
                 "FROM interview_reservation r " +
                 "WHERE r.member_id = ? " +
                 "  AND r.scheduled_at >= ?" +
-                "  AND NOT EXISTS ( " +
-                "      SELECT 1 " +
-                "      FROM storyboard_usage_history suh " +
-                "      WHERE suh.storyboard_id = r.storyboard_id " +
-                "        AND suh.member_id = r.member_id " +
-                "        AND suh.status = 'completed' " +
-                "        AND suh.created_at > r.created_at " +
-                "  ) " +
+                "  AND r.reservation_status = 'pending'" +
                 "ORDER BY r.scheduled_at ASC " +
                 "LIMIT 100";
 
@@ -67,5 +61,11 @@ public class JdbcReservationRepository implements ReservationRepository {
             e.printStackTrace();
             return Optional.empty();
         }
+    }
+
+    @Override
+    public boolean changeInterviewReservationStatus(UUID reservationId, String status) {
+        String sql = "UPDATE interview_reservation SET reservation_status = ? WHERE id = ?";
+        return jdbcTemplate.update(sql, status, reservationId) > 0;
     }
 }

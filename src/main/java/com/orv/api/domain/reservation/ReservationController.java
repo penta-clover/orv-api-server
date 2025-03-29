@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -50,10 +51,10 @@ public class ReservationController {
 
 
     @GetMapping("/interview/forward")
-    public ApiResponse getForwardInterviews(@RequestParam(value = "from", required = false) ZonedDateTime from) {
+    public ApiResponse getForwardInterviews(@RequestParam(value = "from", required = false) OffsetDateTime from) {
         try {
             UUID memberId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
-            LocalDateTime fromTime = (from != null) ? from.toLocalDateTime() : LocalDateTime.now();
+            OffsetDateTime fromTime = (from != null) ? from : OffsetDateTime.now();
             Optional<List<InterviewReservation>> interviewsOrEmpty = reservationRepository.getReservedInterviews(memberId, fromTime);
 
             if (interviewsOrEmpty.isEmpty()) {
@@ -61,6 +62,22 @@ public class ReservationController {
             }
 
             return ApiResponse.success(interviewsOrEmpty.get(), 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
+        }
+    }
+
+    @PatchMapping("/interview/{interviewId}/done")
+    public ApiResponse doneInterview(@PathVariable UUID interviewId) {
+        try {
+            boolean result = reservationRepository.changeInterviewReservationStatus(interviewId, "done");
+
+            if (!result) {
+                return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
+            }
+
+            return ApiResponse.success(null, 200);
         } catch (Exception e) {
             e.printStackTrace();
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
