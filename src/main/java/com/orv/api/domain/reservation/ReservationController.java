@@ -23,9 +23,7 @@ import java.util.UUID;
 @RequestMapping("/api/v0/reservation")
 @RequiredArgsConstructor
 public class ReservationController {
-    private final NotificationSchedulerService notificationService;
-    private final ReservationRepository reservationRepository;
-    private final RecapRepository recapRepository;
+    private final ReservationService reservationService;
 
     @PostMapping("/interview")
     public ApiResponse reserveInterview(@RequestBody InterviewReservationRequest request) {
@@ -34,16 +32,14 @@ public class ReservationController {
             UUID storyboardId = UUID.fromString(request.getStoryboardId());
             ZonedDateTime reservedAt = request.getReservedAt();
 
-            Optional<UUID> id = reservationRepository.reserveInterview(memberId, storyboardId,  reservedAt.toLocalDateTime());
+            Optional<UUID> id = reservationService.reserveInterview(memberId, storyboardId, reservedAt);
 
             if (id.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
             }
 
-            notificationService.scheduleInterviewNotificationCall(memberId, storyboardId, reservedAt);
-
             return ApiResponse.success(new InterviewReservation(id.get(), memberId, storyboardId, reservedAt.toLocalDateTime(), LocalDateTime.now()), 201);
-        } catch (SchedulerException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
@@ -55,7 +51,7 @@ public class ReservationController {
         try {
             UUID memberId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
             OffsetDateTime fromTime = (from != null) ? from : OffsetDateTime.now();
-            Optional<List<InterviewReservation>> interviewsOrEmpty = reservationRepository.getReservedInterviews(memberId, fromTime);
+            Optional<List<InterviewReservation>> interviewsOrEmpty = reservationService.getForwardInterviews(memberId, fromTime);
 
             if (interviewsOrEmpty.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
@@ -71,7 +67,7 @@ public class ReservationController {
     @PatchMapping("/interview/{interviewId}/done")
     public ApiResponse doneInterview(@PathVariable UUID interviewId) {
         try {
-            boolean result = reservationRepository.changeInterviewReservationStatus(interviewId, "done");
+            boolean result = reservationService.markInterviewAsDone(interviewId);
 
             if (!result) {
                 return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
@@ -91,7 +87,7 @@ public class ReservationController {
             UUID videoId = UUID.fromString(request.getVideoId());
             ZonedDateTime scheduledAt = request.getScheduledAt();
 
-            Optional<UUID> id = recapRepository.reserveRecap(memberId, videoId, scheduledAt.toLocalDateTime());
+            Optional<UUID> id = reservationService.reserveRecap(memberId, videoId, scheduledAt);
 
             if (id.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.UNKNOWN, 500);

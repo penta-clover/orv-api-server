@@ -11,4 +11,5 @@ public class JoinForm {
     private String gender;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthDay;
+    private String phoneNumber;
 }

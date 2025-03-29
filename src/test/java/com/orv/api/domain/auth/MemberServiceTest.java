@@ -90,6 +90,7 @@ public class MemberServiceTest {
         LocalDate birthday = LocalDate.of(1990, 1, 1);
         String provider = "testProvider";
         String socialId = "social123";
+        String phoneNumber = "01012345678";
 
         // repository.save()가 호출될 때 반환할 Member 객체 생성
         Member savedMember = new Member();
@@ -100,13 +101,14 @@ public class MemberServiceTest {
         savedMember.setBirthday(birthday);
         savedMember.setProvider(provider);
         savedMember.setSocialId(socialId);
+        savedMember.setPhoneNumber(phoneNumber);
         // 필요 시 다른 필드도 설정할 수 있음
 
         // when: memberRepository.save() 호출 시 savedMember를 반환하도록 설정
         when(memberRepository.save(any(Member.class))).thenReturn(savedMember);
 
         // when: join() 메서드 실행
-        boolean result = memberService.join(id, nickname, gender, birthday, provider, socialId);
+        boolean result = memberService.join(id, nickname, gender, birthday, provider, socialId, phoneNumber);
 
         // then: join()이 true를 반환해야 함
         assertTrue(result, "Join 메서드는 true를 반환해야 합니다.");

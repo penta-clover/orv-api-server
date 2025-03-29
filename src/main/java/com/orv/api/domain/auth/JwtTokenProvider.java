@@ -21,11 +21,6 @@ public class JwtTokenProvider {
 
     private long validityInMilliseconds = 604800000L; // 1 week
 
-    @PostConstruct
-    protected void init() {
-        log.info("jwt token only for test: {}", createToken("054c3e8a-3387-4eb3-ac8a-31a48221f192", Map.of("provider", "google", "socialId", "111622496717434972547"), 604800000L * 52 * 10));
-    }
-
     public String createToken(String subject, Map<String, ?> claims) {
         return createToken(subject, claims, this.validityInMilliseconds);
     }

@@ -29,7 +29,7 @@ public class MemberService {
         return nickname.matches("^[가-힣ㄱ-ㅎㅏ-ㅣA-Za-z0-9]{1,8}$");
     }
 
-    public boolean join(String id, String nickname, String gender, LocalDate birthday, String provider, String socialId) {
+    public boolean join(String id, String nickname, String gender, LocalDate birthday, String provider, String socialId, String phoneNumber) {
         Member member = new Member();
         member.setId(UUID.fromString(id));
         member.setNickname(nickname);
@@ -37,7 +37,8 @@ public class MemberService {
         member.setBirthday(birthday);
         member.setProvider(provider);
         member.setSocialId(socialId);
-        member.setName("USER");
+        member.setName("username");
+        member.setPhoneNumber(phoneNumber);
 
         Member savedMember = memberRepository.save(member);
         return true;

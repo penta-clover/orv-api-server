@@ -43,13 +43,7 @@ public class ReservationControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private ReservationRepository reservationRepository;
-
-    @MockitoBean
-    private NotificationSchedulerService notificationService;
-
-    @MockitoBean
-    private RecapRepository recapRepository;
+    private ReservationService reservationService;
 
     @Test
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
@@ -62,7 +56,7 @@ public class ReservationControllerTest {
         String formattedTime = request.getReservedAt().format(formatter);
 
         String generatedId = "e5895e70-7713-4a35-b12f-2521af77524b";
-        when(reservationRepository.reserveInterview(any(), any(), any())).thenReturn(Optional.of(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b")));
+        when(reservationService.reserveInterview(any(), any(), any())).thenReturn(Optional.of(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b")));
 
         // when
         ResultActions resultActions = mockMvc.perform(post("/api/v0/reservation/interview")
@@ -101,7 +95,7 @@ public class ReservationControllerTest {
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
     public void testGetReservedInterviews() throws Exception {
         // given
-        when(reservationRepository.getReservedInterviews(any(), any())).thenReturn(Optional.of(List.of(
+        when(reservationService.getForwardInterviews(any(), any())).thenReturn(Optional.of(List.of(
                 new InterviewReservation(UUID.fromString("e5895e70-7713-4a32-b15f-2521af77524b"), UUID.fromString("054c3e8a-3387-4eb3-ac8a-31a48221f192"), UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"), LocalDateTime.now().plusHours(5), LocalDateTime.now())
         )));
 
@@ -144,7 +138,7 @@ public class ReservationControllerTest {
         String formattedTime = request.getScheduledAt().format(formatter);
 
         String generatedId = "d23abc70-7713-4a35-b12f-2521af77524b";
-        when(recapRepository.reserveRecap(any(), any(), any())).thenReturn(Optional.of(UUID.fromString(generatedId)));
+        when(reservationService.reserveRecap(any(), any(), any())).thenReturn(Optional.of(UUID.fromString(generatedId)));
 
         // when
         ResultActions resultActions = mockMvc.perform(post("/api/v0/reservation/recap/video")

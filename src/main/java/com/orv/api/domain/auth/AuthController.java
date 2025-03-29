@@ -79,7 +79,7 @@ public class AuthController {
         String socialId = (String) payload.get("socialId");
         String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        memberService.join(memberId, joinForm.getNickname(), joinForm.getGender(), joinForm.getBirthDay(), provider, socialId);
+        memberService.join(memberId, joinForm.getNickname(), joinForm.getGender(), joinForm.getBirthDay(), provider, socialId, joinForm.getPhoneNumber());
 
         return ApiResponse.success(null, 200);
     }

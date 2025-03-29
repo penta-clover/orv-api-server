@@ -227,7 +227,7 @@ public class AuthControllerTest {
         // jwtTokenProvider.getPayload() 모킹
         Mockito.when(jwtTokenProvider.getPayload(eq(token))).thenReturn(payload);
         // memberService.join() 호출시 성공했다고 가정
-        Mockito.when(memberService.join(anyString(), anyString(), anyString(), any(), anyString(), anyString()))
+        Mockito.when(memberService.join(anyString(), anyString(), anyString(), any(), anyString(), anyString(), anyString()))
                 .thenReturn(true);
 
         // when & then
@@ -248,7 +248,8 @@ public class AuthControllerTest {
                         PayloadDocumentation.requestFields(
                                 PayloadDocumentation.fieldWithPath("nickname").description("회원 가입 시 사용할 닉네임"),
                                 PayloadDocumentation.fieldWithPath("gender").description("회원 성별 (예: MALE, FEMALE)"),
-                                PayloadDocumentation.fieldWithPath("birthDay").description("생년월일 (YYYY-MM-DD 형식)")
+                                PayloadDocumentation.fieldWithPath("birthDay").description("생년월일 (YYYY-MM-DD 형식)"),
+                                PayloadDocumentation.fieldWithPath("phoneNumber").description("전화번호 (하이픈X)")
                         ),
                         PayloadDocumentation.responseFields(
                                 PayloadDocumentation.fieldWithPath("statusCode").description("응답 상태 코드"),
