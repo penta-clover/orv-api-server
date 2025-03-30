@@ -119,8 +119,8 @@ public class ArchiveController {
 
             double durationInSeconds = 0.0;
             try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(tempFile)) {
-                // 웹m 파일임을 명시적으로 설정
-                grabber.setFormat("webm");
+                // mp4 파일임을 명시적으로 설정
+                grabber.setFormat("mp4");
                 grabber.start();
 
                 long lengthInTime = grabber.getLengthInTime();
