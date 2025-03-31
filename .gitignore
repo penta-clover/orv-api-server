@@ -121,3 +121,6 @@ fabric.properties
 
 # Build files
 build/**/*
+
+# Ignore start template
+.starttemplate
