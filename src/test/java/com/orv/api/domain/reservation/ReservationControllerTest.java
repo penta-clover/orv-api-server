@@ -129,6 +129,31 @@ public class ReservationControllerTest {
 
     @Test
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
+    public void testDoneInterview() throws Exception {
+        // given
+        UUID interviewId = UUID.fromString("e5895e70-7713-4a32-b15f-2521af77524b");
+        when(reservationService.markInterviewAsDone(any())).thenReturn(true);
+
+        // when
+        ResultActions resultActions = mockMvc.perform(patch("/api/v0/reservation/interview/{interviewId}/done", interviewId));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andDo(
+                        document("reservation/interview-done",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                responseFields(
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("message").description("응답 상태 메시지"),
+                                        fieldWithPath("data").description("null")
+                                )
+                        )
+                );
+    }
+
+    @Test
+    @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
     public void testReserveRecap() throws Exception {
         // given
         RecapReservationRequest request = new RecapReservationRequest();

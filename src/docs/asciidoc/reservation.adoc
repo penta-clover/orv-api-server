@@ -40,6 +40,21 @@ include::{snippets}/reservation/interview-forward/http-request.adoc[]
 ==== 응답 예시
 include::{snippets}/reservation/interview-forward/http-response.adoc[]
 
+=== 인터뷰 예약 완료 처리
+
+**엔드포인트:** `PATCH /api/v0/reservation/interview/{interviewId}/done`
+
+인터뷰에 대한 예약이 인터뷰 수행 완료를 통해 마무리되었음을 저장합니다.
+
+==== 응답 데이터 설명
+include::{snippets}/reservation/interview-done/response-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/reservation/interview-done/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/reservation/interview-done/http-response.adoc[]
+
 === 비디오 리캡 예약
 
 **엔드포인트:** `POST /api/v0/reservation/recap/video`

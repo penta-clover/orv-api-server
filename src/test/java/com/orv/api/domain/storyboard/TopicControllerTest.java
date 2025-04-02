@@ -111,4 +111,44 @@ public class TopicControllerTest {
                         )
                 ));
     }
+
+    @Test
+    public void testGetTopic() throws Exception {
+        // given
+        UUID topicId = UUID.fromString("1be07a77-4c5b-4661-b0d4-d80502fbea98");
+        Topic topic = new Topic();
+        topic.setId(topicId);
+        topic.setName("죽음");
+        topic.setDescription("죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거");
+        topic.setThumbnailUrl("https://www.naver.com/favicon.ico");
+
+        when(topicRepository.findTopicById(topicId)).thenReturn(java.util.Optional.of(topic));
+
+        // when
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/topic/{topicId}", topicId.toString()));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value("200"))
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.data.id").value(topic.getId().toString()))
+                .andExpect(jsonPath("$.data.name").value("죽음"))
+                .andExpect(jsonPath("$.data.description").value("죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거"))
+                .andExpect(jsonPath("$.data.thumbnailUrl").value("https://www.naver.com/favicon.ico"))
+                .andDo(document("topic/get-topic",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        pathParameters(
+                                parameterWithName("topicId").description("Topic의 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("statusCode").description("응답 상태 코드"),
+                                fieldWithPath("message").description("응답 상태 메시지"),
+                                fieldWithPath("data.id").description("Topic의 ID"),
+                                fieldWithPath("data.name").description("Topic의 이름"),
+                                fieldWithPath("data.description").description("Topic의 설명"),
+                                fieldWithPath("data.thumbnailUrl").description("Topic의 thumbnail 이미지 주소")
+                        )
+                ));
+    }
 }
