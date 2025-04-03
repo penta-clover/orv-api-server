@@ -34,8 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@ActiveProfiles("dev")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
 public class ReservationIntegrationTest {
@@ -105,7 +104,7 @@ public class ReservationIntegrationTest {
         // 준비: 요청 JSON 생성
         InterviewReservationRequest request = new InterviewReservationRequest();
         // storyboardId 및 reservedAt 설정
-        request.setStoryboardId(testStoryboardId);  // storyboard_id가 문자열로 저장된다면 괜찮습니다.
+        request.setStoryboardId(testStoryboardId);
         request.setReservedAt(ZonedDateTime.now().plusDays(1));
 
         String requestJson = objectMapper.writeValueAsString(request);
