@@ -8,6 +8,7 @@ import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v0/reservation")
 @RequiredArgsConstructor
+@Slf4j
 public class ReservationController {
     private final ReservationService reservationService;
 
@@ -33,7 +35,6 @@ public class ReservationController {
             ZonedDateTime reservedAt = request.getReservedAt();
 
             Optional<UUID> id = reservationService.reserveInterview(memberId, storyboardId, reservedAt);
-
             if (id.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
             }

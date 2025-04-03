@@ -1,5 +1,7 @@
-package com.orv.api.domain.storyboard;
+package com.orv.api.unit.domain.storyboard;
 
+import com.orv.api.domain.storyboard.StoryboardController;
+import com.orv.api.domain.storyboard.StoryboardRepository;
 import com.orv.api.domain.storyboard.dto.Scene;
 import com.orv.api.domain.storyboard.dto.Storyboard;
 import com.orv.api.domain.storyboard.dto.Topic;

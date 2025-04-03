@@ -1,6 +1,7 @@
-package com.orv.api.domain.storyboard;
+package com.orv.api.unit.domain.storyboard;
 
 import com.orv.api.domain.auth.MemberRepository;
+import com.orv.api.domain.storyboard.StoryboardRepository;
 import com.orv.api.domain.storyboard.dto.Scene;
 import com.orv.api.domain.storyboard.dto.Storyboard;
 import org.junit.jupiter.api.BeforeEach;

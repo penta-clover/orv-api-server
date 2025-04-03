@@ -1,5 +1,7 @@
-package com.orv.api.domain.storyboard;
+package com.orv.api.unit.domain.storyboard;
 
+import com.orv.api.domain.storyboard.TopicController;
+import com.orv.api.domain.storyboard.TopicRepository;
 import com.orv.api.domain.storyboard.dto.Storyboard;
 import com.orv.api.domain.storyboard.dto.Topic;
 import org.junit.jupiter.api.Test;

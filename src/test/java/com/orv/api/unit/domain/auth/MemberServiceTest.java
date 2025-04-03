@@ -1,5 +1,7 @@
-package com.orv.api.domain.auth;
+package com.orv.api.unit.domain.auth;
 
+import com.orv.api.domain.auth.MemberRepository;
+import com.orv.api.domain.auth.MemberService;
 import com.orv.api.domain.auth.dto.Member;
 import com.orv.api.domain.auth.dto.MemberInfo;
 import com.orv.api.domain.auth.dto.ValidationResult;

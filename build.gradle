@@ -39,6 +39,11 @@ dependencies {
 	// Database
 	runtimeOnly 'org.postgresql:postgresql:42.6.0'
 
+	// test
+	testImplementation 'org.testcontainers:testcontainers'
+	testImplementation 'org.testcontainers:postgresql'
+	testImplementation 'org.testcontainers:junit-jupiter'
+
 	// .env loader
 	implementation "me.paulschwarz:spring-dotenv:3.0.0"
 

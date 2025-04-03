@@ -1,6 +1,8 @@
-package com.orv.api.domain.auth;
+package com.orv.api.unit.domain.auth;
 
 
+import com.orv.api.domain.auth.MemberController;
+import com.orv.api.domain.auth.MemberService;
 import com.orv.api.domain.auth.dto.MemberInfo;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

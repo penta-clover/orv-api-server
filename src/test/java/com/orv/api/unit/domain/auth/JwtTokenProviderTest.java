@@ -1,5 +1,6 @@
-package com.orv.api.domain.auth;
+package com.orv.api.unit.domain.auth;
 
+import com.orv.api.domain.auth.JwtTokenProvider;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,8 @@
-package com.orv.api.domain.reservation;
+package com.orv.api.unit.domain.reservation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orv.api.domain.reservation.ReservationController;
+import com.orv.api.domain.reservation.ReservationService;
 import com.orv.api.domain.reservation.dto.InterviewReservation;
 import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
 import com.orv.api.domain.reservation.dto.RecapReservationRequest;

@@ -1,4 +1,4 @@
-package com.orv.api.domain.reservation;
+package com.orv.api.unit.domain.reservation;
 
 import static org.assertj.core.api.Assertions.catchException;
 import static org.mockito.ArgumentMatchers.any;

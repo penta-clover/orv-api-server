@@ -1,6 +1,7 @@
-package com.orv.api.domain.auth;
+package com.orv.api.unit.domain.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orv.api.domain.auth.*;
 import com.orv.api.domain.auth.dto.JoinForm;
 import com.orv.api.domain.auth.dto.Member;
 import com.orv.api.domain.auth.dto.SocialUserInfo;

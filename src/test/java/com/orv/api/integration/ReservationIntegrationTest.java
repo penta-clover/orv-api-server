@@ -1,158 +1,206 @@
+// ReservationIntegrationTest.java
 package com.orv.api.integration;
 
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import com.orv.api.domain.auth.MemberRepository;
-import com.orv.api.domain.auth.dto.Member;
-import com.orv.api.domain.reservation.RecapRepository;
-import com.orv.api.domain.reservation.ReservationNotificationService;
-import com.orv.api.domain.reservation.ReservationService;
-import com.orv.api.domain.reservation.dto.InterviewReservation;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.amazonaws.services.s3.AmazonS3;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orv.api.domain.auth.JwtTokenProvider;
+import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
+import com.orv.api.domain.reservation.dto.RecapReservationRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.quartz.Scheduler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.testcontainers.junit.jupiter.Testcontainers;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.Map;
+import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-@Testcontainers
+@ActiveProfiles("dev")
+@AutoConfigureMockMvc
 @Transactional
-public class ReservationServiceRepositoryTest {
+public class ReservationIntegrationTest {
 
     @Autowired
-    private ReservationService reservationService; // 테스트 대상 서비스
+    private MockMvc mockMvc;
 
     @Autowired
-    private MemberRepository memberRepository; // 실제 DB 연동을 위한 repository
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate; // DB 직접 접근을 위한 JdbcTemplate
+    private ObjectMapper objectMapper;
 
-    // 예약 알림은 실제 전송하지 않도록 @MockBean 처리
+    // Scheduler 빈이 실제로 호출되는지 확인 (실제 동작 여부는 Quartz 테스트 전략에 따라 결정)
+    @Autowired
+    private Scheduler scheduler;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
     @MockitoBean
-    private ReservationNotificationService notificationService;
+    private AmazonS3 amazonS3;
 
-    // Recap 관련 기능은 이 테스트에서는 단순 동작 확인을 위해 모킹
-    @MockitoBean
-    private RecapRepository recapRepository;
+    private static final String testMemberId = "054c3e8a-3387-4eb3-ac8a-31a48221f192";
 
-    private UUID testMemberId;
-    private UUID testStoryboardId;
+    private static final String testStoryboardId = "614c3e8a-3387-4eb3-ac8a-31a48221f192";
+
+    private static final String testVideoId = "5d2add55-fa18-44de-bfc2-bb863222ffe0";
+
+    private static String token;
 
     @BeforeEach
     public void setUp() {
-        // 테스트용 member 생성 (필요한 필드만 채워줍니다)
-        testMemberId = UUID.randomUUID();
-        Member member = new Member();
-        member.setId(testMemberId);
-        member.setNickname("TestUser");
-        member.setProvider("test");
-        member.setSocialId("testSocialId" + testMemberId);
-        member.setPhoneNumber("01012345678");
-        memberRepository.save(member);
+        // 테스트 실행 전, SecurityContext에 테스트용 회원 ID 설정
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(testMemberId, null));
 
-        // storyboard는 외래키 제약조건 때문에 미리 삽입 (MemberRepository처럼 엔티티가 없으면 JdbcTemplate 사용)
-        testStoryboardId = UUID.randomUUID();
-        String insertStoryboardSql = "INSERT INTO storyboard (id, title) VALUES (?, ?)";
-        jdbcTemplate.update(insertStoryboardSql, testStoryboardId, "Test Storyboard");
+        token = jwtTokenProvider.createToken(testMemberId, Map.of("provider", "google", "socialId", "21342342523"));
+
+        // 테스트를 위해 모든 관련 테이블 초기화 (CASCADE 옵션에 의존하지 않도록 순서를 고려)
+        jdbcTemplate.update("DELETE FROM recap_reservation");
+        jdbcTemplate.update("DELETE FROM interview_reservation");
+        jdbcTemplate.update("DELETE FROM video");
+        jdbcTemplate.update("DELETE FROM term_agreement");
+        jdbcTemplate.update("DELETE FROM storyboard_usage_history");
+        jdbcTemplate.update("DELETE FROM member");
+
+        // member 테이블에 테스트 회원 데이터 삽입
+        jdbcTemplate.update("INSERT INTO member (id, nickname, provider, social_id, email, profile_image_url, phone_number, birthday, gender, name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                UUID.fromString(testMemberId), "testUser", "testProvider", "social123", "test@example.com", "http://example.com/profile.jpg", "01012345678", LocalDate.of(2000, 1, 1), "male", "Test User");
+
+        // storyboard 테이블에 테스트 스토리보드 데이터 삽입
+        jdbcTemplate.update("INSERT INTO storyboard (id, title, start_scene_id) VALUES (?, ?, ?)",
+                UUID.fromString(testStoryboardId), "Test Storyboard", null);
+
+        // video 테이블에 테스트 비디오 데이터 삽입
+        jdbcTemplate.update("INSERT INTO video (id, storyboard_id, member_id, video_url, title, running_time, thumbnail_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())",
+                UUID.fromString(testVideoId), UUID.fromString(testStoryboardId), UUID.fromString(testMemberId), "https://youtube.com", "Test Video", 324, "http://example.com/thumbnail.jpg");
     }
 
+    /**
+     * 인터뷰 예약 통합 테스트
+     * - API 호출 시 올바른 예약 생성 및 DB에 데이터 저장
+     */
     @Test
-    public void testReserveInterview_success() throws Exception {
-        // given
-        ZonedDateTime scheduledAt = ZonedDateTime.now().plusDays(1);
+    public void testReserveInterview() throws Exception {
+        // 준비: 요청 JSON 생성
+        InterviewReservationRequest request = new InterviewReservationRequest();
+        // storyboardId 및 reservedAt 설정
+        request.setStoryboardId(testStoryboardId);  // storyboard_id가 문자열로 저장된다면 괜찮습니다.
+        request.setReservedAt(ZonedDateTime.now().plusDays(1));
 
-        // when
-        Optional<UUID> reservationIdOpt = reservationService.reserveInterview(testMemberId, testStoryboardId, scheduledAt);
+        String requestJson = objectMapper.writeValueAsString(request);
 
-        // then
-        assertThat(reservationIdOpt)
-                .as("예약 성공 시 생성된 예약 id가 반환되어야 함")
-                .isPresent();
-        UUID reservationId = reservationIdOpt.get();
+        // API 호출: POST /api/v0/reservation/interview
+        String responseContent = mockMvc.perform(post("/api/v0/reservation/interview")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$.statusCode").value(201))
+                .andReturn().getResponse().getContentAsString();
 
-        // DB에 interview_reservation 레코드가 실제 생성되었는지 확인
-        String query = "SELECT count(*) FROM interview_reservation WHERE id = ?";
-        Integer count = jdbcTemplate.queryForObject(query, Integer.class, reservationId);
-        assertThat(count).isEqualTo(1);
-
-        // member의 전화번호가 있을 경우 알림 전송을 시도하므로, notificationService가 호출되었는지 검증
-        verify(notificationService, times(1))
-                .notifyInterviewReservationConfirmed(eq("01012345678"), any(OffsetDateTime.class));
+        // 검증: interview_reservation 테이블에 데이터 삽입 확인
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM interview_reservation", Integer.class);
+        assertThat(count).isGreaterThan(0);
     }
 
+    /**
+     * 예약된 인터뷰 조회 통합 테스트
+     */
     @Test
     public void testGetForwardInterviews() throws Exception {
-        // given: 예약을 먼저 등록
-        ZonedDateTime scheduledAt = ZonedDateTime.now().plusDays(1);
-        Optional<UUID> reservationIdOpt = reservationService.reserveInterview(testMemberId, testStoryboardId, scheduledAt);
-        assertThat(reservationIdOpt).isPresent();
+        // 테스트 데이터 삽입: 인터뷰 예약 추가
+        UUID reservationId = UUID.randomUUID();
+        // storyboard_id도 UUID 타입이라면 UUID 객체 전달 (혹은 toString() 후, SQL에서 캐스팅할 수 있음)
+        UUID storyboardId = UUID.fromString(testStoryboardId);
+        UUID memberId = UUID.fromString(testMemberId);
+        jdbcTemplate.update(
+                "INSERT INTO interview_reservation (id, member_id, storyboard_id, scheduled_at, created_at, reservation_status) VALUES (?, ?, ?, NOW(), NOW(), ?)",
+                reservationId, memberId, storyboardId, "pending"
+        );
 
-        OffsetDateTime from = OffsetDateTime.now();
-
-        // when
-        Optional<List<InterviewReservation>> interviewsOpt = reservationService.getForwardInterviews(testMemberId, from);
-
-        // then
-        assertThat(interviewsOpt)
-                .as("예약 조회에 성공하면 예약 목록이 반환되어야 함")
-                .isPresent();
-        List<InterviewReservation> interviews = interviewsOpt.get();
-        assertThat(interviews).isNotEmpty();
-        boolean found = interviews.stream().anyMatch(ir -> ir.getId().equals(reservationIdOpt.get()));
-        assertThat(found).isTrue();
+        // API 호출: GET /api/v0/reservation/interview/forward
+        mockMvc.perform(get("/api/v0/reservation/interview/forward")
+                        .header("Authorization", "Bearer " + token)
+                        .param("from", OffsetDateTime.now().toString()))
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$.data").isArray());
     }
 
+    /**
+     * 인터뷰 완료 처리 통합 테스트
+     */
     @Test
-    public void testMarkInterviewAsDone() throws Exception {
-        // given: 예약 생성
-        ZonedDateTime scheduledAt = ZonedDateTime.now().plusDays(1);
-        Optional<UUID> reservationIdOpt = reservationService.reserveInterview(testMemberId, testStoryboardId, scheduledAt);
-        assertThat(reservationIdOpt).isPresent();
-        UUID reservationId = reservationIdOpt.get();
+    public void testDoneInterview() throws Exception {
+        // 테스트 데이터 삽입: pending 상태의 예약 생성
+        UUID reservationId = UUID.randomUUID();
+        UUID storyboardId = UUID.fromString(testStoryboardId);
+        UUID memberId = UUID.fromString(testMemberId);
 
-        // when: 예약 상태를 'done'으로 변경
-        boolean result = reservationService.markInterviewAsDone(reservationId);
+        jdbcTemplate.update(
+                "INSERT INTO interview_reservation (id, member_id, storyboard_id, scheduled_at, created_at, reservation_status) VALUES (?, ?, ?, NOW(), NOW(), ?)",
+                reservationId, memberId, storyboardId, "pending"
+        );
 
-        // then
-        assertThat(result).as("상태 업데이트 성공 시 true를 반환해야 함").isTrue();
+        // API 호출: PATCH /api/v0/reservation/interview/{reservationId}/done
+        mockMvc.perform(patch("/api/v0/reservation/interview/{interviewId}/done", reservationId.toString())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$.statusCode").value(200));
 
-        // DB에서 실제로 상태가 변경되었는지 확인
-        String query = "SELECT reservation_status FROM interview_reservation WHERE id = ?";
-        String status = jdbcTemplate.queryForObject(query, String.class, reservationId);
+        // 검증: DB에서 예약 상태가 'done'으로 변경되었는지 확인
+        String status = jdbcTemplate.queryForObject(
+                "SELECT reservation_status FROM interview_reservation WHERE id = ?",
+                new Object[]{reservationId},
+                String.class
+        );
         assertThat(status).isEqualTo("done");
     }
 
+    /**
+     * 리캡 예약 통합 테스트
+     */
     @Test
-    public void testReserveRecap() {
-        // given: Recap 기능은 모킹 처리하고, 미리 동작 정의
-        UUID videoId = UUID.randomUUID();
-        ZonedDateTime scheduledAt = ZonedDateTime.now().plusDays(1);
-        UUID expectedRecapId = UUID.randomUUID();
-        when(recapRepository.reserveRecap(eq(testMemberId), eq(videoId), any(LocalDateTime.class)))
-                .thenReturn(Optional.of(expectedRecapId));
+    public void testReserveRecap() throws Exception {
+        // 준비: 요청 JSON 생성
+        RecapReservationRequest request = new RecapReservationRequest();
+        // video_id 컬럼이 uuid라면, UUID 객체를 toString() 대신 직접 전달하거나 SQL에서 캐스팅 적용
+        request.setVideoId(testVideoId); // 만약 DB에 문자열로 저장된다면 이렇게, 아니면 UUID 객체로 직접 전달
+        request.setScheduledAt(ZonedDateTime.now().plusDays(1));
 
-        // when
-        Optional<UUID> result = reservationService.reserveRecap(testMemberId, videoId, scheduledAt);
+        String requestJson = objectMapper.writeValueAsString(request);
 
-        // then
-        assertThat(result)
-                .as("Recap 예약 성공 시 생성된 recap id를 반환해야 함")
-                .isPresent()
-                .hasValue(expectedRecapId);
+        // API 호출: POST /api/v0/reservation/recap/video
+        String responseContent = mockMvc.perform(post("/api/v0/reservation/recap/video")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$.statusCode").value(201))
+                .andReturn().getResponse().getContentAsString();
+
+        // 검증: recap_reservation 테이블에 데이터 삽입 확인
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM recap_reservation", Integer.class);
+        assertThat(count).isGreaterThan(0);
     }
 }

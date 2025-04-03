@@ -1,5 +1,6 @@
-package com.orv.api.domain.health;
+package com.orv.api.unit.domain.health;
 
+import com.orv.api.domain.health.HealthController;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
