@@ -34,6 +34,7 @@ public class ReservationServiceImpl implements ReservationService {
 
             if (member.get().getPhoneNumber() != null) {
                 notificationService.notifyInterviewReservationConfirmed(member.get().getPhoneNumber(), OffsetDateTime.now().plusSeconds(1));
+                notificationService.notifyInterviewReservationTimeReached(member.get().getPhoneNumber(), reservedAt.toOffsetDateTime());
             }
 
             return id;

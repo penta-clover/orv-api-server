@@ -1,5 +1,8 @@
 package com.orv.api.global.bizgo;
 
+import com.amazonaws.util.json.Jackson;
+import com.orv.api.domain.reservation.dto.AlimtalkButton;
+import com.orv.api.domain.reservation.dto.AlimtalkContent;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,20 +30,31 @@ public class AlimtalkService {
     @Value("${bizgo.omni.client.senderkey}")
     private String senderKey;
 
-    public String sendAlimtalk(String phoneNumber, String templateCode, String title, String text) throws Exception{
+    public String sendAlimtalk(AlimtalkContent alimtalkContent) throws Exception {
         // 헤더 설정
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + omniTokenService.getToken());
 
-        Map<String, String> payload = new HashMap<>();
+        Map<String, Object> payload = new HashMap<>();
         payload.put("senderKey", senderKey);
-        payload.put("msgType", "AT");
-        payload.put("to", phoneNumber);
-        payload.put("templateCode", templateCode);
-        payload.put("title", title);
-        payload.put("text", text);
+        payload.put("msgType", alimtalkContent.getMsgType());
+        payload.put("to", alimtalkContent.getTo());
+        payload.put("templateCode", alimtalkContent.getTemplateCode());
 
-        HttpEntity<Map<String, String>> entity = new HttpEntity<>(payload, headers);
+        if (alimtalkContent.getTitle() != null) {
+            payload.put("title", alimtalkContent.getTitle());
+        }
+
+        if (alimtalkContent.getButtons() != null) {
+            payload.put("button", alimtalkContent.getButtons());
+        }
+
+        if (alimtalkContent.getText() != null) {
+            payload.put("text", alimtalkContent.getText());
+        }
+
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
         ResponseEntity<SendingResponse> response = restTemplate.exchange(
                 baseUrl + "/v1/send/alimtalk",
