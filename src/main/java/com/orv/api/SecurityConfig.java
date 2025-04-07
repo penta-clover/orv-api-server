@@ -41,7 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/api/v0/health").permitAll()
                         .requestMatchers("/api/v0/member/{memberId}/profile").permitAll()
-                        .requestMatchers("/api/v0/reservations/interview/{reservationId}").permitAll()
+                        .requestMatchers("/api/v0/reservation/interview/{reservationId}").permitAll()
                         .requestMatchers("/api/v0/storyboard/{storyboardId}").permitAll()
                         .requestMatchers("/api/v0/storyboard/{storyboardId}/preview").permitAll()
                         .requestMatchers("/api/v0/storyboard/{storyboardId}/scene/all").permitAll()
