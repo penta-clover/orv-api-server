@@ -21,6 +21,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -109,6 +110,7 @@ public class AuthControllerTest {
         when(socialAuthServiceFactory.getSocialAuthService(provider)).thenReturn(socialAuthService);
         when(socialAuthService.getUserInfo(code)).thenReturn(socialUserInfo);
         when(memberRepository.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.of(existingMember));
+        when(memberRepository.findRolesById(existingMember.getId())).thenReturn(Optional.of(Collections.emptyList()));
         when(jwtTokenProvider.createToken(eq(existingMember.getId().toString()), any(Map.class))).thenReturn(token);
 
         // 가입된 유저일 경우, isNewUser는 false

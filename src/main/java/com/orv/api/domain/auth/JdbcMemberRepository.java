@@ -1,6 +1,8 @@
 package com.orv.api.domain.auth;
 
 import com.orv.api.domain.auth.dto.Member;
+import com.orv.api.domain.auth.dto.Role;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -14,13 +16,11 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Primary
 @Repository
+@Slf4j
 public class JdbcMemberRepository implements MemberRepository {
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsert;
@@ -53,6 +53,23 @@ public class JdbcMemberRepository implements MemberRepository {
             Member member = jdbcTemplate.queryForObject(sql, new Object[]{nickname}, new BeanPropertyRowMapper<>(Member.class));
             return Optional.of(member);
         } catch (EmptyResultDataAccessException e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<List<Role>> findRolesById(UUID memberId) {
+        String sql = "SELECT r.id, r.name " +
+                "FROM role r " +
+                "JOIN member_role mr ON r.id = mr.role_id " +
+                "WHERE mr.member_id = ?";
+
+        try {
+            List<Role> roles = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Role.class), memberId);
+            log.info("Roles: {}", roles);
+            return Optional.of(roles);
+        } catch (Exception e) {
             e.printStackTrace();
             return Optional.empty();
         }

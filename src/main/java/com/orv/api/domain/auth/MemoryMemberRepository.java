@@ -1,12 +1,11 @@
 package com.orv.api.domain.auth;
 
 import com.orv.api.domain.auth.dto.Member;
+import com.orv.api.domain.auth.dto.Role;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -38,6 +37,11 @@ public class MemoryMemberRepository implements MemberRepository {
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<List<Role>> findRolesById(UUID memberId) {
+        return Optional.of(new ArrayList<>());
     }
 
     @Override

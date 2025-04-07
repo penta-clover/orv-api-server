@@ -1,5 +1,5 @@
 // ReservationIntegrationTest.java
-package com.orv.api.integration;
+package com.orv.api.integration.domain.reservation;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -80,6 +80,8 @@ public class ReservationIntegrationTest {
         jdbcTemplate.update("DELETE FROM video");
         jdbcTemplate.update("DELETE FROM term_agreement");
         jdbcTemplate.update("DELETE FROM storyboard_usage_history");
+        jdbcTemplate.update("DELETE FROM member_role");
+        jdbcTemplate.update("DELETE FROM role");
         jdbcTemplate.update("DELETE FROM member");
 
         // member 테이블에 테스트 회원 데이터 삽입

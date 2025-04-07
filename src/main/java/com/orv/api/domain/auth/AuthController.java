@@ -1,9 +1,6 @@
 package com.orv.api.domain.auth;
 
-import com.orv.api.domain.auth.dto.JoinForm;
-import com.orv.api.domain.auth.dto.Member;
-import com.orv.api.domain.auth.dto.SocialUserInfo;
-import com.orv.api.domain.auth.dto.ValidationResult;
+import com.orv.api.domain.auth.dto.*;
 import com.orv.api.global.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,11 +52,23 @@ public class AuthController {
         if (isRegistered) {
             // 가입된 사용자
             Member mem = member.get();
-            token = jwtTokenProvider.createToken(mem.getId().toString(), Map.of("provider", mem.getProvider(), "socialId", mem.getSocialId()));
+            Optional<List<Role>> roles = memberRepository.findRolesById(mem.getId());
+
+            if (roles.isEmpty()) {
+                // 권한 조회에 실패한 경우
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to retrieve user roles.");
+                return;
+            }
+
+            token = jwtTokenProvider.createToken(
+                    mem.getId().toString(),
+                    Map.of("provider", mem.getProvider(), "socialId", mem.getSocialId(), "roles", roles.get()));
         } else {
             // 미가입 사용자
             String temporaryId = UUID.randomUUID().toString();
-            token = jwtTokenProvider.createToken(temporaryId, Map.of("provider", userInfo.getProvider(), "socialId", userInfo.getId()));
+            token = jwtTokenProvider.createToken(
+                    temporaryId,
+                    Map.of("provider", userInfo.getProvider(), "socialId", userInfo.getId(), "roles", List.of()));
         }
 
         String redirectUrl = callbackUrl + "?isNewUser=" + !isRegistered + "&jwtToken=" + token;

@@ -1,4 +1,4 @@
-package com.orv.api.integration;
+package com.orv.api.integration.domain.storyboard;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orv.api.domain.auth.JwtTokenProvider;

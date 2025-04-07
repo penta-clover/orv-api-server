@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v0/archive/video/*").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/api/v0/health").permitAll()
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthorizationFilter(authenticationManager, jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);

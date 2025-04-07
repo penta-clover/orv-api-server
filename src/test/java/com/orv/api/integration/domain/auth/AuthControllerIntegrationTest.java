@@ -1,4 +1,4 @@
-package com.orv.api.integration;
+package com.orv.api.integration.domain.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orv.api.domain.auth.AuthController;
@@ -53,7 +53,6 @@ public class AuthControllerIntegrationTest {
 
     @Test
     void joinEndpoint_insertsMemberIntoDb() throws Exception {
-
 
         // given
         JoinForm joinForm = new JoinForm();

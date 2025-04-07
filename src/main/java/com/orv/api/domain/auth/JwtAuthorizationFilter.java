@@ -8,12 +8,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
@@ -43,7 +47,14 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
         Map<String, Object> payload = jwtTokenProvider.getPayload(token);
         String memberId = (String) payload.get("sub");
-        Authentication authentication = new UsernamePasswordAuthenticationToken(memberId, null, Collections.emptyList());
+
+        List<String> roles = (List<String>) payload.get("roles");
+        List<GrantedAuthority> authorities = roles == null
+                ? Collections.emptyList()
+                : roles.stream().map(role -> new SimpleGrantedAuthority(role)).collect(Collectors.toList());
+
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(memberId, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         chain.doFilter(request, response);
     }
