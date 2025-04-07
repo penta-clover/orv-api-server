@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v0/archive/video/*").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/api/v0/health").permitAll()
+                        .requestMatchers("/api/v0/member/{memberId}/profile").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )

@@ -1,10 +1,12 @@
 package com.orv.api.domain.auth;
 
 import com.orv.api.domain.auth.dto.MemberInfo;
+import com.orv.api.domain.auth.dto.MemberProfile;
 import com.orv.api.global.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,5 +23,11 @@ public class MemberController {
         UUID myId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
         MemberInfo myInfo = memberService.getMyInfo(myId);
         return ApiResponse.success(myInfo, 200);
+    }
+
+    @GetMapping("/{memberId}/profile")
+    public ApiResponse getMemberProfile(@PathVariable UUID memberId) {
+        MemberProfile memberProfile = memberService.getProfile(memberId);
+        return ApiResponse.success(memberProfile, 200);
     }
 }

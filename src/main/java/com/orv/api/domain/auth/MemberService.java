@@ -2,6 +2,7 @@ package com.orv.api.domain.auth;
 
 import com.orv.api.domain.auth.dto.Member;
 import com.orv.api.domain.auth.dto.MemberInfo;
+import com.orv.api.domain.auth.dto.MemberProfile;
 import com.orv.api.domain.auth.dto.ValidationResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -57,6 +58,23 @@ public class MemberService {
         info.setNickname(me.getNickname());
         info.setProfileImageUrl(me.getProfileImageUrl());
         info.setCreatedAt(me.getCreatedAt());
+
+        return info;
+    }
+
+    public MemberProfile getProfile(UUID memberId) {
+        Optional<Member> memberOrEmpty = memberRepository.findById(memberId);
+
+        if (memberOrEmpty.isEmpty()) {
+            return null;
+        }
+
+        Member member = memberOrEmpty.get();
+        MemberProfile info = new MemberProfile();
+        info.setId(member.getId());
+        info.setNickname(member.getNickname());
+        info.setProfileImageUrl(member.getProfileImageUrl());
+        info.setCreatedAt(member.getCreatedAt());
 
         return info;
     }
