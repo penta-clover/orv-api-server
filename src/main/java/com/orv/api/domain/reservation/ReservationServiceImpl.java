@@ -22,6 +22,11 @@ public class ReservationServiceImpl implements ReservationService {
     private final MemberRepository memberRepository;
 
     @Override
+    public Optional<InterviewReservation> getInterviewReservationById(UUID reservationId) {
+        return reservationRepository.findInterviewReservationById(reservationId);
+    }
+
+    @Override
     public Optional<UUID> reserveInterview(UUID memberId, UUID storyboardId, ZonedDateTime reservedAt) throws Exception {
         try {
             Optional<UUID> id = reservationRepository.reserveInterview(memberId, storyboardId, reservedAt.toLocalDateTime());

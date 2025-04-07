@@ -68,4 +68,19 @@ public class JdbcReservationRepository implements ReservationRepository {
         String sql = "UPDATE interview_reservation SET reservation_status = ? WHERE id = ?";
         return jdbcTemplate.update(sql, status, reservationId) > 0;
     }
+
+    @Override
+    public Optional<InterviewReservation> findInterviewReservationById(UUID reservationId) {
+        String sql = "SELECT id, storyboard_id, member_id, scheduled_at, created_at, reservation_status " +
+                "FROM interview_reservation " +
+                "WHERE id = ?";
+
+        try {
+            InterviewReservation reservation = jdbcTemplate.queryForObject(sql, new Object[]{reservationId}, new BeanPropertyRowMapper<>(InterviewReservation.class));
+            return Optional.of(reservation);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
+    }
 }

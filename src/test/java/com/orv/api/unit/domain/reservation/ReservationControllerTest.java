@@ -26,6 +26,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -196,7 +198,47 @@ public class ReservationControllerTest {
                                 )
                         )
                 );
-
     }
 
+
+    @Test
+    @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
+    public void testGetInterviewReservationById() throws Exception {
+        // given
+        UUID reservationId = UUID.fromString("e5895e70-7713-4a32-b15f-2521af77524b");
+        UUID memberId = UUID.fromString("054c3e8a-3387-4eb3-ac8a-31a48221f192");
+        UUID storyboardId = UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b");
+        LocalDateTime scheduledAt = LocalDateTime.now().plusDays(1);
+        LocalDateTime createdAt = LocalDateTime.now();
+        InterviewReservation reservation = new InterviewReservation(reservationId, memberId, storyboardId, scheduledAt, createdAt);
+
+        when(reservationService.getInterviewReservationById(any())).thenReturn(Optional.of(reservation));
+
+        // when
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/interview/{reservationId}", reservationId));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(reservationId.toString()))
+                .andExpect(jsonPath("$.data.memberId").value(memberId.toString()))
+                .andExpect(jsonPath("$.data.storyboardId").value(storyboardId.toString()))
+                .andExpect(jsonPath("$.data.scheduledAt").isString())
+                .andExpect(jsonPath("$.data.createdAt").isString())
+                .andDo(document("reservation/interview-get-by-id",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        pathParameters(
+                                parameterWithName("reservationId").description("조회할 예약 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("statusCode").description("응답 상태 코드"),
+                                fieldWithPath("message").description("응답 상태 메시지"),
+                                fieldWithPath("data.id").description("예약 ID"),
+                                fieldWithPath("data.memberId").description("예약한 회원 ID"),
+                                fieldWithPath("data.storyboardId").description("예약한 스토리보드 ID"),
+                                fieldWithPath("data.scheduledAt").description("예약 대상 일시"),
+                                fieldWithPath("data.createdAt").description("예약 생성 일시")
+                        )
+                ));
+    }
 }

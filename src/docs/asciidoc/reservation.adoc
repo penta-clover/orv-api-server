@@ -23,7 +23,23 @@ include::{snippets}/reservation/interview-success/http-request.adoc[]
 ==== 응답 예시
 include::{snippets}/reservation/interview-success/http-response.adoc[]
 
-== 에러 처리 및 상태 코드
+=== 인터뷰 조회
+
+**엔드포인트:** `POST /api/v0/reservation/interview/{interviewId}`
+
+특정 스토리보드에 대한 인터뷰를 예약합니다.
+
+==== 경로 파라미터 설명
+include::{snippets}/reservation/interview-get-by-id/path-parameters.adoc[]
+
+==== 응답 데이터 설명
+include::{snippets}/reservation/interview-get-by-id/response-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/reservation/interview-get-by-id/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/reservation/interview-get-by-id/http-response.adoc[]
 
 === 인터뷰 예약 조회
 

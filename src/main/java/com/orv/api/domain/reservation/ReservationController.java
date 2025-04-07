@@ -6,6 +6,7 @@ import com.orv.api.domain.reservation.dto.RecapReservationRequest;
 import com.orv.api.domain.reservation.dto.RecapReservationResponse;
 import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
+import jakarta.websocket.server.PathParam;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,23 @@ public class ReservationController {
             }
 
             return ApiResponse.success(new InterviewReservation(id.get(), memberId, storyboardId, reservedAt.toLocalDateTime(), LocalDateTime.now()), 201);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
+        }
+    }
+
+    @GetMapping("/interview/{reservationId}")
+    public ApiResponse getReservationId(@PathVariable UUID reservationId) {
+        try {
+            log.info("reservationId: {}", reservationId);
+            Optional<InterviewReservation> interviewReservation = reservationService.getInterviewReservationById(reservationId);
+
+            if (interviewReservation.isEmpty()) {
+                return ApiResponse.success(null, 404);
+            }
+
+            return ApiResponse.success(interviewReservation.get(), 200);
         } catch (Exception e) {
             e.printStackTrace();
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);

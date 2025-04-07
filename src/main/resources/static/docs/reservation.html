@@ -525,18 +525,132 @@ Content-Length: 328
     "memberId" : "054c3e8a-3387-4eb3-ac8a-31a48221f192",
     "storyboardId" : "e5895e70-7713-4a35-b12f-2521af77524b",
     "scheduledAt" : "2028-03-22T00:36:00",
-    "createdAt" : "2025-04-02T20:10:44.895763"
+    "createdAt" : "2025-04-07T17:13:43.735863"
   }
 }</code></pre>
 </div>
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_인터뷰_조회">인터뷰 조회</h3>
+<div class="paragraph">
+<p><strong>엔드포인트:</strong> <code>POST /api/v0/reservation/interview/{interviewId}</code></p>
+</div>
+<div class="paragraph">
+<p>특정 스토리보드에 대한 인터뷰를 예약합니다.</p>
+</div>
+<div class="sect3">
+<h4 id="_경로_파라미터_설명">경로 파라미터 설명</h4>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. /api/v0/reservation/interview/{reservationId}</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>reservationId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">조회할 예약 ID</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_응답_데이터_설명">응답 데이터 설명</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Path</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>statusCode</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">응답 상태 코드</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>message</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">응답 상태 메시지</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data.id</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">예약 ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data.memberId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">예약한 회원 ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data.storyboardId</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">예약한 스토리보드 ID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data.scheduledAt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">예약 대상 일시</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data.createdAt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">예약 생성 일시</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_요청_예시_2">요청 예시</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/v0/reservation/interview/e5895e70-7713-4a32-b15f-2521af77524b HTTP/1.1
+Host: localhost:8080</code></pre>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_에러_처리_및_상태_코드">에러 처리 및 상태 코드</h2>
-<div class="sectionbody">
+</div>
+<div class="sect3">
+<h4 id="_응답_예시_2">응답 예시</h4>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
+Vary: Origin
+Vary: Access-Control-Request-Method
+Vary: Access-Control-Request-Headers
+Content-Type: application/json
+Content-Length: 334
+
+{
+  "statusCode" : "200",
+  "message" : "success",
+  "data" : {
+    "id" : "e5895e70-7713-4a32-b15f-2521af77524b",
+    "memberId" : "054c3e8a-3387-4eb3-ac8a-31a48221f192",
+    "storyboardId" : "e5895e70-7713-4a35-b12f-2521af77524b",
+    "scheduledAt" : "2025-04-08T17:13:43.703233",
+    "createdAt" : "2025-04-07T17:13:43.70324"
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
 <div class="sect2">
 <h3 id="_인터뷰_예약_조회">인터뷰 예약 조회</h3>
 <div class="paragraph">
@@ -546,7 +660,7 @@ Content-Length: 328
 <p>사용자 자신의 예약된 인터뷰 목록을 조회합니다.</p>
 </div>
 <div class="sect3">
-<h4 id="_응답_데이터_설명">응답 데이터 설명</h4>
+<h4 id="_응답_데이터_설명_2">응답 데이터 설명</h4>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 33.3333%;">
@@ -600,7 +714,7 @@ Content-Length: 328
 </table>
 </div>
 <div class="sect3">
-<h4 id="_요청_예시_2">요청 예시</h4>
+<h4 id="_요청_예시_3">요청 예시</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">GET /api/v0/reservation/interview/forward?from=2025-03-29T12%3A00%3A00%2B09%3A00 HTTP/1.1
@@ -609,7 +723,7 @@ Host: localhost:8080</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_응답_예시_2">응답 예시</h4>
+<h4 id="_응답_예시_3">응답 예시</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
@@ -617,7 +731,7 @@ Vary: Origin
 Vary: Access-Control-Request-Method
 Vary: Access-Control-Request-Headers
 Content-Type: application/json
-Content-Length: 339
+Content-Length: 338
 
 {
   "statusCode" : "200",
@@ -626,8 +740,8 @@ Content-Length: 339
     "id" : "e5895e70-7713-4a32-b15f-2521af77524b",
     "memberId" : "054c3e8a-3387-4eb3-ac8a-31a48221f192",
     "storyboardId" : "e5895e70-7713-4a35-b12f-2521af77524b",
-    "scheduledAt" : "2025-04-03T01:10:44.881182",
-    "createdAt" : "2025-04-02T20:10:44.881198"
+    "scheduledAt" : "2025-04-07T22:13:43.72657",
+    "createdAt" : "2025-04-07T17:13:43.726582"
   } ]
 }</code></pre>
 </div>
@@ -643,7 +757,7 @@ Content-Length: 339
 <p>인터뷰에 대한 예약이 인터뷰 수행 완료를 통해 마무리되었음을 저장합니다.</p>
 </div>
 <div class="sect3">
-<h4 id="_응답_데이터_설명_2">응답 데이터 설명</h4>
+<h4 id="_응답_데이터_설명_3">응답 데이터 설명</h4>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 33.3333%;">
@@ -677,7 +791,7 @@ Content-Length: 339
 </table>
 </div>
 <div class="sect3">
-<h4 id="_요청_예시_3">요청 예시</h4>
+<h4 id="_요청_예시_4">요청 예시</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">PATCH /api/v0/reservation/interview/e5895e70-7713-4a32-b15f-2521af77524b/done HTTP/1.1
@@ -687,7 +801,7 @@ Content-Type: application/x-www-form-urlencoded</code></pre>
 </div>
 </div>
 <div class="sect3">
-<h4 id="_응답_예시_3">응답 예시</h4>
+<h4 id="_응답_예시_4">응답 예시</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
@@ -744,7 +858,7 @@ Content-Length: 68
 </table>
 </div>
 <div class="sect3">
-<h4 id="_응답_데이터_설명_3">응답 데이터 설명</h4>
+<h4 id="_응답_데이터_설명_4">응답 데이터 설명</h4>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
 <col style="width: 33.3333%;">
@@ -798,7 +912,7 @@ Content-Length: 68
 </table>
 </div>
 <div class="sect3">
-<h4 id="_요청_예시_4">요청 예시</h4>
+<h4 id="_요청_예시_5">요청 예시</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">POST /api/v0/reservation/recap/video HTTP/1.1
@@ -814,7 +928,7 @@ Host: localhost:8080
 </div>
 </div>
 <div class="sect3">
-<h4 id="_응답_예시_4">응답 예시</h4>
+<h4 id="_응답_예시_5">응답 예시</h4>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-http" data-lang="http">HTTP/1.1 200 OK
@@ -832,7 +946,7 @@ Content-Length: 323
     "memberId" : "054c3e8a-3387-4eb3-ac8a-31a48221f192",
     "videoId" : "e5895e70-7713-4a35-b12f-2521af77524b",
     "scheduledAt" : "2028-03-22T00:36:00",
-    "createdAt" : "2025-04-02T20:10:44.870043"
+    "createdAt" : "2025-04-07T17:13:43.719576"
   }
 }</code></pre>
 </div>
@@ -842,7 +956,7 @@ Content-Length: 323
 </div>
 </div>
 <div class="sect1">
-<h2 id="_에러_처리_및_상태_코드_2">에러 처리 및 상태 코드</h2>
+<h2 id="_에러_처리_및_상태_코드">에러 처리 및 상태 코드</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>API 호출 시 반환되는 주요 상태 코드는 다음과 같습니다:</p>
@@ -863,7 +977,7 @@ Content-Length: 323
 <div id="footer">
 <div id="footer-text">
 Version 0.0.1-SNAPSHOT<br>
-Last updated 2025-04-02 20:03:28 +0900
+Last updated 2025-04-07 17:13:21 +0900
 </div>
 </div>
 </body>
