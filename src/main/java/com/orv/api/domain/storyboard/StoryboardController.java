@@ -33,6 +33,23 @@ public class StoryboardController {
         return ApiResponse.success(storyboard, 200);
     }
 
+    @GetMapping("/{storyboardId}/scene/all")
+    public ApiResponse getAllScene(@PathVariable String storyboardId) {
+        try {
+            UUID storyboardUUID = UUID.fromString(storyboardId);
+            Optional<List<Scene>> scenesOrEmpty = storyboardRepository.findScenesByStoryboardId(storyboardUUID);
+
+            if (scenesOrEmpty.isEmpty()) {
+                return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
+            }
+
+            List<Scene> scenes = scenesOrEmpty.get();
+            return ApiResponse.success(scenes, 200);
+        } catch (Exception e) {
+            return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
+        }
+    }
+
     @GetMapping("/scene/{sceneId}")
     public ApiResponse getScene(@PathVariable String sceneId) {
         String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
