@@ -89,7 +89,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     # --cleanup: 사용하지 않는 이전 이미지들을 제거, --interval: 3분마다 업데이트 체크
-    command: --cleanup --interval 180 orv_api_server
+    command: --cleanup --interval 300 orv_api_server
     networks:
       custom_net:
         ipv4_address: 172.28.0.8

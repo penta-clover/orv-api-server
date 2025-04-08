@@ -1,6 +1,7 @@
 package com.orv.api.domain.reservation;
 
 import com.orv.api.domain.reservation.dto.InterviewReservation;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -78,8 +79,7 @@ public class JdbcReservationRepository implements ReservationRepository {
         try {
             InterviewReservation reservation = jdbcTemplate.queryForObject(sql, new Object[]{reservationId}, new BeanPropertyRowMapper<>(InterviewReservation.class));
             return Optional.of(reservation);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
     }

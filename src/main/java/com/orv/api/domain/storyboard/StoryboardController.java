@@ -73,7 +73,7 @@ public class StoryboardController {
         Optional<List<Scene>> scenesOrEmpty = storyboardRepository.findScenesByStoryboardId(storyboardUUID);
 
         if (scenesOrEmpty.isEmpty()) {
-            return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
+            return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);
         }
 
         List<Scene> scenes = scenesOrEmpty.get();
