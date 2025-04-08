@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v0/archive/video/*").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/api/v0/health").permitAll()
-                        .requestMatchers("/api/v0/member/{memberId}/profile").permitAll()
+                        .requestMatchers("/api/v0/member/*/profile").permitAll()
                         .requestMatchers("/api/v0/reservation/interview/*").permitAll()
                         .requestMatchers("/api/v0/storyboard/*").permitAll()
                         .requestMatchers("/api/v0/storyboard/*/preview").permitAll()
