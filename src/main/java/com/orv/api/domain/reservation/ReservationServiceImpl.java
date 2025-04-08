@@ -58,7 +58,7 @@ public class ReservationServiceImpl implements ReservationService {
             // 전화번호 정보가 있다면 알림톡 발송
             if (member.get().getPhoneNumber() != null) {
                 notificationService.notifyInterviewReservationConfirmed(member.get().getPhoneNumber(), OffsetDateTime.now().plusSeconds(1));
-                notificationService.notifyInterviewReservationPreview(member.get().getPhoneNumber(), member.get().getName(), reservation.get().getScheduledAt().atOffset(ZoneOffset.ofHours(9)), topic.get().get(0).getName(), questionCount, reservation.get().getId(), notifyPreviewAt);
+                notificationService.notifyInterviewReservationPreview(member.get().getPhoneNumber(), member.get().getNickname(), reservation.get().getScheduledAt().atOffset(ZoneOffset.ofHours(9)), topic.get().get(0).getName(), questionCount, reservation.get().getId(), notifyPreviewAt);
                 notificationService.notifyInterviewReservationTimeReached(member.get().getPhoneNumber(), reservedAt.toOffsetDateTime());
             }
 

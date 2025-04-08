@@ -42,7 +42,7 @@ public class InterviewReservationPreviewAlimtalkJob implements Job {
             ));
 
             String msgKey = alimtalkService.sendAlimtalk(alimtalkContent);
-            log.info("Sent alimtalk with msgKey: {}", msgKey);
+            log.info("Sent reservation preview alimtalk with msgKey: {}", msgKey);
         } catch (Exception e) {
             log.error("Failed to send alimtalk", e);
             return;
