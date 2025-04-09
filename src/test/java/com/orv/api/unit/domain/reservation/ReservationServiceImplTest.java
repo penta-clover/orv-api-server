@@ -48,7 +48,7 @@ public class ReservationServiceImplTest {
         // given
         UUID memberId = UUID.randomUUID();
         UUID storyboardId = UUID.randomUUID();
-        ZonedDateTime reservedAt = ZonedDateTime.now();
+        OffsetDateTime reservedAt = OffsetDateTime.now();
         UUID interviewId = UUID.randomUUID();
 
         when(reservationRepository.reserveInterview(eq(memberId), eq(storyboardId), any()))
@@ -75,7 +75,7 @@ public class ReservationServiceImplTest {
         // given
         UUID memberId = UUID.randomUUID();
         UUID storyboardId = UUID.randomUUID();
-        ZonedDateTime reservedAt = ZonedDateTime.now();
+        OffsetDateTime reservedAt = OffsetDateTime.now();
 
         when(reservationRepository.reserveInterview(eq(memberId), eq(storyboardId), any()))
                 .thenReturn(Optional.empty());
@@ -96,7 +96,7 @@ public class ReservationServiceImplTest {
         // given
         UUID memberId = UUID.randomUUID();
         UUID storyboardId = UUID.randomUUID();
-        ZonedDateTime reservedAt = ZonedDateTime.now();
+        OffsetDateTime reservedAt = OffsetDateTime.now();
         UUID interviewId = UUID.randomUUID();
 
         when(reservationRepository.reserveInterview(eq(memberId), eq(storyboardId), any()))

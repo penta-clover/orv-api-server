@@ -13,7 +13,7 @@ import java.util.UUID;
 @Service
 public interface ReservationService {
     Optional<InterviewReservation> getInterviewReservationById(UUID reservationId);
-    Optional<UUID> reserveInterview(UUID memberId, UUID storyboardId, ZonedDateTime reservedAt) throws Exception;
+    Optional<UUID> reserveInterview(UUID memberId, UUID storyboardId, OffsetDateTime reservedAt) throws Exception;
     Optional<UUID> reserveInstantInterview(UUID memberId, UUID storyboardId) throws Exception;
     Optional<List<InterviewReservation>> getForwardInterviews(UUID memberId, OffsetDateTime from);
     boolean markInterviewAsDone(UUID interviewId);

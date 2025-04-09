@@ -34,7 +34,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public Optional<UUID> reserveInterview(UUID memberId, UUID storyboardId, ZonedDateTime reservedAt) throws Exception {
+    public Optional<UUID> reserveInterview(UUID memberId, UUID storyboardId, OffsetDateTime reservedAt) throws Exception {
         try {
             Optional<UUID> id = reservationRepository.reserveInterview(memberId, storyboardId, reservedAt.toLocalDateTime());
 
@@ -48,7 +48,7 @@ public class ReservationServiceImpl implements ReservationService {
             Optional<List<Topic>> topic = storyboardRepository.findTopicsOfStoryboard(reservation.get().getStoryboardId());
 
             // preview 링크는 인터뷰로부터 3일 전에 발송. 단, 예약일이 인터뷰 3일 이내인 경우 즉시 발송.
-            OffsetDateTime before3Days = reservedAt.toOffsetDateTime().minusDays(3);
+            OffsetDateTime before3Days = reservedAt.minusDays(3);
             OffsetDateTime notifyPreviewAt = getMaxOffsetDateTime(before3Days, OffsetDateTime.now().plusSeconds(5));
 
             // 인터뷰에 포함된 질문 개수 계산
@@ -59,7 +59,7 @@ public class ReservationServiceImpl implements ReservationService {
             if (member.get().getPhoneNumber() != null) {
                 notificationService.notifyInterviewReservationConfirmed(member.get().getPhoneNumber(), OffsetDateTime.now().plusSeconds(1));
                 notificationService.notifyInterviewReservationPreview(member.get().getPhoneNumber(), member.get().getNickname(), reservation.get().getScheduledAt().atOffset(ZoneOffset.ofHours(9)), topic.get().get(0).getName(), questionCount, reservation.get().getId(), notifyPreviewAt);
-                notificationService.notifyInterviewReservationTimeReached(member.get().getPhoneNumber(), reservedAt.toOffsetDateTime());
+                notificationService.notifyInterviewReservationTimeReached(member.get().getPhoneNumber(), reservedAt);
             }
 
             return id;
