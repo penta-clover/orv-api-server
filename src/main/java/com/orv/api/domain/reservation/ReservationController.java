@@ -29,18 +29,24 @@ public class ReservationController {
     private final ReservationService reservationService;
 
     @PostMapping("/interview")
-    public ApiResponse reserveInterview(@RequestBody InterviewReservationRequest request) {
+    public ApiResponse reserveInterview(@RequestBody InterviewReservationRequest request, @RequestParam(value="startNow", required = false, defaultValue = "false") Boolean startNow) {
         try {
             UUID memberId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
             UUID storyboardId = UUID.fromString(request.getStoryboardId());
             ZonedDateTime reservedAt = request.getReservedAt();
+            Optional<UUID> reservationId;
 
-            Optional<UUID> id = reservationService.reserveInterview(memberId, storyboardId, reservedAt);
-            if (id.isEmpty()) {
+            if (startNow) {
+                reservationId = reservationService.reserveInstantInterview(memberId, storyboardId);
+            } else {
+                reservationId = reservationService.reserveInterview(memberId, storyboardId, reservedAt);
+            }
+
+            if (reservationId.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
             }
 
-            return ApiResponse.success(new InterviewReservation(id.get(), memberId, storyboardId, reservedAt.toLocalDateTime(), LocalDateTime.now()), 201);
+            return ApiResponse.success(new InterviewReservation(reservationId.get(), memberId, storyboardId, reservedAt.toLocalDateTime(), LocalDateTime.now()), 201);
         } catch (Exception e) {
             e.printStackTrace();
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);

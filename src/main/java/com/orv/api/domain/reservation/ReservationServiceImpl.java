@@ -69,6 +69,36 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    public Optional<UUID> reserveInstantInterview(UUID memberId, UUID storyboardId) throws Exception {
+        try {
+            OffsetDateTime scheduledAt = OffsetDateTime.now();
+            Optional<UUID> id = reservationRepository.reserveInterview(memberId, storyboardId, scheduledAt.toLocalDateTime());
+
+            if (id.isEmpty()) {
+                throw new Exception("Failed to reserve instant interview");
+            }
+
+            // 인터뷰 관련 정보 가져오기
+            Optional<Member> member = memberRepository.findById(memberId);
+            Optional<InterviewReservation> reservation = reservationRepository.findInterviewReservationById(id.get());
+            Optional<List<Topic>> topic = storyboardRepository.findTopicsOfStoryboard(reservation.get().getStoryboardId());
+
+            // 인터뷰에 포함된 질문 개수 계산
+            Optional<List<Scene>> scenesOrEmpty = storyboardRepository.findScenesByStoryboardId(storyboardId);
+            Integer questionCount = calculateQuestionCount(scenesOrEmpty.get());
+
+            // 전화번호 정보가 있다면 알림톡 발송
+            if (member.get().getPhoneNumber() != null) {
+                notificationService.notifyInterviewReservationPreview(member.get().getPhoneNumber(), member.get().getNickname(), reservation.get().getScheduledAt().atOffset(ZoneOffset.ofHours(9)), topic.get().get(0).getName(), questionCount, reservation.get().getId(), OffsetDateTime.now());
+            }
+
+            return id;
+        } catch (SchedulerException e) {
+            throw new Exception("Failed to schedule interview notification", e);
+        }
+    }
+
+    @Override
     public Optional<List<InterviewReservation>> getForwardInterviews(UUID memberId, OffsetDateTime from) {
         return reservationRepository.getReservedInterviews(memberId, from);
     }
