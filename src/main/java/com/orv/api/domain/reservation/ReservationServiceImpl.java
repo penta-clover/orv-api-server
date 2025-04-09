@@ -73,6 +73,7 @@ public class ReservationServiceImpl implements ReservationService {
         try {
             OffsetDateTime scheduledAt = OffsetDateTime.now();
             Optional<UUID> id = reservationRepository.reserveInterview(memberId, storyboardId, scheduledAt.toLocalDateTime().plusHours(9));
+            reservationRepository.changeInterviewReservationStatus(id.get(), "done");
 
             if (id.isEmpty()) {
                 throw new Exception("Failed to reserve instant interview");
