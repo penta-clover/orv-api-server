@@ -5,10 +5,7 @@ import com.orv.api.domain.storyboard.dto.Topic;
 import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,9 +18,9 @@ public class TopicController {
     private final TopicRepository topicRepository;
 
     @GetMapping("/list")
-    public ApiResponse getTopics() {
+    public ApiResponse getTopics(@RequestParam(name = "category", required = false, defaultValue = "DEFAULT") String categoryCode) {
         try {
-            List<Topic> topics = topicRepository.findTopics();
+            List<Topic> topics = topicRepository.findTopicsByCategoryCode(categoryCode);
             return ApiResponse.success(topics, 200);
         } catch (Exception e) {
             e.printStackTrace();

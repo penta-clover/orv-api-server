@@ -31,6 +31,21 @@ public class JdbcTopicRepository implements TopicRepository {
     }
 
     @Override
+    public List<Topic> findTopicsByCategoryCode(String categoryCode) {
+        String sql = "SELECT t.id, t.name, t.description, t.thumbnail_url " +
+                "FROM topic t " +
+                "JOIN category_topic ct ON t.id = ct.topic_id " +
+                "JOIN category c ON ct.category_id = c.id " +
+                "WHERE c.code = ?";
+        try {
+            return jdbcTemplate.query(sql, new Object[]{categoryCode}, new BeanPropertyRowMapper<>(Topic.class));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+
+    @Override
     public List<Storyboard> findStoryboardsByTopicId(UUID topicId) {
         String sql = "SELECT s.id, s.title, s.start_scene_id AS startSceneId " + "FROM storyboard s " + "JOIN storyboard_topic st ON s.id = st.storyboard_id " + "WHERE st.topic_id = ?";
 
