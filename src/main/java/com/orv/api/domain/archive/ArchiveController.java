@@ -73,7 +73,7 @@ public class ArchiveController {
     @GetMapping("/videos/my")
     public ApiResponse getMyVideos() {
         String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
-        List<Video> videos = videoRepository.findByMemberId(UUID.fromString(memberId), 0, 30);
+        List<Video> videos = videoRepository.findByMemberId(UUID.fromString(memberId), 0, 100);
         return ApiResponse.success(videos, 200);
     }
 
