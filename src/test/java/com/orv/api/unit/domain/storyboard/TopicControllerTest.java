@@ -13,9 +13,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
@@ -46,9 +48,10 @@ public class TopicControllerTest {
         topic.setName("죽음");
         topic.setDescription("죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거");
         topic.setThumbnailUrl("https://www.naver.com/favicon.ico");
+        topic.setHashtags(Collections.emptyList());
         List<Topic> topics = List.of(topic);
 
-        when(topicRepository.findTopics()).thenReturn(topics);
+        when(topicRepository.findTopicsByCategoryCode(any())).thenReturn(topics);
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/topic/list"));
@@ -61,6 +64,7 @@ public class TopicControllerTest {
                 .andExpect(jsonPath("$.data[0].name").value("죽음"))
                 .andExpect(jsonPath("$.data[0].description").value("죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거"))
                 .andExpect(jsonPath("$.data[0].thumbnailUrl").value("https://www.naver.com/favicon.ico"))
+                .andExpect(jsonPath("$.data[0].hashtags").isEmpty())
                 .andDo(document("topic/get-topics",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -70,7 +74,8 @@ public class TopicControllerTest {
                                 fieldWithPath("data[].id").description("Topic의 ID"),
                                 fieldWithPath("data[].name").description("Topic의 이름"),
                                 fieldWithPath("data[].description").description("Topic의 설명"),
-                                fieldWithPath("data[].thumbnailUrl").description("Topic의 thumbnail 이미지 주소")
+                                fieldWithPath("data[].thumbnailUrl").description("Topic의 thumbnail 이미지 주소"),
+                                fieldWithPath("data[].hashtags").description("Topic의 해시태그 목록")
                         )
                 ));
     }
@@ -137,6 +142,7 @@ public class TopicControllerTest {
                 .andExpect(jsonPath("$.data.name").value("죽음"))
                 .andExpect(jsonPath("$.data.description").value("죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거"))
                 .andExpect(jsonPath("$.data.thumbnailUrl").value("https://www.naver.com/favicon.ico"))
+                .andExpect(jsonPath("$.data.hashtags").isEmpty())
                 .andDo(document("topic/get-topic",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -149,7 +155,8 @@ public class TopicControllerTest {
                                 fieldWithPath("data.id").description("Topic의 ID"),
                                 fieldWithPath("data.name").description("Topic의 이름"),
                                 fieldWithPath("data.description").description("Topic의 설명"),
-                                fieldWithPath("data.thumbnailUrl").description("Topic의 thumbnail 이미지 주소")
+                                fieldWithPath("data.thumbnailUrl").description("Topic의 thumbnail 이미지 주소"),
+                                fieldWithPath("data.hashtags").description("Topic의 해시태그 목록")
                         )
                 ));
     }

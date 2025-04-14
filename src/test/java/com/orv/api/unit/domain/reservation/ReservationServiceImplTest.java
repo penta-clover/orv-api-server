@@ -13,6 +13,8 @@ import com.orv.api.domain.reservation.ReservationNotificationService;
 import com.orv.api.domain.reservation.ReservationRepository;
 import com.orv.api.domain.reservation.ReservationServiceImpl;
 import com.orv.api.domain.reservation.dto.InterviewReservation;
+import com.orv.api.domain.storyboard.StoryboardRepository;
+import com.orv.api.domain.storyboard.dto.Topic;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.quartz.SchedulerException;
 
+import javax.sound.midi.SysexMessage;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -29,6 +32,9 @@ public class ReservationServiceImplTest {
 
     @Mock
     private ReservationRepository reservationRepository;
+
+    @Mock
+    private StoryboardRepository storyboardRepository;
 
     @Mock
     private RecapRepository recapRepository;
@@ -48,11 +54,34 @@ public class ReservationServiceImplTest {
         // given
         UUID memberId = UUID.randomUUID();
         UUID storyboardId = UUID.randomUUID();
+        UUID topicId = UUID.randomUUID();
         OffsetDateTime reservedAt = OffsetDateTime.now();
         UUID interviewId = UUID.randomUUID();
 
         when(reservationRepository.reserveInterview(eq(memberId), eq(storyboardId), any()))
                 .thenReturn(Optional.of(interviewId));
+
+        when(reservationRepository.findInterviewReservationById(interviewId))
+                .thenReturn(Optional.of(new InterviewReservation(
+                        interviewId,
+                        memberId,
+                        storyboardId,
+                        reservedAt.toLocalDateTime(),
+                        ZonedDateTime.now().toLocalDateTime()
+                )));
+
+        when(storyboardRepository.findTopicsOfStoryboard(any()))
+                .thenReturn(Optional.of(Arrays.asList(new Topic(
+                                topicId,
+                                "name",
+                                "description",
+                                "thumbnail_url",
+                                Collections.emptyList()
+                        )
+                )));
+
+        when(storyboardRepository.findScenesByStoryboardId(storyboardId))
+                .thenReturn(Optional.of(new ArrayList<>()));
 
         Member member = new Member();
         member.setPhoneNumber("01012345678");
@@ -98,9 +127,32 @@ public class ReservationServiceImplTest {
         UUID storyboardId = UUID.randomUUID();
         OffsetDateTime reservedAt = OffsetDateTime.now();
         UUID interviewId = UUID.randomUUID();
+        UUID topicId = UUID.randomUUID();
 
         when(reservationRepository.reserveInterview(eq(memberId), eq(storyboardId), any()))
                 .thenReturn(Optional.of(interviewId));
+
+        when(reservationRepository.findInterviewReservationById(interviewId))
+                .thenReturn(Optional.of(new InterviewReservation(
+                        interviewId,
+                        memberId,
+                        storyboardId,
+                        reservedAt.toLocalDateTime(),
+                        ZonedDateTime.now().toLocalDateTime()
+                )));
+
+        when(storyboardRepository.findTopicsOfStoryboard(any()))
+                .thenReturn(Optional.of(Arrays.asList(new Topic(
+                                topicId,
+                                "name",
+                                "description",
+                                "thumbnail_url",
+                                Collections.emptyList()
+                        )
+                )));
+
+        when(storyboardRepository.findScenesByStoryboardId(storyboardId))
+                .thenReturn(Optional.of(new ArrayList<>()));
 
         Member member = new Member();
         member.setPhoneNumber("01012345678");

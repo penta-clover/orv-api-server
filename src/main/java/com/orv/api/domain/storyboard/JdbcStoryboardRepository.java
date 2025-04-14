@@ -165,13 +165,18 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
 
     @Override
     public Optional<List<Topic>> findTopicsOfStoryboard(UUID storyboardId) {
-        String sql = "SELECT t.id, t.name, t.description " +
+        String sql = "SELECT t.id, t.name, t.description, t.thumbnail_url, " +
+                "COALESCE(json_agg(json_build_object('name', h.name, 'color', h.color)) " +
+                "FILTER (WHERE h.id IS NOT NULL), '[]') AS hashtags " +
                 "FROM topic t " +
                 "JOIN storyboard_topic st ON t.id = st.topic_id " +
-                "WHERE st.storyboard_id = ?";
+                "LEFT JOIN hashtag_topic ht ON t.id = ht.topic_id " +
+                "LEFT JOIN hashtag h ON h.id = ht.hashtag_id " +
+                "WHERE st.storyboard_id = ? " +
+                "GROUP BY t.id, t.name, t.description, t.thumbnail_url";
 
         try {
-            List<Topic> topics = jdbcTemplate.query(sql, new Object[]{storyboardId}, new BeanPropertyRowMapper<>(Topic.class));
+            List<Topic> topics = jdbcTemplate.query(sql, new Object[]{storyboardId}, new TopicRowMapper());
             return Optional.of(topics);
         } catch (Exception e) {
             e.printStackTrace();

@@ -62,6 +62,8 @@ public class ReservationIntegrationTest {
 
     private static final String testStoryboardId = "614c3e8a-3387-4eb3-ac8a-31a48221f192";
 
+    private static final String testTopicId = "4d2add55-fa18-44de-bfc2-bb863222ffe0";
+
     private static final String testVideoId = "5d2add55-fa18-44de-bfc2-bb863222ffe0";
 
     private static String token;
@@ -91,6 +93,14 @@ public class ReservationIntegrationTest {
         // storyboard 테이블에 테스트 스토리보드 데이터 삽입
         jdbcTemplate.update("INSERT INTO storyboard (id, title, start_scene_id) VALUES (?, ?, ?)",
                 UUID.fromString(testStoryboardId), "Test Storyboard", null);
+
+        // topic 테이블에 테스트 주제 데이터 삽입
+        jdbcTemplate.update("INSERT INTO topic (id, name, description, thumbnail_url) VALUES (?, ?, ?, ?)",
+                UUID.fromString(testTopicId), "Test Topic", "Test Description", "http://example.com/thumbnail.jpg");
+
+        // storyboard_topic 테이블에 테스트 스토리보드-주제 관계 데이터 삽입
+        jdbcTemplate.update("INSERT INTO storyboard_topic (storyboard_id, topic_id) VALUES (?, ?)",
+                UUID.fromString(testStoryboardId), UUID.fromString(testTopicId));
 
         // video 테이블에 테스트 비디오 데이터 삽입
         jdbcTemplate.update("INSERT INTO video (id, storyboard_id, member_id, video_url, title, running_time, thumbnail_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())",

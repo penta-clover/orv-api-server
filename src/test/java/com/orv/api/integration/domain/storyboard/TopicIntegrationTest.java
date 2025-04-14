@@ -40,8 +40,13 @@ public class TopicIntegrationTest {
 
     private static final String testTopicId = "ba4c3e8a-3387-4eb3-ac8a-31a48221f192";
     private static final String testMemberId = "054c3e8a-3387-4eb3-ac8a-31a48221f192";
-
     private static final String testStoryboardId = "614c3e8a-3387-4eb3-ac8a-31a48221f192";
+    private static final String defaultCategoryId = "3d91d72d-f9b8-4725-b056-85a2a813c93f";
+
+    private static final String hashtagId = "e291d72d-f9b8-4725-b056-85a2a813c93f";
+    private static final String testHashtagName = "test-hashtag";
+    private static final String testHashtagColor = "#FF5733";
+
     private String token;
 
     @BeforeEach
@@ -49,6 +54,17 @@ public class TopicIntegrationTest {
         // 테스트용 Topic 삽입
         String insertTopicSql = "INSERT INTO topic (id, name, description, thumbnail_url) VALUES (?, ?, ?, ?)";
         jdbcTemplate.update(insertTopicSql, UUID.fromString(testTopicId), "Integration Test Topic", "Integration Test Description", "http://example.com/test-thumbnail.jpg");
+
+        String insertCategoryTopicSql = "INSERT INTO category_topic (category_id, topic_id) VALUES (?, ?)";
+        jdbcTemplate.update(insertCategoryTopicSql, UUID.fromString(defaultCategoryId), UUID.fromString(testTopicId));
+
+        // 테스트용 hastag 삽입
+        String insertHashtagSql = "INSERT INTO hashtag (id, name, color) VALUES (?, ?, ?)";
+        jdbcTemplate.update(insertHashtagSql, UUID.fromString(hashtagId), testHashtagName, testHashtagColor);
+
+        // Topic과 Hashtag를 연결하는 topic_hashtag 삽입
+        String insertTopicHashtagSql = "INSERT INTO hashtag_topic (hashtag_id, topic_id) VALUES (?, ?)";
+        jdbcTemplate.update(insertTopicHashtagSql, UUID.fromString(hashtagId), UUID.fromString(testTopicId));
 
         // 테스트용 Storyboard 삽입;
         String insertStoryboardSql = "INSERT INTO storyboard (id, title, start_scene_id) VALUES (?, ?, ?)";
@@ -73,7 +89,10 @@ public class TopicIntegrationTest {
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.data").isArray())
                 // 미리 삽입한 testTopicId가 포함되어 있는지 JSONPath로 검증
-                .andExpect(jsonPath("$.data[?(@.id == '" + testTopicId.toString() + "')]").exists());
+                .andExpect(jsonPath("$.data[?(@.id == '" + testTopicId.toString() + "')]").exists())
+                // 미리 삽입한 hashtag name과 color가 포함되어 있는지 JSONPath로 검증
+                .andExpect(jsonPath("$.data[?(@.hashtags[0].name == '" + testHashtagName + "' && @.hashtags[0].color == '" + testHashtagColor + "')]").exists());
+
     }
 
     /**

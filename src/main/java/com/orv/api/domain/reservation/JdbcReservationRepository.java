@@ -41,7 +41,7 @@ public class JdbcReservationRepository implements ReservationRepository {
             return Optional.of((UUID) keys.get("id"));
         }
 
-        return Optional.of(null);
+        return Optional.empty();
     }
 
     @Override

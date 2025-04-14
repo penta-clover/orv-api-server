@@ -19,11 +19,16 @@ public class JdbcTopicRepository implements TopicRepository {
 
     @Override
     public List<Topic> findTopics() {
-        String sql = "SELECT id, name, description, thumbnail_url FROM topic";
+        String sql = "SELECT t.id, t.name, t.description, t.thumbnail_url, " +
+                "COALESCE(json_agg(json_build_object('name', h.name, 'color', h.color)) " +
+                "FILTER (WHERE h.id IS NOT NULL), '[]') AS hashtags " +
+                "FROM topic t " +
+                "LEFT JOIN hashtag_topic ht ON t.id = ht.topic_id " +
+                "LEFT JOIN hashtag h ON h.id = ht.hashtag_id " +
+                "GROUP BY t.id, t.name, t.description, t.thumbnail_url";
 
         try {
-            List<Topic> topics = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Topic.class));
-            return topics;
+            return jdbcTemplate.query(sql, new TopicRowMapper());
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException();
@@ -32,13 +37,26 @@ public class JdbcTopicRepository implements TopicRepository {
 
     @Override
     public List<Topic> findTopicsByCategoryCode(String categoryCode) {
-        String sql = "SELECT t.id, t.name, t.description, t.thumbnail_url " +
-                "FROM topic t " +
-                "JOIN category_topic ct ON t.id = ct.topic_id " +
-                "JOIN category c ON ct.category_id = c.id " +
-                "WHERE c.code = ?";
+        String sql = "SELECT t.id,\n" +
+                "       t.name,\n" +
+                "       t.description,\n" +
+                "       t.thumbnail_url,\n" +
+                "       COALESCE(\n" +
+                "               (json_agg(\n" +
+                "                DISTINCT json_build_object('name', h.name, 'color', h.color)::jsonb\n" +
+                "                        ) FILTER (WHERE h.id IS NOT NULL))::text,\n" +
+                "               '[]'\n" +
+                "       )::json AS hashtags\n" +
+                "FROM topic t\n" +
+                "         JOIN category_topic ct ON t.id = ct.topic_id\n" +
+                "         JOIN category c ON ct.category_id = c.id\n" +
+                "         LEFT JOIN hashtag_topic ht ON t.id = ht.topic_id\n" +
+                "         LEFT JOIN hashtag h ON h.id = ht.hashtag_id\n" +
+                "WHERE c.code = ?\n" +
+                "GROUP BY t.id, t.name, t.description, t.thumbnail_url;";
+
         try {
-            return jdbcTemplate.query(sql, new Object[]{categoryCode}, new BeanPropertyRowMapper<>(Topic.class));
+            return jdbcTemplate.query(sql, new Object[]{categoryCode}, new TopicRowMapper());
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException();
@@ -47,7 +65,10 @@ public class JdbcTopicRepository implements TopicRepository {
 
     @Override
     public List<Storyboard> findStoryboardsByTopicId(UUID topicId) {
-        String sql = "SELECT s.id, s.title, s.start_scene_id AS startSceneId " + "FROM storyboard s " + "JOIN storyboard_topic st ON s.id = st.storyboard_id " + "WHERE st.topic_id = ?";
+        String sql = "SELECT s.id, s.title, s.start_scene_id AS startSceneId " +
+                "FROM storyboard s " +
+                "JOIN storyboard_topic st ON s.id = st.storyboard_id " +
+                "WHERE st.topic_id = ?";
 
         try {
             return jdbcTemplate.query(sql, new Object[]{topicId}, new BeanPropertyRowMapper<>(Storyboard.class));
@@ -59,10 +80,16 @@ public class JdbcTopicRepository implements TopicRepository {
 
     @Override
     public Optional<Topic> findTopicById(UUID topicId) {
-        String sql = "SELECT id, name, description, thumbnail_url FROM topic WHERE id = ?";
-
+        String sql = "SELECT t.id, t.name, t.description, t.thumbnail_url, " +
+                "       COALESCE(json_agg(json_build_object('name', h.name, 'color', h.color)) FILTER (WHERE h.id IS NOT NULL), '[]') AS hashtags " +
+                "FROM topic t " +
+                "LEFT JOIN hashtag_topic ht ON t.id = ht.topic_id " +
+                "LEFT JOIN hashtag h ON h.id = ht.hashtag_id " +
+                "WHERE t.id = ? " +
+                "GROUP BY t.id, t.name, t.description, t.thumbnail_url";
         try {
-            return Optional.of(jdbcTemplate.queryForObject(sql, new Object[]{topicId}, new BeanPropertyRowMapper<>(Topic.class)));
+            Topic topic = jdbcTemplate.queryForObject(sql, new Object[]{topicId}, new TopicRowMapper());
+            return Optional.of(topic);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException();

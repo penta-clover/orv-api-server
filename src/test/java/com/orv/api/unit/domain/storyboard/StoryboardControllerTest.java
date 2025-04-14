@@ -15,6 +15,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -194,8 +195,8 @@ public class StoryboardControllerTest {
         // given
         UUID storyboardId = UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b");
         Optional<List<Topic>> topics = Optional.of(List.of(
-                new Topic(UUID.randomUUID(), "topic1", "topic1 description", "https://thumbnail.com/url1"),
-                new Topic(UUID.randomUUID(), "topic2", "topic2 description", "https://thumbnail.com/url2"))
+                new Topic(UUID.randomUUID(), "topic1", "topic1 description", "https://thumbnail.com/url1", Collections.emptyList()),
+                new Topic(UUID.randomUUID(), "topic2", "topic2 description", "https://thumbnail.com/url2", Collections.emptyList()))
         );
 
         when(storyboardRepository.findTopicsOfStoryboard(storyboardId)).thenReturn(topics);
@@ -211,10 +212,12 @@ public class StoryboardControllerTest {
                 .andExpect(jsonPath("$.data[0].name").value("topic1"))
                 .andExpect(jsonPath("$.data[0].description").value("topic1 description"))
                 .andExpect(jsonPath("$.data[0].thumbnailUrl").value("https://thumbnail.com/url1"))
+                .andExpect(jsonPath("$.data[0].hashtags").isArray())
                 .andExpect(jsonPath("$.data[1].id").exists())
                 .andExpect(jsonPath("$.data[1].name").value("topic2"))
                 .andExpect(jsonPath("$.data[1].description").value("topic2 description"))
                 .andExpect(jsonPath("$.data[1].thumbnailUrl").value("https://thumbnail.com/url2"))
+                .andExpect(jsonPath("$.data[1].hashtags").isArray())
                 .andDo(document("storyboard/get-topics-of-storyboard",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -227,7 +230,8 @@ public class StoryboardControllerTest {
                                 fieldWithPath("data[].id").description("Topic의 ID"),
                                 fieldWithPath("data[].name").description("Topic의 이름"),
                                 fieldWithPath("data[].description").description("Topic의 설명"),
-                                fieldWithPath("data[].thumbnailUrl").description("Topic의 썸네일 URL")
+                                fieldWithPath("data[].thumbnailUrl").description("Topic의 썸네일 URL"),
+                                fieldWithPath("data[].hashtags").description("Topic의 해시태그 목록")
                         )
                 ));
 
