@@ -27,8 +27,8 @@ services:
       - LETSENCRYPT_EMAIL=orv@orv.im
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./nginx/vhost.d:/etc/nginx/vhost.d:ro
       - proxy_certs:/etc/nginx/certs
-      - proxy_vhost:/etc/nginx/vhost.d
       - proxy_html:/usr/share/nginx/html
     depends_on:
       - api
@@ -45,8 +45,8 @@ services:
       - NGINX_PROXY_CONTAINER=api_proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
       - proxy_certs:/etc/nginx/certs:rw
-      - proxy_vhost:/etc/nginx/vhost.d:rw
       - proxy_html:/usr/share/nginx/html:rw
 
   postgres:
