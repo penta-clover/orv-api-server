@@ -18,7 +18,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "4566:4566"
     environment:
       - VIRTUAL_HOST=staging.api.orv.im
       - LETSENCRYPT_HOST=staging.api.orv.im
@@ -69,13 +68,11 @@ services:
   localstack:
     image: localstack/localstack
     container_name: localstack
-    expose:
-      - "4566"
+    ports:
+      - "4566:4566"  # 모든 서비스의 엔드포인트 포트 (특히 S3는 4566)
     environment:
       - SERVICES=s3   # S3만 활성화 (여러 서비스를 동시에 활성화할 수도 있음)
       - DEFAULT_REGION=ap-northeast-2
-      - VIRTUAL_HOST=staging.api.orv.im
-      - VIRTUAL_PORT=4566
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
