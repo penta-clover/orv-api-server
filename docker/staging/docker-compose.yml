@@ -17,19 +17,6 @@ services:
     container_name: orv_nginx
     ports:
       - "443:443"
-<<<<<<< HEAD
-    environment:
-      - VIRTUAL_HOST=staging.api.orv.im
-      - LETSENCRYPT_HOST=staging.api.orv.im
-      - LETSENCRYPT_EMAIL=orv@orv.im
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - proxy_certs:/etc/nginx/certs
-      - proxy_vhost:/etc/nginx/vhost.d
-      - proxy_html:/usr/share/nginx/html
-      - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
-=======
->>>>>>> parent of eff6522 (fix: staging server nginx ssl cert file)
     depends_on:
       - api
     networks:
