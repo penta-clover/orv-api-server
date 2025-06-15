@@ -17,4 +17,9 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(false) // 쿠키 사용 시 true로 변경 필요
                 .maxAge(3600);
     }
+
+    @Override
+    public void configurePathMatch(PathMatchConfigurer configurer) {
+        configurer.setUseTrailingSlashMatch(false);
+    }
 }
