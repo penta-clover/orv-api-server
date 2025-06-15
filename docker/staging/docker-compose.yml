@@ -29,6 +29,7 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - proxy_certs:/etc/nginx/certs
       - proxy_html:/usr/share/nginx/html
+      - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
     depends_on:
       - api
     networks:
