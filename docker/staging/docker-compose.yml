@@ -2,8 +2,8 @@ services:
   api:
     image: chj7239/orv-api-server:staging
     container_name: orv_api_server
-    expose:
-      - "8080"
+    ports:
+      - "80:8080"
     env_file:
       - .env.staging
     depends_on:
@@ -12,11 +12,12 @@ services:
       custom_net:
         ipv4_address: 172.28.0.2
 
-  api-proxy:
-    image: jwilder/nginx-proxy
-    container_name: api_proxy
+  nginx:
+    build: nginx
+    container_name: orv_nginx
     ports:
       - "443:443"
+<<<<<<< HEAD
     environment:
       - VIRTUAL_HOST=staging.api.orv.im
       - LETSENCRYPT_HOST=staging.api.orv.im
@@ -27,22 +28,13 @@ services:
       - proxy_vhost:/etc/nginx/vhost.d
       - proxy_html:/usr/share/nginx/html
       - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
+=======
+>>>>>>> parent of eff6522 (fix: staging server nginx ssl cert file)
     depends_on:
       - api
     networks:
       custom_net:
         ipv4_address: 172.28.0.3
-
-  letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion
-    container_name: nginx-letsencrypt
-    depends_on:
-      - api-proxy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - proxy_certs:/etc/nginx/certs:rw
-      - proxy_vhost:/etc/nginx/vhost.d:rw
-      - proxy_html:/usr/share/nginx/html:rw
 
   postgres:
     image: postgres:16.4
@@ -93,22 +85,12 @@ services:
         ipv4_address: 172.28.0.6
 
   localstack-proxy:
-    image: jwilder/nginx-proxy
+    build: ./localstack-proxy
     container_name: localstack_proxy
     ports:
       - "4565:443"
     depends_on:
       - localstack
-      - letsencrypt
-    environment:
-      - VIRTUAL_HOST=staging.api.orv.im
-      - LETSENCRYPT_HOST=staging.api.orv.im
-      - LETSENCRYPT_EMAIL=orv@orv.im
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - proxy_certs:/etc/nginx/certs
-      - proxy_vhost:/etc/nginx/vhost.d
-      - proxy_html:/usr/share/nginx/html
     networks:
       custom_net:
         ipv4_address: 172.28.0.7
@@ -127,9 +109,6 @@ services:
 
 volumes:
   postgres_data:
-  proxy_certs:
-  proxy_vhost:
-  proxy_html:
 
 networks:
   custom_net:
