@@ -6,9 +6,6 @@ services:
       - "8080"
     env_file:
       - .env.staging
-    environment:
-      - VIRTUAL_HOST=staging.api.orv.im
-      - VIRTUAL_PORT=8080
     depends_on:
       - postgres
     networks:
@@ -21,9 +18,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "4566:4566"
     environment:
-      - VIRTUAL_HOST=staging.api.orv.im,staging.s3.orv.im
-      - LETSENCRYPT_HOST=staging.api.orv.im,staging.s3.orv.im
+      - VIRTUAL_HOST=staging.api.orv.im
+      - LETSENCRYPT_HOST=staging.api.orv.im
       - LETSENCRYPT_EMAIL=orv@orv.im
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
@@ -42,8 +40,6 @@ services:
     container_name: nginx-letsencrypt
     depends_on:
       - api-proxy
-    environment:
-      - NGINX_PROXY_CONTAINER=api_proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - proxy_certs:/etc/nginx/certs:rw
@@ -78,7 +74,7 @@ services:
     environment:
       - SERVICES=s3   # S3만 활성화 (여러 서비스를 동시에 활성화할 수도 있음)
       - DEFAULT_REGION=ap-northeast-2
-      - VIRTUAL_HOST=staging.s3.orv.im
+      - VIRTUAL_HOST=staging.api.orv.im
       - VIRTUAL_PORT=4566
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -99,6 +95,27 @@ services:
     networks:
       custom_net:
         ipv4_address: 172.28.0.6
+
+  localstack-proxy:
+    image: jwilder/nginx-proxy
+    container_name: localstack_proxy
+    ports:
+      - "4565:443"
+    depends_on:
+      - localstack
+      - letsencrypt
+    environment:
+      - VIRTUAL_HOST=staging.api.orv.im
+      - LETSENCRYPT_HOST=staging.api.orv.im
+      - LETSENCRYPT_EMAIL=orv@orv.im
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - proxy_certs:/etc/nginx/certs
+      - proxy_vhost:/etc/nginx/vhost.d
+      - proxy_html:/usr/share/nginx/html
+    networks:
+      custom_net:
+        ipv4_address: 172.28.0.7
 
   watchtower:
     image: containrrr/watchtower
