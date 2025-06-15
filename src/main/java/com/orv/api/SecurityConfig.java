@@ -2,6 +2,7 @@ package com.orv.api;
 
 import com.orv.api.domain.auth.JwtAuthorizationFilter;
 import com.orv.api.domain.auth.JwtTokenProvider;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,6 +49,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/v0/storyboard/*/topic/list").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(handling -> handling
+                        .authenticationEntryPoint((request, response, exception) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\": \"Unauthorized\"}");
+                        })
                 )
                 .addFilterBefore(new JwtAuthorizationFilter(authenticationManager, jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
