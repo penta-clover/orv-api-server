@@ -52,7 +52,7 @@ public class ArchiveControllerTest {
         // given
         InputStream videoStream = getClass().getResourceAsStream("/videos/upload-test-video.mp4");
         assertNotNull(videoStream, "테스트 비디오 파일을 찾을 수 없습니다.");
-        MockMultipartFile video = new MockMultipartFile("video", "extract-test-video.mp4", "video/mp4", videoStream);
+        MockMultipartFile video = new MockMultipartFile("video", "test.mp4", "video/mp4", videoStream);
 
         // storyboardId를 MultipartFile로 생성
         String storyboardIdValue = "3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
