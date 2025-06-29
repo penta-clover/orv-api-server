@@ -59,19 +59,13 @@ public class AudioExtractServiceImpl implements AudioExtractService {
      * @return FFmpeg 오디오 코덱
      */
     private String getAudioCodec(String format) {
-        switch (format.toLowerCase()) {
-            case "mp3":
-                return "libmp3lame";
-            case "wav":
-                return "pcm_s16le";
-            case "aac":
-                return "aac";
-            case "opus":
-                return "libopus";
-            case "flac":
-                return "flac";
-            default:
-                return "libmp3lame"; // 기본값: MP3
-        }
+        return switch (format.toLowerCase()) {
+            case "mp3" -> "libmp3lame";
+            case "wav" -> "pcm_s16le";
+            case "aac" -> "aac";
+            case "opus" -> "libopus";
+            case "flac" -> "flac";
+            default -> "libmp3lame"; // 기본값: MP3
+        };
     }
 }
