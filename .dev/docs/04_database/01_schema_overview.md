@@ -11,7 +11,7 @@
 ```mermaid
 erDiagram
     MEMBER {
-        bigint id PK "회원 ID"
+        uuid id PK "회원 ID"
         varchar name "이름"
         varchar email "이메일"
         varchar profile_image_url "프로필 이미지 URL"
@@ -56,11 +56,23 @@ erDiagram
     STORYBOARD ||--o{ SCENE : "contains"
     MEMBER ||--|{ RESERVATION : "makes"
     TOPIC ||--|{ RESERVATION : "is_for"
+    MEMBER ||--|{ INTERVIEW_AUDIO_RECORDING : "owns"
+    STORYBOARD ||--|{ INTERVIEW_AUDIO_RECORDING : "contains"
 ```
 
 ---
 
 ### 2. 주요 테이블 설명
+
+#### **`INTERVIEW_AUDIO_RECORDING`**
+-   **설명**: 인터뷰에서 추출된 오디오 파일의 메타데이터를 저장합니다.
+-   **주요 컬럼**:
+    -   `id`: 기본 키 (UUID).
+    -   `storyboard_id`: 이 오디오가 속한 스토리보드 (FK).
+    -   `member_id`: uuid (FK) "이 오디오의 소유자 회원".
+    -   `video_url`: S3에 저장된 오디오 파일의 URL.
+    -   `created_at`: 오디오 레코딩 생성 일시.
+    -   `running_time`: 오디오의 재생 시간 (초).
 
 #### **`MEMBER`**
 -   **설명**: 서비스에 가입한 사용자 정보를 저장합니다. 소셜 로그인을 통해 가입하며, `provider`와 `provider_id`로 각 소셜 계정을 식별합니다.
