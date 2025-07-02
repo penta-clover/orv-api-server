@@ -20,4 +20,6 @@ public interface VideoRepository {
     boolean updateTitle(UUID videoId, String title);
 
     boolean updateThumbnail(UUID videoId, InputStream thumbnail, ImageMetadata imageMetadata);
+
+    Optional<InputStream> getVideoStream(UUID videoId);
 }

@@ -1,4 +1,4 @@
-CREATE TABLE INTERVIEW_AUDIO_RECORDING
+CREATE TABLE interview_audio_recording
 (
     id            UUID PRIMARY KEY,
     storyboard_id UUID NOT NULL,

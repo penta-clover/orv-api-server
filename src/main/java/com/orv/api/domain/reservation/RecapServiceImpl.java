@@ -1,0 +1,127 @@
+package com.orv.api.domain.reservation;
+
+import com.orv.api.domain.archive.AudioRepository;
+import com.orv.api.domain.archive.VideoRepository;
+import com.orv.api.domain.archive.dto.AudioMetadata;
+import com.orv.api.domain.archive.dto.Video;
+import com.orv.api.domain.media.AudioCompressionService;
+import com.orv.api.domain.media.AudioExtractService;
+import com.orv.api.domain.media.dto.InterviewAudioRecording;
+import com.orv.api.domain.media.repository.InterviewAudioRecordingRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class RecapServiceImpl implements RecapService {
+
+    private final VideoRepository videoRepository;
+    private final AudioExtractService audioExtractService;
+    private final AudioCompressionService audioCompressionService;
+    private final AudioRepository audioRepository;
+    private final InterviewAudioRecordingRepository interviewAudioRecordingRepository;
+
+    @Override
+    public void processRecap(UUID videoId, UUID memberId) throws IOException {
+        Optional<Video> videoOptional = videoRepository.findById(videoId);
+        if (videoOptional.isEmpty()) {
+            log.error("Video with ID {} not found for recap processing.", videoId);
+            throw new IOException("Video not found.");
+        }
+        Video video = videoOptional.get();
+
+        Optional<InputStream> videoStreamOptional = videoRepository.getVideoStream(videoId);
+        if (videoStreamOptional.isEmpty()) {
+            log.error("Failed to get video stream for video ID {}.", videoId);
+            throw new IOException("Failed to retrieve video stream.");
+        }
+
+        Path tempVideoPath = null;
+        Path tempAudioExtractedPath = null;
+        Path tempAudioCompressedPath = null;
+        File tempVideoFile = null;
+        File tempAudioExtractedFile = null;
+        File tempAudioCompressedFile = null;
+
+        try (InputStream videoInputStream = videoStreamOptional.get()) {
+            // 1. Download video stream to a temporary file
+            tempVideoPath = Files.createTempFile("recap_video_", ".mp4");
+            tempVideoFile = tempVideoPath.toFile();
+            Files.copy(videoInputStream, tempVideoPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            log.info("Video downloaded to temporary file: {}", tempVideoFile.getAbsolutePath());
+
+            // 2. Extract audio (Video -> WAV)
+            tempAudioExtractedPath = Files.createTempFile("extracted_audio_", ".wav");
+            tempAudioExtractedFile = tempAudioExtractedPath.toFile();
+            log.info("Extracting audio from video: {}", tempVideoFile.getAbsolutePath());
+            audioExtractService.extractAudio(tempVideoFile, tempAudioExtractedFile, "wav");
+            log.info("Audio extracted to: {}", tempAudioExtractedFile.getAbsolutePath());
+
+            // 3. Compress audio (WAV -> Opus)
+            tempAudioCompressedPath = Files.createTempFile("compressed_audio_", ".opus");
+            tempAudioCompressedFile = tempAudioCompressedPath.toFile();
+            log.info("Compressing audio: {}", tempAudioExtractedFile.getAbsolutePath());
+            audioCompressionService.compress(tempAudioExtractedFile, tempAudioCompressedFile);
+            log.info("Audio compressed to: {}", tempAudioCompressedFile.getAbsolutePath());
+
+            // 4. Upload compressed audio to S3
+            String s3AudioUrl;
+            try (InputStream compressedAudioInputStream = new FileInputStream(tempAudioCompressedFile)) {
+                AudioMetadata audioMetadata = new AudioMetadata(
+                        video.getStoryboardId(),
+                        memberId,
+                        video.getTitle() != null ? video.getTitle() + " (Recap Audio)" : "Recap Audio",
+                        "audio/opus",
+                        video.getRunningTime(), // Reusing video's running time for now
+                        tempAudioCompressedFile.length()
+                );
+                s3AudioUrl = audioRepository.save(compressedAudioInputStream, audioMetadata)
+                        .orElseThrow(() -> new IOException("Failed to upload compressed audio to S3."));
+            }
+            log.info("Compressed audio uploaded to S3: {}", s3AudioUrl);
+
+            // 5. Save recap audio metadata to DB
+            InterviewAudioRecording recapAudioRecording = InterviewAudioRecording.builder()
+                    .id(UUID.randomUUID())
+                    .storyboardId(video.getStoryboardId())
+                    .memberId(memberId)
+                    .videoUrl(s3AudioUrl) // Storing S3 audio URL in videoUrl field
+                    .createdAt(OffsetDateTime.now(ZoneOffset.UTC))
+                    .runningTime(video.getRunningTime())
+                    .build();
+            interviewAudioRecordingRepository.save(recapAudioRecording);
+            log.info("Recap audio metadata saved to DB for video ID: {}", videoId);
+
+        } catch (Exception e) {
+            log.error("Error processing recap for video ID {}: {}", videoId, e.getMessage(), e);
+            throw new IOException("Recap processing failed for video ID: " + videoId, e);
+        } finally {
+            // Clean up temporary files
+            if (tempVideoFile != null && tempVideoFile.exists()) {
+                Files.deleteIfExists(tempVideoPath);
+                log.info("Deleted temporary video file: {}", tempVideoFile.getAbsolutePath());
+            }
+            if (tempAudioExtractedFile != null && tempAudioExtractedFile.exists()) {
+                Files.deleteIfExists(tempAudioExtractedPath);
+                log.info("Deleted temporary extracted audio file: {}", tempAudioExtractedFile.getAbsolutePath());
+            }
+            if (tempAudioCompressedFile != null && tempAudioCompressedFile.exists()) {
+                Files.deleteIfExists(tempAudioCompressedPath);
+                log.info("Deleted temporary compressed audio file: {}", tempAudioCompressedFile.getAbsolutePath());
+            }
+        }
+    }
+}

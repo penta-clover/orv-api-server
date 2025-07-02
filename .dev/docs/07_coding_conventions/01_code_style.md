@@ -82,3 +82,10 @@
 -   테스트 메소드 이름은 한글 또는 영문으로 자유롭게 작성하되, `[행위]_[상태]` 또는 `[상황]_[예상결과]` 형식을 권장합니다.
     -   예: `회원가입_성공()`, `존재하지_않는_이메일로_로그인시_예외발생()`
     -   예: `login_withValidCredentials_returnsTokens()`
+
+### 3. 데이터베이스 네이밍 규칙 (Database Naming Conventions)
+
+-   **테이블 (Tables)**: 소문자와 언더스코어(`_`)를 사용하여 스네이크 케이스(snake_case)로 작성합니다.
+    -   예: `member`, `topic`, `interview_audio_recording`
+-   **컬럼 (Columns)**: 소문자와 언더스코어(`_`)를 사용하여 스네이크 케이스(snake_case)로 작성합니다.
+    -   예: `created_at`, `profile_image_url`

@@ -1,15 +1,18 @@
 package com.orv.api.domain.media;
 
+import com.orv.api.domain.archive.AudioRepository;
+import com.orv.api.domain.archive.dto.AudioMetadata;
 import com.orv.api.domain.media.dto.InterviewAudioRecording;
 import com.orv.api.domain.media.repository.InterviewAudioRecordingRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -20,17 +23,20 @@ public class AudioService {
     private final AudioExtractService audioExtractService;
     private final AudioCompressionService audioCompressionService;
     private final InterviewAudioRecordingRepository audioRecordingRepository;
+    private final AudioRepository audioRepository;
 
     public AudioService(AudioExtractService audioExtractService,
                         AudioCompressionService audioCompressionService,
-                        InterviewAudioRecordingRepository audioRecordingRepository) {
+                        InterviewAudioRecordingRepository audioRecordingRepository,
+                        AudioRepository audioRepository) {
         this.audioExtractService = audioExtractService;
         this.audioCompressionService = audioCompressionService;
         this.audioRecordingRepository = audioRecordingRepository;
+        this.audioRepository = audioRepository;
     }
 
     public InterviewAudioRecording processAndSaveAudio(
-            File inputVideoFile, UUID storyboardId, UUID memberId, String s3BaseUrl) throws IOException {
+            File inputVideoFile, UUID storyboardId, UUID memberId, String title) throws IOException {
 
         // 1. 임시 파일 경로 설정
         Path tempAudioExtractedPath = null;
@@ -54,21 +60,29 @@ public class AudioService {
             audioCompressionService.compress(tempAudioExtractedFile, tempAudioCompressedFile);
             log.info("오디오 압축 완료: {}", tempAudioCompressedFile.getAbsolutePath());
 
-            // TODO: 4. 압축된 오디오 파일을 S3에 업로드 (현재 S3 저장 로직 부재, 추후 추가 필요)
-            // 임시로 S3 경로를 생성
-            String s3Key = "audio-recordings/" + UUID.randomUUID().toString() + ".opus";
-            String videoUrl = s3BaseUrl + "/" + s3Key; // 실제 S3 URL이 될 경로
+            // 4. S3에 업로드
+            // TODO: running_time 계산 (FFmpeg 등으로 정확한 시간 획득 필요)
+            int runningTime = 60; // 현재는 임시값 (예: 60초)
+            String s3Url;
+            try (InputStream inputStream = new FileInputStream(tempAudioCompressedFile)) {
+                AudioMetadata audioMetadata = new AudioMetadata(
+                        storyboardId,
+                        memberId,
+                        title,
+                        "audio/opus",
+                        runningTime,
+                        tempAudioCompressedFile.length()
+                );
+                s3Url = audioRepository.save(inputStream, audioMetadata)
+                        .orElseThrow(() -> new IOException("S3에 오디오 파일 업로드 실패"));
+            }
 
-            // TODO: 5. running_time 계산 (FFmpeg 등으로 정확한 시간 획득 필요)
-            // 현재는 임시값 (예: 60초)
-            int runningTime = 60; // 실제 오디오 길이를 측정하는 로직 필요
-
-            // 6. 메타데이터 저장
+            // 5. 메타데이터 저장
             InterviewAudioRecording audioRecording = InterviewAudioRecording.builder()
-                    .id(UUID.randomUUID()) // 새로운 UUID 생성
+                    .id(UUID.randomUUID())
                     .storyboardId(storyboardId)
                     .memberId(memberId)
-                    .videoUrl(videoUrl)
+                    .videoUrl(s3Url)
                     .createdAt(OffsetDateTime.now())
                     .runningTime(runningTime)
                     .build();

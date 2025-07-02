@@ -30,7 +30,7 @@ public class JdbcInterviewAudioRecordingRepository implements InterviewAudioReco
             audioRecording.setCreatedAt(OffsetDateTime.now(ZoneOffset.UTC));
         }
 
-        String sql = "INSERT INTO INTERVIEW_AUDIO_RECORDING (id, storyboard_id, member_id, video_url, created_at, running_time) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO interview_audio_recording (id, storyboard_id, member_id, video_url, created_at, running_time) VALUES (?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
                 audioRecording.getId(),
                 audioRecording.getStoryboardId(),
@@ -43,7 +43,7 @@ public class JdbcInterviewAudioRecordingRepository implements InterviewAudioReco
 
     @Override
     public Optional<InterviewAudioRecording> findById(UUID id) {
-        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, running_time FROM INTERVIEW_AUDIO_RECORDING WHERE id = ?";
+        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, running_time FROM interview_audio_recording WHERE id = ?";
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(sql, new InterviewAudioRecordingRowMapper(), id));
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {

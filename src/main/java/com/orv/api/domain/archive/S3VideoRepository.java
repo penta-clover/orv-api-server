@@ -130,4 +130,23 @@ public class S3VideoRepository implements VideoRepository {
             return false;
         }
     }
+
+    @Override
+    public Optional<InputStream> getVideoStream(UUID videoId) {
+        String sql = "SELECT video_url FROM video WHERE id = ?";
+        try {
+            String videoUrl = jdbcTemplate.queryForObject(sql, String.class, videoId);
+            if (videoUrl == null) {
+                return Optional.empty();
+            }
+            // Extract key from CloudFront URL
+            String key = videoUrl.substring(cloudfrontDomain.length() + 1);
+            return Optional.of(amazonS3Client.getObject(bucket, key).getObjectContent());
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
+    }
 }

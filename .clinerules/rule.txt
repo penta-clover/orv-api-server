@@ -1,0 +1,56 @@
+# Project Rules for AI Agent (orv-api-server)
+
+You are an expert assistant for the orv-api-server project. You **MUST** follow the rules below for all tasks, including code generation, modification, and refactoring.
+
+### 1. The Golden Rule
+
+**The single source of truth for this project is the `.dev/docs` directory at the project root. The documentation in this directory ALWAYS takes precedence over your internal knowledge or general coding practices.** Your primary directive is to consult the relevant documents in this directory before analyzing the codebase.
+
+### 2. Mandatory Onboarding Process
+
+Before starting any task, you **MUST** first read `.dev/docs/00_index.md`. This file is your "cheat sheet" and provides a complete overview of the project, its tech stack, and core principles.
+
+### 3. Guide to Key Documents by Task
+
+Refer to these documents before performing a specific task:
+
+| Task Type | Required Reading |
+|---|---|
+| **Designing new features** | All documents in `01_architecture/` |
+| **Local setup, build, or run** | All documents in `02_getting_started/` |
+| **Adding/Modifying API endpoints** | All documents in `03_api_specifications/` |
+| **Changing DB tables/columns** | All documents in `04_database/` |
+| **Modifying domain business logic** | `{domain}.md` in `05_domain_models/` |
+| **Modifying auth/security logic** | `01_authentication_flow.md` in `06_core_concepts/` |
+| **Troubleshooting or debugging** | All documents in `09_troubleshooting/` |
+
+### 4. Protocol for Discrepancies Between Code and Docs
+
+If you detect a discrepancy between the documentation and the actual code, **DO NOT proceed with castom_instructionssumptions.** You must follow this protocol:
+
+1.  **Halt and Inquire**: Immediately stop the current task.
+2.  **Specify the Conflict**: Clearly state the discrepancy, specifying which document and which file/code snippet are in conflict and how.
+3.  **Request Clarification**: Ask for guidance, for example: "I've found a conflict between the documentation and the code. Which is the source of truth? Once confirmed, I will synchronize them before proceeding."
+4.  **Synchronize**: After receiving user confirmation, update both the code and the documentation to be consistent with the source of truth, then resume the original task.
+
+### 5. CRITICAL: Documentation Update Policy
+
+**This is the most important rule.** When you change any code that alters the project's state, you **MUST** read `.dev/docs/08_documentation_policy/01_documentation_update_rules.md` and update all affected documents **within the same commit**. Submitting code without its corresponding documentation update is a direct violation of the rules.
+
+### 6. Git Workflow Compliance
+
+All commits **MUST** adhere to the Conventional Commits specification, as defined in `.dev/docs/07_coding_conventions/02_git_workflow.md`.
+
+---
+### Summary: Key Documents and Their Roles
+
+-   `00_index.md`: **Starting Point**. Project overview and summary.
+-   `01_architecture/`: System design and structure.
+-   `02_getting_started/`: Dev environment setup and run commands.
+-   `03_api_specifications/`: API endpoint specifications.
+-   `04_database/`: DB schema and migration rules.
+-   `05_domain_models/`: Core business logic.
+-   `06_core_concepts/`: Deep dive into key features like auth.
+-   `07_coding_conventions/`: Code style, naming, and Git rules.
+-   `08_documentation_policy/`: **Mandatory rules for updating docs after code changes.**
+-   `09_troubleshooting/`: Guide for fixing common errors.

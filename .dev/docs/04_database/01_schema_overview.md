@@ -56,15 +56,15 @@ erDiagram
     STORYBOARD ||--o{ SCENE : "contains"
     MEMBER ||--|{ RESERVATION : "makes"
     TOPIC ||--|{ RESERVATION : "is_for"
-    MEMBER ||--|{ INTERVIEW_AUDIO_RECORDING : "owns"
-    STORYBOARD ||--|{ INTERVIEW_AUDIO_RECORDING : "contains"
+    MEMBER ||--|{ interview_audio_recording : "owns"
+    STORYBOARD ||--|{ interview_audio_recording : "contains"
 ```
 
 ---
 
 ### 2. 주요 테이블 설명
 
-#### **`INTERVIEW_AUDIO_RECORDING`**
+#### **`interview_audio_recording`**
 -   **설명**: 인터뷰에서 추출된 오디오 파일의 메타데이터를 저장합니다.
 -   **주요 컬럼**:
     -   `id`: 기본 키 (UUID).

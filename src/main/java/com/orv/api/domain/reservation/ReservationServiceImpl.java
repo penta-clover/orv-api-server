@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -27,6 +28,7 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationNotificationService notificationService;
     private final MemberRepository memberRepository;
     private final StoryboardRepository storyboardRepository;
+    private final RecapService recapService;
 
     @Override
     public Optional<InterviewReservation> getInterviewReservationById(UUID reservationId) {
@@ -110,8 +112,12 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public Optional<UUID> reserveRecap(UUID memberId, UUID videoId, ZonedDateTime scheduledAt) {
-        return recapRepository.reserveRecap(memberId, videoId, scheduledAt.toLocalDateTime());
+    public Optional<UUID> reserveRecap(UUID memberId, UUID videoId, ZonedDateTime scheduledAt) throws IOException {
+        Optional<UUID> recapReservationId = recapRepository.reserveRecap(memberId, videoId, scheduledAt.toLocalDateTime());
+        if (recapReservationId.isPresent()) {
+            recapService.processRecap(videoId, memberId);
+        }
+        return recapReservationId;
     }
 
     private OffsetDateTime getMaxOffsetDateTime(OffsetDateTime offsetDateTime1, OffsetDateTime offsetDateTime2) {
