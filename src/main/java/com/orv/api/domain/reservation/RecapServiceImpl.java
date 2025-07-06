@@ -1,6 +1,8 @@
 package com.orv.api.domain.reservation;
 
 import com.orv.api.domain.archive.AudioRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orv.api.domain.archive.VideoRepository;
 import com.orv.api.domain.archive.dto.AudioMetadata;
 import com.orv.api.domain.archive.dto.Video;
@@ -8,6 +10,12 @@ import com.orv.api.domain.media.AudioCompressionService;
 import com.orv.api.domain.media.AudioExtractService;
 import com.orv.api.domain.media.dto.InterviewAudioRecording;
 import com.orv.api.domain.media.repository.InterviewAudioRecordingRepository;
+import com.orv.api.domain.reservation.dto.*;
+import com.orv.api.domain.storyboard.InterviewScenarioFactory;
+import com.orv.api.domain.storyboard.StoryboardRepository;
+import com.orv.api.domain.storyboard.dto.Scene;
+import com.orv.api.domain.storyboard.dto.Storyboard;
+import com.orv.api.infra.recap.RecapClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,8 +30,13 @@ import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +49,10 @@ public class RecapServiceImpl implements RecapService {
     private final AudioRepository audioRepository;
     private final InterviewAudioRecordingRepository interviewAudioRecordingRepository;
     private final RecapRepository recapRepository;
+    private final RecapResultRepository recapResultRepository;
+    private final StoryboardRepository storyboardRepository;
+    private final InterviewScenarioFactory interviewScenarioFactory;
+    private final RecapClient recapClient;
 
     @Override
     public Optional<UUID> reserveRecap(UUID memberId, UUID videoId, ZonedDateTime scheduledAt) throws IOException {
@@ -49,22 +66,20 @@ public class RecapServiceImpl implements RecapService {
         log.info("Recap reservation saved to DB with ID: {}", recapReservationId);
 
         // 2. 오디오 처리 및 저장
-        processRecap(videoId, memberId, recapReservationId);
+        Video video = videoRepository.findById(videoId)
+                .orElseThrow(() -> new IOException("Video with ID " + videoId + " not found."));
+        String audioS3Url = processAudio(video, memberId, recapReservationId);
+
+        // 3. Recap 서버 API 호출
+        callRecapServer(recapReservationId, video, audioS3Url);
 
         return recapReservationIdOptional;
     }
 
-    private void processRecap(UUID videoId, UUID memberId, UUID recapReservationId) throws IOException {
-        Optional<Video> videoOptional = videoRepository.findById(videoId);
-        if (videoOptional.isEmpty()) {
-            log.error("Video with ID {} not found for recap processing.", videoId);
-            throw new IOException("Video not found.");
-        }
-        Video video = videoOptional.get();
-
-        Optional<InputStream> videoStreamOptional = videoRepository.getVideoStream(videoId);
+    private String processAudio(Video video, UUID memberId, UUID recapReservationId) throws IOException {
+        Optional<InputStream> videoStreamOptional = videoRepository.getVideoStream(video.getId());
         if (videoStreamOptional.isEmpty()) {
-            log.error("Failed to get video stream for video ID {}.", videoId);
+            log.error("Failed to get video stream for video ID {}.", video.getId());
             throw new IOException("Failed to retrieve video stream.");
         }
 
@@ -92,7 +107,7 @@ public class RecapServiceImpl implements RecapService {
             // 3. Compress audio (WAV -> Opus)
             tempAudioCompressedPath = Files.createTempFile("compressed_audio_", ".opus");
             tempAudioCompressedFile = tempAudioCompressedPath.toFile();
-            log.info("Compressing audio: {}", tempAudioExtractedFile.getAbsolutePath());
+            log.info("Compressing audio: {}", tempAudioCompressedFile.getAbsolutePath());
             audioCompressionService.compress(tempAudioExtractedFile, tempAudioCompressedFile);
             log.info("Audio compressed to: {}", tempAudioCompressedFile.getAbsolutePath());
 
@@ -128,12 +143,14 @@ public class RecapServiceImpl implements RecapService {
                 recapRepository.linkAudioRecording(recapReservationId, audioRecordingId);
                 log.info("Recap audio metadata saved and linked to reservation ID: {}", recapReservationId);
             } else {
-                log.error("Failed to save recap audio metadata to DB for video ID: {}", videoId);
+                log.error("Failed to save recap audio metadata to DB for video ID: {}", video.getId());
+                throw new IOException("Failed to save recap audio metadata.");
             }
+            return resourceUrl.toString();
 
         } catch (Exception e) {
-            log.error("Error processing recap for video ID {}: {}", videoId, e.getMessage(), e);
-            throw new IOException("Recap processing failed for video ID: " + videoId, e);
+            log.error("Error processing audio for video ID {}: {}", video.getId(), e.getMessage(), e);
+            throw new IOException("Audio processing failed for video ID: " + video.getId(), e);
         } finally {
             // Clean up temporary files
             if (tempVideoFile != null && tempVideoFile.exists()) {
@@ -149,5 +166,27 @@ public class RecapServiceImpl implements RecapService {
                 log.info("Deleted temporary compressed audio file: {}", tempAudioCompressedFile.getAbsolutePath());
             }
         }
+    }
+
+    private void callRecapServer(UUID recapReservationId, Video video, String audioS3Url) {
+        // 1. Get storyboard and scene info
+        Storyboard storyboard = storyboardRepository.findById(video.getStoryboardId())
+                .orElseThrow(() -> new RuntimeException("Storyboard not found for ID: " + video.getStoryboardId()));
+
+        List<Scene> allScenes = storyboardRepository.findScenesByStoryboardId(video.getStoryboardId())
+                .orElseThrow(() -> new RuntimeException("Scenes not found for Storyboard ID: " + video.getStoryboardId()));
+
+        // 2. Create InterviewScenario using the factory
+        InterviewScenario interviewScenario = interviewScenarioFactory.create(storyboard, allScenes);
+
+        // 3. Create request body
+        RecapServerRequest requestBody = new RecapServerRequest(audioS3Url, interviewScenario);
+
+        // 4. Call API via RecapClient
+        recapClient.requestRecap(requestBody).ifPresent(response -> {
+            log.info("Successfully received recap from server for video ID: {}. Storing results...", video.getId());
+            recapResultRepository.save(recapReservationId, response.getRecapContent())
+                    .ifPresent(recapResultId -> log.info("Recap results stored successfully with result ID: {}", recapResultId));
+        });
     }
 }

@@ -59,7 +59,7 @@ public class MemberControllerTest {
                 .andExpect(jsonPath("$.data.id").value(myInfo.getId().toString()))
                 .andExpect(jsonPath("$.data.nickname").value(myInfo.getNickname()))
                 .andExpect(jsonPath("$.data.profileImageUrl").value(myInfo.getProfileImageUrl()))
-                .andExpect(jsonPath("$.data.createdAt").value(startsWith(myInfo.getCreatedAt().truncatedTo(ChronoUnit.SECONDS).toString())))
+                .andExpect(jsonPath("$.data.createdAt").value(org.hamcrest.Matchers.startsWith(myInfo.getCreatedAt().truncatedTo(ChronoUnit.SECONDS).toString())))
                 .andDo(document("member/get-my-info",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
