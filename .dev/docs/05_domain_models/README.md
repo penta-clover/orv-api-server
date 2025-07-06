@@ -16,6 +16,7 @@
 | **예약 (Reservation)** | `domain/reservation`| 인터뷰 세션 예약 및 상태 관리, 스케줄링 | (작성 예정) |
 | **스토리보드/주제 (Storyboard/Topic)** | `domain/storyboard`| 인터뷰 주제 및 질문(씬) 관리, 스토리보드 생성 및 구성 | (작성 예정) |
 | **약관 (Term)** | `domain/term` | 서비스 이용 약관, 개인정보 처리방침 관리 및 사용자 동의 여부 기록 | (작성 예정) |
+| **리캡 (Recap)** | `domain/recap` | 리캡 생성 예약, 리캡 결과 조회 및 관리 | [recap.md](./recap.md) |
 | **관리자 (Admin)** | `domain/admin` | 관리자 기능 (사용자 관리, 콘텐츠 관리 등) | (작성 예정) |
 
 ---

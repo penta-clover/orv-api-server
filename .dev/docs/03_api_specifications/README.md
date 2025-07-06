@@ -77,6 +77,7 @@ Authorization: Bearer {ACCESS_TOKEN}
 ### 3. 도메인별 API 명세 목록
 
 -   [인증/회원 (Auth/Member)](./auth.md)
+-   [리캡 (Recap)](./recap.md)
 -   아카이브 (Archive) - (작성 예정)
 -   예약 (Reservation) - (작성 예정)
 -   스토리보드 (Storyboard) - (작성 예정)

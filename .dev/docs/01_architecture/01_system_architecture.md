@@ -21,11 +21,15 @@ graph TD
     subgraph "외부 시스템 / 데이터 스토어"
         C[PostgreSQL 데이터베이스]
         D[AWS S3 (Object Storage)]
+        E[Recap 서버 (External AI Service)]
     end
 
     A -- "HTTPS (API 요청)" --> B
     B -- "JDBC (데이터 조회/저장)" --> C
     B -- "AWS SDK (파일 업로드/다운로드)" --> D
+    B -- "HTTPS (Recap 요청)" --> E
+
+    style E fill:#f9f,stroke:#333,stroke-width:2px
 
     style B fill:#f9f,stroke:#333,stroke-width:2px
 ```

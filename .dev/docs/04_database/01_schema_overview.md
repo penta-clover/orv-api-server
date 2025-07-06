@@ -51,6 +51,39 @@ erDiagram
         varchar state "예약 상태 (예: PENDING, CONFIRMED, CANCELED, COMPLETED)"
     }
 
+    interview_audio_recording {
+        uuid id PK "오디오 레코딩 ID"
+        uuid storyboard_id FK "스토리보드 ID"
+        uuid member_id FK "회원 ID"
+        text audio_url "오디오 파일 URL"
+        timestamptz created_at
+        integer running_time "재생 시간"
+    }
+
+    recap_reservation {
+        uuid id PK "리캡 예약 ID"
+        uuid member_id FK "회원 ID"
+        uuid video_id FK "영상 ID"
+        timestamptz scheduled_at "예약 시간"
+        timestamptz created_at
+        uuid interview_audio_recording_id FK "오디오 레코딩 ID"
+        uuid recap_result_id FK "리캡 결과 ID"
+    }
+
+    recap_result {
+        uuid id PK "리캡 결과 ID"
+        timestamptz created_at
+    }
+
+    recap_answer_summary {
+        uuid id PK "리캡 답변 요약 ID"
+        uuid recap_result_id FK "리캡 결과 ID"
+        uuid scene_id FK "씬 ID"
+        text summary "요약 내용"
+        int scene_order "씬 순서"
+        timestamptz created_at
+    }
+
     MEMBER ||--|{ STORYBOARD : "creates"
     TOPIC ||--|{ STORYBOARD : "is_about"
     STORYBOARD ||--o{ SCENE : "contains"
@@ -58,6 +91,11 @@ erDiagram
     TOPIC ||--|{ RESERVATION : "is_for"
     MEMBER ||--|{ interview_audio_recording : "owns"
     STORYBOARD ||--|{ interview_audio_recording : "contains"
+    MEMBER ||--|{ recap_reservation : "makes"
+    interview_audio_recording ||--o{ recap_reservation : "used_in"
+    recap_result ||--o{ recap_reservation : "generated_for"
+    recap_result ||--|{ recap_answer_summary : "contains"
+    SCENE ||--|{ recap_answer_summary : "summarizes"
 ```
 
 ---
@@ -70,9 +108,36 @@ erDiagram
     -   `id`: 기본 키 (UUID).
     -   `storyboard_id`: 이 오디오가 속한 스토리보드 (FK).
     -   `member_id`: uuid (FK) "이 오디오의 소유자 회원".
-    -   `video_url`: S3에 저장된 오디오 파일의 URL.
+    -   `audio_url`: S3에 저장된 오디오 파일의 URL.
     -   `created_at`: 오디오 레코딩 생성 일시.
     -   `running_time`: 오디오의 재생 시간 (초).
+
+#### **`recap_reservation`**
+-   **설명**: 사용자가 리캡(Recap) 생성을 예약한 정보를 저장합니다.
+-   **주요 컬럼**:
+    -   `id`: 기본 키 (UUID).
+    -   `member_id`: 예약을 한 회원 (FK).
+    -   `video_id`: 리캡을 생성할 원본 영상 ID (FK).
+    -   `scheduled_at`: 리캡 생성 예약 시간.
+    -   `created_at`: 리캡 예약 생성 일시.
+    -   `interview_audio_recording_id`: 리캡에 사용될 오디오 레코딩 ID (FK).
+    -   `recap_result_id`: 생성된 리캡 결과 ID (FK).
+
+#### **`recap_result`**
+-   **설명**: 생성된 리캡의 최종 결과 메타데이터를 저장합니다.
+-   **주요 컬럼**:
+    -   `id`: 기본 키 (UUID).
+    -   `created_at`: 리캡 결과 생성 일시.
+
+#### **`recap_answer_summary`**
+-   **설명**: 리캡 결과에 포함된 각 답변 씬(Scene)의 요약 정보를 저장합니다.
+-   **주요 컬럼**:
+    -   `id`: 기본 키 (UUID).
+    -   `recap_result_id`: 이 요약이 속한 리캡 결과 ID (FK).
+    -   `scene_id`: 요약된 씬의 ID (FK).
+    -   `summary`: 씬의 요약 내용.
+    -   `scene_order`: 리캡 내에서의 씬 순서.
+    -   `created_at`: 요약 생성 일시.
 
 #### **`MEMBER`**
 -   **설명**: 서비스에 가입한 사용자 정보를 저장합니다. 소셜 로그인을 통해 가입하며, `provider`와 `provider_id`로 각 소셜 계정을 식별합니다.
