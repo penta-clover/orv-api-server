@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
@@ -96,7 +97,7 @@ public class RecapServiceImpl implements RecapService {
             log.info("Audio compressed to: {}", tempAudioCompressedFile.getAbsolutePath());
 
             // 4. Upload compressed audio to S3
-            String s3AudioUrl;
+            URI resourceUrl;
             try (InputStream compressedAudioInputStream = new FileInputStream(tempAudioCompressedFile)) {
                 AudioMetadata audioMetadata = new AudioMetadata(
                         video.getStoryboardId(),
@@ -106,17 +107,17 @@ public class RecapServiceImpl implements RecapService {
                         video.getRunningTime(), // Reusing video's running time for now
                         tempAudioCompressedFile.length()
                 );
-                s3AudioUrl = audioRepository.save(compressedAudioInputStream, audioMetadata)
+                resourceUrl = audioRepository.save(compressedAudioInputStream, audioMetadata)
                         .orElseThrow(() -> new IOException("Failed to upload compressed audio to S3."));
             }
-            log.info("Compressed audio uploaded to S3: {}", s3AudioUrl);
+            log.info("Compressed audio uploaded to S3: {}", resourceUrl);
 
             // 5. Save recap audio metadata to DB
             InterviewAudioRecording recapAudioRecording = InterviewAudioRecording.builder()
                     .id(UUID.randomUUID())
                     .storyboardId(video.getStoryboardId())
                     .memberId(memberId)
-                    .videoUrl(s3AudioUrl) // Storing S3 audio URL in videoUrl field
+                    .audioUrl(resourceUrl.toString()) // Storing S3 audio URL in audioUrl field
                     .createdAt(OffsetDateTime.now(ZoneOffset.UTC))
                     .runningTime(video.getRunningTime())
                     .build();

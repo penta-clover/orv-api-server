@@ -16,7 +16,7 @@ public class InterviewAudioRecording {
     private UUID id;
     private UUID storyboardId;
     private UUID memberId;
-    private String videoUrl;
+    private String audioUrl;
     private OffsetDateTime createdAt;
     private Integer runningTime;
 }

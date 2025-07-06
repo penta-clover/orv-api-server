@@ -211,7 +211,9 @@ public class ReservationIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
 
         // 검증: recap_reservation 테이블에 데이터 삽입 확인
-        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM recap_reservation", Integer.class);
-        assertThat(count).isGreaterThan(0);
+        Integer recapReservationCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM recap_reservation", Integer.class);
+        Integer audioRecordingCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM interview_audio_recording", Integer.class);
+        assertThat(recapReservationCount).isGreaterThan(0);
+        assertThat(audioRecordingCount).isGreaterThan(0);
     }
 }

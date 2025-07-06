@@ -11,9 +11,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -63,7 +65,7 @@ public class AudioService {
             // 4. S3에 업로드
             // TODO: running_time 계산 (FFmpeg 등으로 정확한 시간 획득 필요)
             int runningTime = 60; // 현재는 임시값 (예: 60초)
-            String s3Url;
+            URI resourceUrl;
             try (InputStream inputStream = new FileInputStream(tempAudioCompressedFile)) {
                 AudioMetadata audioMetadata = new AudioMetadata(
                         storyboardId,
@@ -73,8 +75,8 @@ public class AudioService {
                         runningTime,
                         tempAudioCompressedFile.length()
                 );
-                s3Url = audioRepository.save(inputStream, audioMetadata)
-                        .orElseThrow(() -> new IOException("S3에 오디오 파일 업로드 실패"));
+                Optional<URI> urlOptional = audioRepository.save(inputStream, audioMetadata);
+                resourceUrl = urlOptional.orElseThrow(() -> new IOException("S3에 오디오 파일 업로드 실패"));
             }
 
             // 5. 메타데이터 저장
@@ -82,7 +84,7 @@ public class AudioService {
                     .id(UUID.randomUUID())
                     .storyboardId(storyboardId)
                     .memberId(memberId)
-                    .videoUrl(s3Url)
+                    .audioUrl(resourceUrl.toString())
                     .createdAt(OffsetDateTime.now())
                     .runningTime(runningTime)
                     .build();
