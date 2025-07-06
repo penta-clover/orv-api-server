@@ -7,7 +7,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.springframework.stereotype.Service;
+
 @Slf4j
+@Service
 public class AudioExtractServiceImpl implements AudioExtractService {
     /**
      * FFmpeg를 사용하여 비디오 파일에서 오디오를 추출합니다.

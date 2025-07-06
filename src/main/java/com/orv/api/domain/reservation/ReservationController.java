@@ -27,6 +27,7 @@ import java.util.UUID;
 @Slf4j
 public class ReservationController {
     private final ReservationService reservationService;
+    private final RecapService recapService;
 
     @PostMapping("/interview")
     public ApiResponse reserveInterview(@RequestBody InterviewReservationRequest request, @RequestParam(value="startNow", required = false, defaultValue = "false") Boolean startNow) {
@@ -112,7 +113,7 @@ public class ReservationController {
             UUID videoId = UUID.fromString(request.getVideoId());
             ZonedDateTime scheduledAt = request.getScheduledAt();
 
-            Optional<UUID> id = reservationService.reserveRecap(memberId, videoId, scheduledAt);
+            Optional<UUID> id = recapService.reserveRecap(memberId, videoId, scheduledAt);
 
             if (id.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.UNKNOWN, 500);

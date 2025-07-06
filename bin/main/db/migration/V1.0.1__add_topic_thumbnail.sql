@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE topic
+    ADD COLUMN thumbnail_url TEXT NOT NULL;
+
+COMMIT;

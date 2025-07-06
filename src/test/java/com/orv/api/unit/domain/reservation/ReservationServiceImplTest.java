@@ -204,24 +204,4 @@ public class ReservationServiceImplTest {
         // then
         assertTrue(result);
     }
-
-    // reserveRecap 메소드 테스트
-    @Test
-    public void testReserveRecap() {
-        // given
-        UUID memberId = UUID.randomUUID();
-        UUID videoId = UUID.randomUUID();
-        ZonedDateTime scheduledAt = ZonedDateTime.now();
-        UUID recapId = UUID.randomUUID();
-
-        when(recapRepository.reserveRecap(eq(memberId), eq(videoId), any()))
-                .thenReturn(Optional.of(recapId));
-
-        // when
-        Optional<UUID> result = reservationService.reserveRecap(memberId, videoId, scheduledAt);
-
-        // then
-        assertTrue(result.isPresent());
-        assertEquals(recapId, result.get());
-    }
 }

@@ -6,4 +6,5 @@ import java.util.UUID;
 
 public interface RecapRepository {
     Optional<UUID> reserveRecap(UUID memberId, UUID videoId, LocalDateTime scheduledAt);
+    void linkAudioRecording(UUID recapReservationId, UUID audioRecordingId);
 }

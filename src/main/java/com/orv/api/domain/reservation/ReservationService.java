@@ -18,5 +18,4 @@ public interface ReservationService {
     Optional<UUID> reserveInstantInterview(UUID memberId, UUID storyboardId) throws Exception;
     Optional<List<InterviewReservation>> getForwardInterviews(UUID memberId, OffsetDateTime from);
     boolean markInterviewAsDone(UUID interviewId);
-    Optional<UUID> reserveRecap(UUID memberId, UUID videoId, ZonedDateTime scheduledAt) throws IOException;
 }

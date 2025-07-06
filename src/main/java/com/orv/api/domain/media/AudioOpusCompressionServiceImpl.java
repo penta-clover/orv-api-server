@@ -7,7 +7,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.springframework.stereotype.Service;
+
 @Slf4j
+@Service
 public class AudioOpusCompressionServiceImpl implements AudioCompressionService {
     /**
      * Compresses an audio file using the Opus codec.

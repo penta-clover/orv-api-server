@@ -111,15 +111,6 @@ public class ReservationServiceImpl implements ReservationService {
         return reservationRepository.changeInterviewReservationStatus(interviewId, "done");
     }
 
-    @Override
-    public Optional<UUID> reserveRecap(UUID memberId, UUID videoId, ZonedDateTime scheduledAt) throws IOException {
-        Optional<UUID> recapReservationId = recapRepository.reserveRecap(memberId, videoId, scheduledAt.toLocalDateTime());
-        if (recapReservationId.isPresent()) {
-            recapService.processRecap(videoId, memberId);
-        }
-        return recapReservationId;
-    }
-
     private OffsetDateTime getMaxOffsetDateTime(OffsetDateTime offsetDateTime1, OffsetDateTime offsetDateTime2) {
         return offsetDateTime1.isAfter(offsetDateTime2) ? offsetDateTime1 : offsetDateTime2;
     }

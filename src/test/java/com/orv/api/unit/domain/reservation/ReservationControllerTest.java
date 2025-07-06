@@ -1,6 +1,7 @@
 package com.orv.api.unit.domain.reservation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orv.api.domain.reservation.RecapService;
 import com.orv.api.domain.reservation.ReservationController;
 import com.orv.api.domain.reservation.ReservationService;
 import com.orv.api.domain.reservation.dto.InterviewReservation;
@@ -46,6 +47,9 @@ public class ReservationControllerTest {
 
     @MockitoBean
     private ReservationService reservationService;
+
+    @MockitoBean
+    private RecapService recapService;
 
     @Test
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
@@ -165,7 +169,7 @@ public class ReservationControllerTest {
         String formattedTime = request.getScheduledAt().format(formatter);
 
         String generatedId = "d23abc70-7713-4a35-b12f-2521af77524b";
-        when(reservationService.reserveRecap(any(), any(), any())).thenReturn(Optional.of(UUID.fromString(generatedId)));
+        when(recapService.reserveRecap(any(), any(), any())).thenReturn(Optional.of(UUID.fromString(generatedId)));
 
         // when
         ResultActions resultActions = mockMvc.perform(post("/api/v0/reservation/recap/video")

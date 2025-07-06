@@ -16,8 +16,11 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
+import com.amazonaws.services.s3.model.S3Object;
+
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.util.*;
 
 @Repository
@@ -139,9 +142,20 @@ public class S3VideoRepository implements VideoRepository {
             if (videoUrl == null) {
                 return Optional.empty();
             }
-            // Extract key from CloudFront URL
-            String key = videoUrl.substring(cloudfrontDomain.length() + 1);
-            return Optional.of(amazonS3Client.getObject(bucket, key).getObjectContent());
+
+            URI uri = new URI(videoUrl);
+            String scheme = uri.getScheme();
+
+            if ("s3".equalsIgnoreCase(scheme)) {
+                String bucketName = uri.getHost();
+                String key = uri.getPath().substring(1);
+                S3Object s3Object = amazonS3Client.getObject(bucketName, key);
+                return Optional.of(s3Object.getObjectContent());
+            } else if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
+                return Optional.of(uri.toURL().openStream());
+            } else {
+                return Optional.empty();
+            }
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         } catch (Exception e) {

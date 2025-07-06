@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,9 +34,26 @@ public class RecapServiceImpl implements RecapService {
     private final AudioCompressionService audioCompressionService;
     private final AudioRepository audioRepository;
     private final InterviewAudioRecordingRepository interviewAudioRecordingRepository;
+    private final RecapRepository recapRepository;
 
     @Override
-    public void processRecap(UUID videoId, UUID memberId) throws IOException {
+    public Optional<UUID> reserveRecap(UUID memberId, UUID videoId, ZonedDateTime scheduledAt) throws IOException {
+        // 1. DB에 리캡 예약 정보 저장
+        Optional<UUID> recapReservationIdOptional = recapRepository.reserveRecap(memberId, videoId, scheduledAt.toLocalDateTime());
+        if (recapReservationIdOptional.isEmpty()) {
+            log.error("Failed to reserve recap for video ID: {}", videoId);
+            return Optional.empty();
+        }
+        UUID recapReservationId = recapReservationIdOptional.get();
+        log.info("Recap reservation saved to DB with ID: {}", recapReservationId);
+
+        // 2. 오디오 처리 및 저장
+        processRecap(videoId, memberId, recapReservationId);
+
+        return recapReservationIdOptional;
+    }
+
+    private void processRecap(UUID videoId, UUID memberId, UUID recapReservationId) throws IOException {
         Optional<Video> videoOptional = videoRepository.findById(videoId);
         if (videoOptional.isEmpty()) {
             log.error("Video with ID {} not found for recap processing.", videoId);
@@ -102,8 +120,15 @@ public class RecapServiceImpl implements RecapService {
                     .createdAt(OffsetDateTime.now(ZoneOffset.UTC))
                     .runningTime(video.getRunningTime())
                     .build();
-            interviewAudioRecordingRepository.save(recapAudioRecording);
-            log.info("Recap audio metadata saved to DB for video ID: {}", videoId);
+            InterviewAudioRecording savedAudioRecording = interviewAudioRecordingRepository.save(recapAudioRecording);
+
+            if (savedAudioRecording != null) {
+                UUID audioRecordingId = savedAudioRecording.getId();
+                recapRepository.linkAudioRecording(recapReservationId, audioRecordingId);
+                log.info("Recap audio metadata saved and linked to reservation ID: {}", recapReservationId);
+            } else {
+                log.error("Failed to save recap audio metadata to DB for video ID: {}", videoId);
+            }
 
         } catch (Exception e) {
             log.error("Error processing recap for video ID {}: {}", videoId, e.getMessage(), e);
