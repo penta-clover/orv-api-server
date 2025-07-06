@@ -189,4 +189,9 @@ public class RecapServiceImpl implements RecapService {
                     .ifPresent(recapResultId -> log.info("Recap results stored successfully with result ID: {}", recapResultId));
         });
     }
+
+    @Override
+    public Optional<RecapResultResponse> getRecapResult(UUID recapReservationId) {
+        return recapResultRepository.findByRecapReservationId(recapReservationId);
+    }
 }

@@ -4,6 +4,7 @@ import com.orv.api.domain.reservation.dto.InterviewReservation;
 import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
 import com.orv.api.domain.reservation.dto.RecapReservationRequest;
 import com.orv.api.domain.reservation.dto.RecapReservationResponse;
+import com.orv.api.domain.reservation.dto.RecapResultResponse;
 import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
 import jakarta.websocket.server.PathParam;
@@ -11,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -124,5 +126,16 @@ public class ReservationController {
             e.printStackTrace();
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
+    }
+
+    @GetMapping("/recap/{recapReservationId}/result")
+    public ApiResponse getRecapResult(@PathVariable UUID recapReservationId) {
+        Optional<RecapResultResponse> recapResult = recapService.getRecapResult(recapReservationId);
+
+        if (recapResult.isEmpty()) {
+            return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);
+        }
+
+        return ApiResponse.success(recapResult.get(), 200);
     }
 }
