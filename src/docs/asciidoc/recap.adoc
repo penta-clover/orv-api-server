@@ -1,0 +1,52 @@
+= Recap API 문서
+Author Name <author@example.com>
+v0.0.1-SNAPSHOT
+:snippets: {snippets}
+:imagesdir: images
+
+== Recap API 개요
+
+Recap API는 비디오 리캡 예약 및 결과 조회 기능을 제공합니다.
+
+=== 비디오 리캡 예약
+
+**엔드포인트:** `POST /api/v0/reservation/recap/video`
+
+촬영한 영상에 대한 리캡을 예약합니다.
+
+==== 요청 데이터 설명
+include::{snippets}/reservation/recap-success/request-fields.adoc[]
+
+==== 응답 데이터 설명
+include::{snippets}/reservation/recap-success/response-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/reservation/recap-success/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/reservation/recap-success/http-response.adoc[]
+
+=== 리캡 결과 조회
+
+**엔드포인트:** `GET /api/v0/reservation/recap/{recapReservationId}/result`
+
+리캡 예약에 대한 분석 결과를 조회합니다.
+
+==== 경로 파라미터 설명
+include::{snippets}/recap/get-recap-result-by-id/path-parameters.adoc[]
+
+==== 응답 데이터 설명
+include::{snippets}/recap/get-recap-result-by-id/response-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/recap/get-recap-result-by-id/http-request.adoc[]
+
+==== 응답 예시
+include::{snippets}/recap/get-recap-result-by-id/http-response.adoc[]
+
+== 에러 처리 및 상태 코드
+
+API 호출 시 반환되는 주요 상태 코드는 다음과 같습니다:
+
+* **200:** 성공
+* **4xx, 5xx:** 클라이언트 또는 서버 오류 (자세한 내용은 개별 스니펫 참고)

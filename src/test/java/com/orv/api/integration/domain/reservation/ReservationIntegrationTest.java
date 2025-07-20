@@ -5,21 +5,21 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orv.api.domain.auth.JwtTokenProvider;
 import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
+import com.orv.api.domain.reservation.dto.RecapContent;
 import com.orv.api.domain.reservation.dto.RecapReservationRequest;
+import com.orv.api.domain.reservation.dto.RecapServerResponse;
+import com.orv.api.infra.recap.RecapClient;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.quartz.Scheduler;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,10 +27,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -57,6 +61,9 @@ public class ReservationIntegrationTest {
 
     @MockitoBean
     private AmazonS3 amazonS3;
+    
+    @MockitoBean
+    private RecapClient recapClient;
 
     private static final String testMemberId = "054c3e8a-3387-4eb3-ac8a-31a48221f192";
 
@@ -65,6 +72,10 @@ public class ReservationIntegrationTest {
     private static final String testTopicId = "4d2add55-fa18-44de-bfc2-bb863222ffe0";
 
     private static final String testVideoId = "5d2add55-fa18-44de-bfc2-bb863222ffe0";
+
+    private static final String testScene1Id = "6C9B9D49-24A3-4179-93A4-92F66C530653";
+
+    private static final String testScene2Id = "F1173A37-4B82-4870-B132-92C7AE5DAC58";
 
     private static String token;
 
@@ -193,6 +204,14 @@ public class ReservationIntegrationTest {
      */
     @Test
     public void testReserveRecap() throws Exception {
+        RecapServerResponse mockResponse = new RecapServerResponse(
+                List.of(
+                        new RecapContent(UUID.fromString(testScene1Id), "summary1"),
+                        new RecapContent(UUID.fromString(testScene2Id), "summary2")
+                )
+        );
+        when(recapClient.requestRecap(any())).thenReturn(Optional.of(mockResponse));
+
         // 준비: 요청 JSON 생성
         RecapReservationRequest request = new RecapReservationRequest();
         // video_id 컬럼이 uuid라면, UUID 객체를 toString() 대신 직접 전달하거나 SQL에서 캐스팅 적용
