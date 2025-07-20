@@ -1,4 +1,4 @@
-package com.orv.api.unit.domain.domain.reservation;
+package com.orv.api.unit.domain.reservation;
 
 import com.orv.api.domain.archive.AudioRepository;
 import com.orv.api.domain.archive.VideoRepository;

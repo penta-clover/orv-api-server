@@ -11,12 +11,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RecapAnswerSummaryResponse {
-    @JsonProperty("scene_id")
+    @JsonProperty("sceneId")
     private UUID sceneId;
 
     @JsonProperty("question")
     private String question;
 
-    @JsonProperty("answer_summary")
+    @JsonProperty("answerSummary")
     private String answerSummary;
 }

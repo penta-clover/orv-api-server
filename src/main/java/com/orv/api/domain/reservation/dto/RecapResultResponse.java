@@ -13,12 +13,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RecapResultResponse {
-    @JsonProperty("recap_result_id")
+    @JsonProperty("recapResultId")
     private UUID recapResultId;
 
-    @JsonProperty("created_at")
+    @JsonProperty("createdAt")
     private OffsetDateTime createdAt;
 
-    @JsonProperty("answer_summaries")
+    @JsonProperty("answerSummaries")
     private List<RecapAnswerSummaryResponse> answerSummaries;
 }

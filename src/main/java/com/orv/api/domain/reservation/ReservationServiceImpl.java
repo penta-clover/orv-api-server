@@ -24,11 +24,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReservationServiceImpl implements ReservationService {
     private final ReservationRepository reservationRepository;
-    private final RecapRepository recapRepository;
     private final ReservationNotificationService notificationService;
     private final MemberRepository memberRepository;
     private final StoryboardRepository storyboardRepository;
-    private final RecapService recapService;
 
     @Override
     public Optional<InterviewReservation> getInterviewReservationById(UUID reservationId) {
