@@ -12,6 +12,8 @@ Reservation 관련 엔드포인트입니다.
 
 **엔드포인트:** `POST /api/v0/reservation/interview`
 
+
+
 특정 스토리보드에 대한 인터뷰를 예약합니다.
 
 ==== 요청 데이터 설명

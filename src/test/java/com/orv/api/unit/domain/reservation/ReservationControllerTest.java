@@ -1,11 +1,14 @@
 package com.orv.api.unit.domain.reservation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orv.api.domain.reservation.RecapService;
 import com.orv.api.domain.reservation.ReservationController;
 import com.orv.api.domain.reservation.ReservationService;
 import com.orv.api.domain.reservation.dto.InterviewReservation;
 import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
 import com.orv.api.domain.reservation.dto.RecapReservationRequest;
+import com.orv.api.domain.reservation.dto.RecapResultResponse;
+import com.orv.api.domain.reservation.dto.RecapAnswerSummaryResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
@@ -46,6 +49,9 @@ public class ReservationControllerTest {
 
     @MockitoBean
     private ReservationService reservationService;
+
+    @MockitoBean
+    private RecapService recapService;
 
     @Test
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
@@ -165,7 +171,7 @@ public class ReservationControllerTest {
         String formattedTime = request.getScheduledAt().format(formatter);
 
         String generatedId = "d23abc70-7713-4a35-b12f-2521af77524b";
-        when(reservationService.reserveRecap(any(), any(), any())).thenReturn(Optional.of(UUID.fromString(generatedId)));
+        when(recapService.reserveRecap(any(), any(), any())).thenReturn(Optional.of(UUID.fromString(generatedId)));
 
         // when
         ResultActions resultActions = mockMvc.perform(post("/api/v0/reservation/recap/video")
@@ -238,6 +244,56 @@ public class ReservationControllerTest {
                                 fieldWithPath("data.storyboardId").description("예약한 스토리보드 ID"),
                                 fieldWithPath("data.scheduledAt").description("예약 대상 일시"),
                                 fieldWithPath("data.createdAt").description("예약 생성 일시")
+                        )
+                ));
+    }
+
+    @Test
+    @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
+    public void testGetRecapResultById() throws Exception {
+        // given
+        UUID recapResultId = UUID.fromString("a1b2c3d4-e5f6-7890-1234-567890abcdef");
+        UUID sceneId1 = UUID.fromString("b1b2c3d4-e5f6-7890-1234-567890abcdef");
+        UUID sceneId2 = UUID.fromString("c1c2d3e4-f5a6-7890-1234-567890abcdef");
+
+        RecapAnswerSummaryResponse summary1 = new RecapAnswerSummaryResponse(sceneId1, "Question for scene 1", "Summary for scene 1");
+        RecapAnswerSummaryResponse summary2 = new RecapAnswerSummaryResponse(sceneId2, "Question for scene 2", "Summary for scene 2");
+
+        RecapResultResponse mockResponse = new RecapResultResponse(
+                recapResultId,
+                ZonedDateTime.now().toOffsetDateTime(),
+                Arrays.asList(summary1, summary2)
+        );
+
+        when(recapService.getRecapResult(any(UUID.class))).thenReturn(Optional.of(mockResponse));
+
+        // when
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/recap/{recapResultId}/result", recapResultId)
+                .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.recapResultId").value(recapResultId.toString()))
+                .andExpect(jsonPath("$.data.answerSummaries[0].sceneId").value(summary1.getSceneId().toString()))
+                .andExpect(jsonPath("$.data.answerSummaries[0].question").value(summary1.getQuestion()))
+                .andExpect(jsonPath("$.data.answerSummaries[0].answerSummary").value(summary1.getAnswerSummary()))
+                .andExpect(jsonPath("$.data.answerSummaries[1].sceneId").value(summary2.getSceneId().toString()))
+                .andExpect(jsonPath("$.data.answerSummaries[1].question").value(summary2.getQuestion()))
+                .andExpect(jsonPath("$.data.answerSummaries[1].answerSummary").value(summary2.getAnswerSummary()))
+                .andDo(document("recap/get-recap-result-by-id",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        pathParameters(
+                                parameterWithName("recapResultId").description("조회할 리캡 결과 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("statusCode").description("응답 상태 코드"),
+                                fieldWithPath("message").description("응답 상태 메시지"),
+                                fieldWithPath("data.recapResultId").description("리캡 결과 ID"),
+                                fieldWithPath("data.createdAt").description("리캡 결과 생성 일시"),
+                                fieldWithPath("data.answerSummaries[].sceneId").description("요약된 씬 ID"),
+                                fieldWithPath("data.answerSummaries[].question").description("씬 질문 내용"),
+                                fieldWithPath("data.answerSummaries[].answerSummary").description("씬 답변 요약 내용")
                         )
                 ));
     }

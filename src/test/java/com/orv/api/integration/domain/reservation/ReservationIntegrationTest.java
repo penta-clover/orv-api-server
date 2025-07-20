@@ -104,7 +104,7 @@ public class ReservationIntegrationTest {
 
         // video 테이블에 테스트 비디오 데이터 삽입
         jdbcTemplate.update("INSERT INTO video (id, storyboard_id, member_id, video_url, title, running_time, thumbnail_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())",
-                UUID.fromString(testVideoId), UUID.fromString(testStoryboardId), UUID.fromString(testMemberId), "https://youtube.com", "Test Video", 324, "http://example.com/thumbnail.jpg");
+                UUID.fromString(testVideoId), UUID.fromString(testStoryboardId), UUID.fromString(testMemberId), "https://d3bdjeyz3ry3pi.cloudfront.net/archive/videos/1fae8eed-3e88-4a9c-9e1e-96bed6414f9f", "Test Video", 324, "http://example.com/thumbnail.jpg");
     }
 
     /**
@@ -211,7 +211,75 @@ public class ReservationIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
 
         // 검증: recap_reservation 테이블에 데이터 삽입 확인
-        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM recap_reservation", Integer.class);
-        assertThat(count).isGreaterThan(0);
+        Integer recapReservationCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM recap_reservation", Integer.class);
+        Integer audioRecordingCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM interview_audio_recording", Integer.class);
+        assertThat(recapReservationCount).isGreaterThan(0);
+        assertThat(audioRecordingCount).isGreaterThan(0);
+    }
+
+    private void insertRecapResultTestData(UUID recapReservationId, UUID recapResultId, UUID memberId, UUID videoId, UUID storyboardId, UUID sceneId1, UUID sceneId2) {
+        // Insert into recap_result
+        jdbcTemplate.update("INSERT INTO recap_result (id, created_at) VALUES (?, ?)",
+                recapResultId, OffsetDateTime.now());
+
+        // Insert into recap_reservation, linking to recap_result
+        jdbcTemplate.update("INSERT INTO recap_reservation (id, member_id, video_id, scheduled_at, recap_result_id) VALUES (?, ?, ?, ?, ?)",
+                recapReservationId, memberId, videoId, OffsetDateTime.now(), recapResultId);
+
+        // Insert into scene (ensure these exist for the join)
+        // Using ON CONFLICT (id) DO NOTHING to avoid issues if scenes are pre-populated
+        jdbcTemplate.update("INSERT INTO scene (id, storyboard_id, name, scene_type, content) VALUES (?, ?, ?, ?, CAST(? AS jsonb)) ON CONFLICT (id) DO NOTHING",
+                sceneId1, storyboardId, "Scene 1 Title", "QUESTION", "{\"question\" : \"가벼운 인사 한마디 부탁 드립니다.\", \"hint\" : \"hint1\"}");
+        jdbcTemplate.update("INSERT INTO scene (id, storyboard_id, name, scene_type, content) VALUES (?, ?, ?, ?, CAST(? AS jsonb)) ON CONFLICT (id) DO NOTHING",
+                sceneId2, storyboardId, "Scene 2 Title", "QUESTION", "{\"question\" : \" @{name}님은 왜 HySpark에 들어 오려고 했나요?\", \"hint\" : \"hint2\"}");
+
+        // Insert into recap_answer_summary
+        jdbcTemplate.update("INSERT INTO recap_answer_summary (recap_result_id, scene_id, summary, scene_order) VALUES (?, ?, ?, ?)",
+                recapResultId, sceneId1, "안녕하세요. 저는 홍길동입니다.", 0);
+        jdbcTemplate.update("INSERT INTO recap_answer_summary (recap_result_id, scene_id, summary, scene_order) VALUES (?, ?, ?, ?)",
+                recapResultId, sceneId2, "HySpark에 대한 기대가 컸습니다.", 1);
+    }
+
+    /**
+     * 리캡 결과 조회 통합 테스트
+     */
+    @Test
+    public void testGetRecapResult_success() throws Exception {
+        // Given
+        UUID recapReservationId = UUID.randomUUID();
+        UUID recapResultId = UUID.randomUUID();
+        UUID sceneId1 = UUID.fromString("b33dbf34-7f5d-47db-84f6-0c846eeb0b6a");
+        UUID sceneId2 = UUID.fromString("b7ca99d7-55d6-4eb1-9102-8957c1275ee5");
+
+        insertRecapResultTestData(recapReservationId, recapResultId, UUID.fromString(testMemberId), UUID.fromString(testVideoId), UUID.fromString(testStoryboardId), sceneId1, sceneId2);
+
+        // When & Then
+        mockMvc.perform(get("/api/v0/reservation/recap/{recapReservationId}/result", recapReservationId.toString())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.data.recap_result_id").value(recapResultId.toString()))
+                .andExpect(jsonPath("$.data.created_at").exists())
+                .andExpect(jsonPath("$.data.answer_summaries").isArray())
+                .andExpect(jsonPath("$.data.answer_summaries[0].scene_id").value(sceneId1.toString()))
+                .andExpect(jsonPath("$.data.answer_summaries[0].question").value("가벼운 인사 한마디 부탁 드립니다."))
+                .andExpect(jsonPath("$.data.answer_summaries[0].answer_summary").value("안녕하세요. 저는 홍길동입니다."))
+                .andExpect(jsonPath("$.data.answer_summaries[1].scene_id").value(sceneId2.toString()))
+                .andExpect(jsonPath("$.data.answer_summaries[1].question").value("@{name}님은 왜 HySpark에 들어 오려고 했나요?"))
+                .andExpect(jsonPath("$.data.answer_summaries[1].answer_summary").value("HySpark에 대한 기대가 컸습니다."));
+    }
+
+    @Test
+    public void testGetRecapResult_notFound() throws Exception {
+        // Given
+        UUID nonExistentRecapReservationId = UUID.randomUUID();
+
+        // When & Then
+        mockMvc.perform(get("/api/v0/reservation/recap/{nonExistentRecapReservationId}/result", nonExistentRecapReservationId.toString())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$.statusCode").value(404));
     }
 }

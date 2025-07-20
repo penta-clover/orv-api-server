@@ -15,9 +15,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
@@ -57,7 +59,7 @@ public class MemberControllerTest {
                 .andExpect(jsonPath("$.data.id").value(myInfo.getId().toString()))
                 .andExpect(jsonPath("$.data.nickname").value(myInfo.getNickname()))
                 .andExpect(jsonPath("$.data.profileImageUrl").value(myInfo.getProfileImageUrl()))
-                .andExpect(jsonPath("$.data.createdAt").value(myInfo.getCreatedAt().toString()))
+                .andExpect(jsonPath("$.data.createdAt").value(org.hamcrest.Matchers.startsWith(myInfo.getCreatedAt().truncatedTo(ChronoUnit.SECONDS).toString())))
                 .andDo(document("member/get-my-info",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),

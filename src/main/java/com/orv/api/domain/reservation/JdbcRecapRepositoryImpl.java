@@ -42,4 +42,16 @@ public class JdbcRecapRepositoryImpl implements RecapRepository {
 
         return Optional.of(null);
     }
+
+    @Override
+    public void linkAudioRecording(UUID recapReservationId, UUID audioRecordingId) {
+        String sql = "UPDATE recap_reservation SET interview_audio_recording_id = ? WHERE id = ?";
+        jdbcTemplate.update(sql, audioRecordingId, recapReservationId);
+    }
+
+    @Override
+    public void linkRecapResult(UUID recapReservationId, UUID recapResultId) {
+        String sql = "UPDATE recap_reservation SET recap_result_id = ? WHERE id = ?";
+        jdbcTemplate.update(sql, recapResultId, recapReservationId);
+    }
 }

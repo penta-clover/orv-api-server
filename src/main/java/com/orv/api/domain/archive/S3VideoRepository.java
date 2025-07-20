@@ -16,8 +16,11 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
+import com.amazonaws.services.s3.model.S3Object;
+
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.util.*;
 
 @Repository
@@ -128,6 +131,36 @@ public class S3VideoRepository implements VideoRepository {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    @Override
+    public Optional<InputStream> getVideoStream(UUID videoId) {
+        String sql = "SELECT video_url FROM video WHERE id = ?";
+        try {
+            String videoUrl = jdbcTemplate.queryForObject(sql, String.class, videoId);
+            if (videoUrl == null) {
+                return Optional.empty();
+            }
+
+            URI uri = new URI(videoUrl);
+            String scheme = uri.getScheme();
+
+            if ("s3".equalsIgnoreCase(scheme)) {
+                String bucketName = uri.getHost();
+                String key = uri.getPath().substring(1);
+                S3Object s3Object = amazonS3Client.getObject(bucketName, key);
+                return Optional.of(s3Object.getObjectContent());
+            } else if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
+                return Optional.of(uri.toURL().openStream());
+            } else {
+                return Optional.empty();
+            }
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Optional.empty();
         }
     }
 }
