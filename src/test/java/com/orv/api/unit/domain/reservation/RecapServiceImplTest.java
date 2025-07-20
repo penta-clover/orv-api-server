@@ -8,10 +8,12 @@ import com.orv.api.domain.media.AudioExtractService;
 import com.orv.api.domain.media.repository.InterviewAudioRecordingRepository;
 import com.orv.api.domain.reservation.dto.RecapServerRequest;
 import com.orv.api.domain.reservation.dto.RecapServerResponse;
+import com.orv.api.domain.reservation.dto.RecapAudioResponse;
 import com.orv.api.domain.reservation.RecapRepository;
 import com.orv.api.domain.reservation.RecapResultRepository;
 import com.orv.api.domain.reservation.RecapServiceImpl;
 import com.orv.api.domain.reservation.dto.InterviewScenario;
+import com.orv.api.domain.media.dto.InterviewAudioRecording;
 import com.orv.api.domain.storyboard.InterviewScenarioFactory;
 import com.orv.api.domain.storyboard.StoryboardRepository;
 import com.orv.api.domain.storyboard.dto.Storyboard;
@@ -25,11 +27,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -99,5 +103,43 @@ class RecapServiceImplTest {
         // then
         verify(recapClient, times(1)).requestRecap(any(RecapServerRequest.class));
         verify(recapResultRepository, times(1)).save(eq(recapReservationId), any());
+    }
+
+    @Test
+    @DisplayName("리캡 예약 ID로 오디오 정보를 조회하여 RecapAudioResponse를 반환한다")
+    void getRecapAudio_existingAudio_returnsRecapAudioResponse() {
+        // given
+        UUID recapReservationId = UUID.randomUUID();
+        UUID audioId = UUID.randomUUID();
+        UUID storyboardId = UUID.randomUUID();
+        UUID memberId = UUID.randomUUID();
+        String audioUrl = "https://s3.amazonaws.com/test-audio.opus";
+        Integer runningTime = 324;
+        OffsetDateTime createdAt = OffsetDateTime.now();
+
+        InterviewAudioRecording mockAudioRecording = InterviewAudioRecording.builder()
+                .id(audioId)
+                .storyboardId(storyboardId)
+                .memberId(memberId)
+                .audioUrl(audioUrl)
+                .runningTime(runningTime)
+                .createdAt(createdAt)
+                .build();
+
+        when(recapRepository.findAudioByRecapReservationId(recapReservationId))
+                .thenReturn(Optional.of(mockAudioRecording));
+
+        // when
+        Optional<RecapAudioResponse> result = recapService.getRecapAudio(recapReservationId);
+
+        // then
+        assertThat(result).isPresent();
+        RecapAudioResponse response = result.get();
+        assertThat(response.getAudioId()).isEqualTo(audioId);
+        assertThat(response.getAudioUrl()).isEqualTo(audioUrl);
+        assertThat(response.getRunningTime()).isEqualTo(runningTime);
+        assertThat(response.getCreatedAt()).isEqualTo(createdAt);
+
+        verify(recapRepository, times(1)).findAudioByRecapReservationId(recapReservationId);
     }
 }

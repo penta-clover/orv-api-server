@@ -1,5 +1,6 @@
 package com.orv.api.domain.reservation;
 
+import com.orv.api.domain.media.dto.InterviewAudioRecording;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -7,6 +8,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -53,5 +55,29 @@ public class JdbcRecapRepositoryImpl implements RecapRepository {
     public void linkRecapResult(UUID recapReservationId, UUID recapResultId) {
         String sql = "UPDATE recap_reservation SET recap_result_id = ? WHERE id = ?";
         jdbcTemplate.update(sql, recapResultId, recapReservationId);
+    }
+
+    @Override
+    public Optional<InterviewAudioRecording> findAudioByRecapReservationId(UUID recapReservationId) {
+        String sql = """
+                SELECT iar.id, iar.storyboard_id, iar.member_id, iar.audio_url, iar.created_at, iar.running_time
+                FROM interview_audio_recording iar 
+                JOIN recap_reservation rr ON rr.interview_audio_recording_id = iar.id 
+                WHERE rr.id = ?
+                """;
+        
+        return jdbcTemplate.query(sql, rs -> {
+            if (rs.next()) {
+                return Optional.of(InterviewAudioRecording.builder()
+                        .id((UUID) rs.getObject("id"))
+                        .storyboardId((UUID) rs.getObject("storyboard_id"))
+                        .memberId((UUID) rs.getObject("member_id"))
+                        .audioUrl(rs.getString("audio_url"))
+                        .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                        .runningTime(rs.getInt("running_time"))
+                        .build());
+            }
+            return Optional.empty();
+        }, recapReservationId);
     }
 }

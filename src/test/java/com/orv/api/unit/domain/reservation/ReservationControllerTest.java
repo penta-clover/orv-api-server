@@ -6,6 +6,7 @@ import com.orv.api.domain.reservation.ReservationController;
 import com.orv.api.domain.reservation.ReservationService;
 import com.orv.api.domain.reservation.dto.InterviewReservation;
 import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
+import com.orv.api.domain.reservation.dto.RecapAudioResponse;
 import com.orv.api.domain.reservation.dto.RecapReservationRequest;
 import com.orv.api.domain.reservation.dto.RecapResultResponse;
 import com.orv.api.domain.reservation.dto.RecapAnswerSummaryResponse;
@@ -21,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -294,6 +296,52 @@ public class ReservationControllerTest {
                                 fieldWithPath("data.answerSummaries[].sceneId").description("요약된 씬 ID"),
                                 fieldWithPath("data.answerSummaries[].question").description("씬 질문 내용"),
                                 fieldWithPath("data.answerSummaries[].answerSummary").description("씬 답변 요약 내용")
+                        )
+                ));
+    }
+
+    @Test
+    @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
+    public void testGetRecapAudio() throws Exception {
+        // given
+        UUID recapReservationId = UUID.fromString("a1b2c3d4-e5f6-7890-1234-567890abcdef");
+        UUID audioId = UUID.fromString("b1b2c3d4-e5f6-7890-1234-567890abcdef");
+        String audioUrl = "https://s3.amazonaws.com/test-audio.opus";
+        Integer runningTime = 324;
+        OffsetDateTime createdAt = OffsetDateTime.now();
+
+        RecapAudioResponse mockResponse = new RecapAudioResponse(
+                audioId,
+                audioUrl,
+                runningTime,
+                createdAt
+        );
+
+        when(recapService.getRecapAudio(any(UUID.class))).thenReturn(Optional.of(mockResponse));
+
+        // when
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/recap/{recapReservationId}/audio", recapReservationId)
+                .accept(MediaType.APPLICATION_JSON));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.audioId").value(audioId.toString()))
+                .andExpect(jsonPath("$.data.audioUrl").value(audioUrl))
+                .andExpect(jsonPath("$.data.runningTime").value(runningTime))
+                .andExpect(jsonPath("$.data.createdAt").isString())
+                .andDo(document("recap/get-recap-audio-by-id",
+                        preprocessRequest(prettyPrint()),
+                        preprocessResponse(prettyPrint()),
+                        pathParameters(
+                                parameterWithName("recapReservationId").description("조회할 리캡 예약 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("statusCode").description("응답 상태 코드"),
+                                fieldWithPath("message").description("응답 상태 메시지"),
+                                fieldWithPath("data.audioId").description("오디오 ID"),
+                                fieldWithPath("data.audioUrl").description("오디오 S3 URL"),
+                                fieldWithPath("data.runningTime").description("오디오 재생 시간 (초)"),
+                                fieldWithPath("data.createdAt").description("오디오 생성 일시")
                         )
                 ));
     }

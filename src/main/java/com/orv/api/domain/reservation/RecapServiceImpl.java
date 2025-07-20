@@ -194,4 +194,15 @@ public class RecapServiceImpl implements RecapService {
     public Optional<RecapResultResponse> getRecapResult(UUID recapReservationId) {
         return recapResultRepository.findByRecapReservationId(recapReservationId);
     }
+
+    @Override
+    public Optional<RecapAudioResponse> getRecapAudio(UUID recapReservationId) {
+        return recapRepository.findAudioByRecapReservationId(recapReservationId)
+                .map(audioRecording -> new RecapAudioResponse(
+                        audioRecording.getId(),
+                        audioRecording.getAudioUrl(),
+                        audioRecording.getRunningTime(),
+                        audioRecording.getCreatedAt()
+                ));
+    }
 }

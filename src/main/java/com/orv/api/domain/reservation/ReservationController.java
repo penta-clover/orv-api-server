@@ -2,6 +2,7 @@ package com.orv.api.domain.reservation;
 
 import com.orv.api.domain.reservation.dto.InterviewReservation;
 import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
+import com.orv.api.domain.reservation.dto.RecapAudioResponse;
 import com.orv.api.domain.reservation.dto.RecapReservationRequest;
 import com.orv.api.domain.reservation.dto.RecapReservationResponse;
 import com.orv.api.domain.reservation.dto.RecapResultResponse;
@@ -137,5 +138,16 @@ public class ReservationController {
         }
 
         return ApiResponse.success(recapResult.get(), 200);
+    }
+
+    @GetMapping("/recap/{recapReservationId}/audio")
+    public ApiResponse getRecapAudio(@PathVariable UUID recapReservationId) {
+        Optional<RecapAudioResponse> recapAudio = recapService.getRecapAudio(recapReservationId);
+
+        if (recapAudio.isEmpty()) {
+            return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);
+        }
+
+        return ApiResponse.success(recapAudio.get(), 200);
     }
 }
