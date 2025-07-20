@@ -259,15 +259,15 @@ public class ReservationIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200))
-                .andExpect(jsonPath("$.data.recap_result_id").value(recapResultId.toString()))
-                .andExpect(jsonPath("$.data.created_at").exists())
-                .andExpect(jsonPath("$.data.answer_summaries").isArray())
-                .andExpect(jsonPath("$.data.answer_summaries[0].scene_id").value(sceneId1.toString()))
-                .andExpect(jsonPath("$.data.answer_summaries[0].question").value("가벼운 인사 한마디 부탁 드립니다."))
-                .andExpect(jsonPath("$.data.answer_summaries[0].answer_summary").value("안녕하세요. 저는 홍길동입니다."))
-                .andExpect(jsonPath("$.data.answer_summaries[1].scene_id").value(sceneId2.toString()))
-                .andExpect(jsonPath("$.data.answer_summaries[1].question").value("@{name}님은 왜 HySpark에 들어 오려고 했나요?"))
-                .andExpect(jsonPath("$.data.answer_summaries[1].answer_summary").value("HySpark에 대한 기대가 컸습니다."));
+                .andExpect(jsonPath("$.data.recapResultId").value(recapResultId.toString()))
+                .andExpect(jsonPath("$.data.createdAt").exists())
+                .andExpect(jsonPath("$.data.answerSummaries").isArray())
+                .andExpect(jsonPath("$.data.answerSummaries[0].sceneId").value(sceneId1.toString()))
+                .andExpect(jsonPath("$.data.answerSummaries[0].question").value("가벼운 인사 한마디 부탁 드립니다."))
+                .andExpect(jsonPath("$.data.answerSummaries[0].answerSummary").value("안녕하세요. 저는 홍길동입니다."))
+                .andExpect(jsonPath("$.data.answerSummaries[1].sceneId").value(sceneId2.toString()))
+                .andExpect(jsonPath("$.data.answerSummaries[1].question").value("@{name}님은 왜 HySpark에 들어 오려고 했나요?"))
+                .andExpect(jsonPath("$.data.answerSummaries[1].answerSummary").value("HySpark에 대한 기대가 컸습니다."));
     }
 
     @Test

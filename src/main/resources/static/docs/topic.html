@@ -508,6 +508,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Topic의 thumbnail 이미지 주소</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data[].hashtags</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Array</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Topic의 해시태그 목록</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -529,7 +534,7 @@ Vary: Origin
 Vary: Access-Control-Request-Method
 Vary: Access-Control-Request-Headers
 Content-Type: application/json
-Content-Length: 315
+Content-Length: 337
 
 {
   "statusCode" : "200",
@@ -538,7 +543,8 @@ Content-Length: 315
     "id" : "1be07a77-4c5b-4661-b0d4-d80502fbea98",
     "name" : "죽음",
     "description" : "죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거",
-    "thumbnailUrl" : "https://www.naver.com/favicon.ico"
+    "thumbnailUrl" : "https://www.naver.com/favicon.ico",
+    "hashtags" : [ ]
   } ]
 }</code></pre>
 </div>
@@ -706,6 +712,11 @@ Content-Length: 223
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Topic의 thumbnail 이미지 주소</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data.hashtags</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Topic의 해시태그 목록</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -727,7 +738,7 @@ Vary: Origin
 Vary: Access-Control-Request-Method
 Vary: Access-Control-Request-Headers
 Content-Type: application/json
-Content-Length: 311
+Content-Length: 334
 
 {
   "statusCode" : "200",
@@ -736,7 +747,8 @@ Content-Length: 311
     "id" : "1be07a77-4c5b-4661-b0d4-d80502fbea98",
     "name" : "죽음",
     "description" : "죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거",
-    "thumbnailUrl" : "https://www.naver.com/favicon.ico"
+    "thumbnailUrl" : "https://www.naver.com/favicon.ico",
+    "hashtags" : null
   }
 }</code></pre>
 </div>
