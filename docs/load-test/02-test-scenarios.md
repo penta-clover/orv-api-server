@@ -15,21 +15,23 @@
 
 | 단계 | HTTP Method | Endpoint | 설명 | 대기시간 | 예상 응답시간 |
 |------|-------------|----------|------|---------|--------------| 
-| 1 | GET | `/api/v0/auth/callback/test` | 테스트 전용 로그인 | - | < 200ms |
-| 2 | GET | `/api/v0/topic/list` | 토픽 목록 조회 | 1초 | < 300ms |
-| 3 | GET | `/api/v0/archive/videos/my` | 내 영상 목록 조회 | 0.5초 | < 500ms |
-| 4 | GET | `/api/v0/storyboard/{id}/preview` | 스토리보드 미리보기 (4회 반복) | 각 2초 | < 400ms |
-| 5 | GET | `/api/v0/storyboard/scene/{sceneId}` | Scene 상세 조회 (6-9회, 스토리보드별 다름) | 각 50초 | < 300ms |
-| 6 | POST | `/api/v0/archive/recorded-video` | 7분 영상 업로드 (480p, ~5MB) | - | 3-10초 |
-| 7 | POST | `/api/v0/reservation/recap/video` | 리캡 예약 생성 | 2초 | < 500ms |
-| 8 | GET | `/api/v0/archive/video/{videoId}` | 영상 다운로드 | - | 5-20초 |
+| 1 | GET | `/api/v0/auth/login/test` | 테스트 전용 로그인 URL 조회 | - | < 200ms |
+| 2 | GET | `/api/v0/auth/callback/test?code={testUserId}` | 테스트 전용 로그인 콜백 (test_user_{agent}_{process}_{thread} 형식) | - | < 200ms |
+| 3 | GET | `/api/v0/topic/list` | 토픽 목록 조회 | 1초 | < 300ms |
+| 4 | GET | `/api/v0/archive/videos/my` | 내 영상 목록 조회 | 0.5초 | < 500ms |
+| 5 | GET | `/api/v0/storyboard/{id}/preview` | 스토리보드 미리보기 (4회 반복) | 각 2초 | < 400ms |
+| 6 | GET | `/api/v0/storyboard/{id}` | 스토리보드 상세 정보 조회 | 1초 | < 400ms |
+| 7 | GET | `/api/v0/storyboard/scene/{sceneId}` | Scene 상세 조회 (6-9회, 스토리보드별 다름) | 각 45-55초 (랜덤) | < 300ms |
+| 8 | POST | `/api/v0/archive/recorded-video` | 7분 영상 업로드 (480p, ~5MB) | - | 3-10초 |
+| 9 | POST | `/api/v0/reservation/recap/video` | 리캡 예약 생성 | 2초 | < 500ms |
+| 10 | GET | `/api/v0/archive/video/{videoId}` | 영상 다운로드 | - | 5-20초 |
 
 ### 주요 특징
 
-- **총 API 호출 횟수**: 18-25회 (Scene 개수에 따라 가변)
-  - 6개 Scene: 18회 (로그인 1 + 조회 13 + 생성 2 + 다운로드 1)
-  - 8개 Scene: 21회 (로그인 1 + 조회 16 + 생성 2 + 다운로드 1)  
-  - 9개 Scene: 22회 (로그인 1 + 조회 17 + 생성 2 + 다운로드 1)
+- **총 API 호출 횟수**: 19-26회 (Scene 개수에 따라 가변)
+  - 6개 Scene: 19회 (로그인 2 + 조회 13 + 생성 2 + 다운로드 1)
+  - 8개 Scene: 22회 (로그인 2 + 조회 16 + 생성 2 + 다운로드 1)  
+  - 9개 Scene: 23회 (로그인 2 + 조회 17 + 생성 2 + 다운로드 1)
 - **예상 총 소요시간**: 8-11분 (Scene 개수별 차별화)
 - **파일 처리**: 영상 업로드(480p, ~5MB) 및 다운로드
 - **병목 예상 지점**: 영상 업로드, 영상 다운로드, Scene 장시간 세션 유지
@@ -64,9 +66,10 @@
 시나리오 A 사용자:
 - 4개의 다른 스토리보드 미리보기를 탐색
 - Scene을 순차적으로 진행 (인터뷰 시뮬레이션, nextSceneId 체인 따라감)
-- Scene 간 50초의 답변/사고 시간 (실제 인터뷰 패턴)
+- Scene 간 45-55초의 답변/사고 시간 (실제 인터뷰 패턴, 랜덤)
 - 10분 세션 내 최대 11개 Scene 진행 가능
 - 영상 업로드 후 즉시 리캡 요청
+- 고유 사용자 ID: test_user_{agent}_{process}_{thread} 형식
 
 시나리오 B 사용자:
 - 이전에 생성된 리캡 결과 확인
@@ -141,8 +144,13 @@ static def getStoryboardByUserId(int userId) {
 
 ### 테스트 데이터 요구사항
 
-- **테스트 사용자**: 6,000명 (Provider: 'test')
+- **테스트 사용자**: 6,000명 (Provider: 'test', ID 형식: test_user_{agent}_{process}_{thread})
 - **스토리보드**: 기존 8개 스토리보드 활용 (월요병, 오늘하루, 자기소개, 생일, 연말정산, 회고, 짝사랑, 여행)
+  - 현재 구현된 미리보기 ID:
+    - 189d11ae-c9bf-4ed5-8f55-40f004afa098
+    - f2655dc4-8daa-40c6-853c-f01acf72b4ad
+    - c0cf41b6-e6f6-4e40-b3da-b49e83a133d3
+    - 8c2746c4-4613-47f8-8799-235fec7f359d (자기소개)
 - **Scene**: 스토리보드별 6-9개 (실제 구조 반영), nextSceneId로 연결된 체인 구조
 - **Scene 데이터 형태 (타입별 다름)**:
   - **QUESTION**: `{"question": "질문내용", "hint": "힌트", "nextSceneId": "UUID", "isHiddenQuestion": true/false}`

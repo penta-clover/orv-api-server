@@ -42,7 +42,10 @@ class TestAuthServiceTest {
     @DisplayName("getUserInfo 메서드는")
     class GetUserInfo {
         @ParameterizedTest
-        @ValueSource(strings = { "test_user_1", "test_user_2", "test_user_1000", "test_user_5999", "test_user_6000" })
+        @ValueSource(strings = { 
+            "test_user_0_0_0", "test_user_0_0_1", "test_user_1_2_3", 
+            "test_user_5_10_100", "test_user_999_999_999" 
+        })
         @DisplayName("유효한 authorization code가 주어졌을 때 테스트 사용자 정보를 반환한다.")
         void shouldReturnTestUserInfoWhenValidCode(String authorizationCode) {
             // given
@@ -59,7 +62,19 @@ class TestAuthServiceTest {
         }
 
         @ParameterizedTest
-        @ValueSource(strings = { "test_user_0", "90C1AD20-288B-467B-82D5-7E4A0F6CFF60", "test_user", "test", "test_user_6001", "test_user_9876543210" })
+        @ValueSource(strings = { 
+            // 기존 단순 숫자 형식 (더 이상 지원 안함)
+            "test_user_1", "test_user_1000", "test_user_6000",
+            // 형식 오류
+            "test_user_0", "test_user", "test", "invalid_format",
+            "90C1AD20-288B-467B-82D5-7E4A0F6CFF60",
+            // 음수
+            "test_user_-1_0_0", "test_user_0_-1_0", "test_user_0_0_-1",
+            // 잘못된 구분자/개수
+            "test_user_1-2-3", "test_user_1.2.3", "test_user_1_2_3_4", "test_user_1_2",
+            // 숫자가 아닌 값
+            "test_user_a_b_c", "test_user_1_a_3", "test_user_a_2_3"
+        })
         @DisplayName("잘못된 authorization code가 주어졌을 때 예외를 발생시킨다.")
         void shouldThrowWhenInvalidCode(String wrongAuthorizationCode) {
             // given
@@ -69,6 +84,38 @@ class TestAuthServiceTest {
             
             // then
             assertThat(thrownException).isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("agent_process_thread 형식으로 올바른 데이터를 생성한다.")
+        void shouldGenerateCorrectDataFormat() {
+            // given
+            String authorizationCode = "test_user_1_2_3";
+            
+            // when
+            SocialUserInfo socialUserInfo = testAuthService.getUserInfo(authorizationCode);
+            
+            // then
+            assertThat(socialUserInfo.getProvider()).isEqualTo("test");
+            assertThat(socialUserInfo.getId()).isEqualTo("fake_social_id_1_2_3");
+            assertThat(socialUserInfo.getEmail()).isEqualTo("loadtest_1-2-3@test.com");
+            assertThat(socialUserInfo.getNickname()).isEqualTo("LT_1-2-3");
+        }
+
+        @Test
+        @DisplayName("0으로 시작하는 agent_process_thread 형식도 올바르게 처리한다.")
+        void shouldHandleZeroValues() {
+            // given
+            String authorizationCode = "test_user_0_0_1";
+            
+            // when
+            SocialUserInfo socialUserInfo = testAuthService.getUserInfo(authorizationCode);
+            
+            // then
+            assertThat(socialUserInfo.getProvider()).isEqualTo("test");
+            assertThat(socialUserInfo.getId()).isEqualTo("fake_social_id_0_0_1");
+            assertThat(socialUserInfo.getEmail()).isEqualTo("loadtest_0-0-1@test.com");
+            assertThat(socialUserInfo.getNickname()).isEqualTo("LT_0-0-1");
         }
     }
 }
