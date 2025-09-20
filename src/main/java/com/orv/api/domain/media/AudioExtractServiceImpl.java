@@ -34,8 +34,12 @@ public class AudioExtractServiceImpl implements AudioExtractService {
                 throw new IOException("입력 파일에 오디오 스트림이 없습니다: " + inputVideoFile.getAbsolutePath());
             }
             
-            // 출력 오디오 파일 레코더 설정
-            recorder = new FFmpegFrameRecorder(outputAudioFile, grabber.getAudioChannels());
+            // 입력 오디오의 실제 파라미터 가져오기
+            int inputChannels = grabber.getAudioChannels();
+            int inputSampleRate = grabber.getSampleRate();
+            
+            // 출력 오디오 파일 레코더 설정 - 입력과 동일한 채널 수 사용
+            recorder = new FFmpegFrameRecorder(outputAudioFile, inputChannels);
             
             // 오디오 코덱 설정
             String codecName = getAudioCodec(format);
@@ -65,14 +69,14 @@ public class AudioExtractServiceImpl implements AudioExtractService {
                 recorder.setAudioCodec(avcodec.AV_CODEC_ID_MP3);
             }
             
-            // 오디오 파라미터 설정
-            // WAV의 경우 Opus 변환을 위해 48kHz 사용, 나머지는 44.1kHz 유지
+            // 오디오 파라미터 설정 - 입력 소스의 파라미터 사용
+            // WAV의 경우 리샘플링, 아니면 입력값 사용
             if (codecName.equals("pcm_s16le")) {
                 recorder.setSampleRate(48000); // Opus 호환을 위한 48kHz
             } else {
-                recorder.setSampleRate(44100); // 일반적인 44.1kHz
+                recorder.setSampleRate(inputSampleRate); // 입력과 동일한 샘플레이트
             }
-            recorder.setAudioChannels(2);  // 스테레오 채널
+            recorder.setAudioChannels(Math.min(inputChannels, 2));  // 입력과 동일한 채널 수
             recorder.setAudioBitrate(192000); // 비트레이트 192kbps
             recorder.setAudioQuality(0); // 최고 품질
             
