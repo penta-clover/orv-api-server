@@ -145,20 +145,20 @@ class TestRunner {
 
         // 2. 대시보드 로딩
         getTopicList()
-        Thread.sleep(1000)
+        Thread.sleep(500)
 
         getMyVideos()
         Thread.sleep(500)
 
         // 스토리보드 미리보기
         getStoryboardPreview('0afecfc8-62a4-4398-85a8-0cff8b8f698f')
-        Thread.sleep(500)
+        Thread.sleep(1500)
         getStoryboardPreview('9c570f84-16b6-4c5d-85b0-eadf05829056')
-        Thread.sleep(500)
+        Thread.sleep(1500)
         getStoryboardPreview('18779df7-a80d-497c-9206-9e61540bb465')
-        Thread.sleep(500)
+        Thread.sleep(1500)
         getStoryboardPreview('8c2746c4-4613-47f8-8799-235fec7f359d')
-        Thread.sleep(500)
+        Thread.sleep(1500)
 
         HTTPResponse storyboardResponse = getStoryboard('8c2746c4-4613-47f8-8799-235fec7f359d')
         Thread.sleep(1000)
