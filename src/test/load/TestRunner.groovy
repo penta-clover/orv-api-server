@@ -151,8 +151,14 @@ class TestRunner {
         Thread.sleep(500)
 
         // 스토리보드 미리보기
-        getStoryboardPreview('189d11ae-c9bf-4ed5-8f55-40f004afa098')
-        Thread.sleep(2000)
+        getStoryboardPreview('0afecfc8-62a4-4398-85a8-0cff8b8f698f')
+        Thread.sleep(500)
+        getStoryboardPreview('9c570f84-16b6-4c5d-85b0-eadf05829056')
+        Thread.sleep(500)
+        getStoryboardPreview('18779df7-a80d-497c-9206-9e61540bb465')
+        Thread.sleep(500)
+        getStoryboardPreview('8c2746c4-4613-47f8-8799-235fec7f359d')
+        Thread.sleep(500)
 
         HTTPResponse storyboardResponse = getStoryboard('8c2746c4-4613-47f8-8799-235fec7f359d')
         Thread.sleep(1000)
