@@ -1,6 +1,10 @@
 import static net.grinder.script.Grinder.grinder
 
 import java.security.SecureRandom
+import java.time.ZonedDateTime
+import java.time.ZoneId
+import java.nio.file.Files
+import java.nio.file.Paths
 
 import net.grinder.script.GTest
 import net.grinder.scriptengine.groovy.junit.GrinderRunner
@@ -28,10 +32,14 @@ class TestRunner {
     private static GTest getStoryboardPreviewTest
     private static GTest getStoryboardTest
     private static GTest getSceneTest
+    private static GTest uploadVideoTest
+    private static GTest createRecapTest
 
     private static HTTPRequest request
     private static final Map<String, String> HEADERS = [:]
     private static final List<Cookie> COOKIES = []
+
+    private static byte[] sharedVideoData // 업로드 테스트용 영상 데이터
 
     private String testUserId
 
@@ -48,9 +56,16 @@ class TestRunner {
         getStoryboardPreviewTest = new GTest(6, 'GetStoryboardPreview')
         getStoryboardTest = new GTest(7, 'GetStoryboard')
         getSceneTest = new GTest(8, 'GetScene')
+        uploadVideoTest = new GTest(9, 'UploadVideo')
+        createRecapTest = new GTest(10, 'CreateRecap')
 
         request = new HTTPRequest()
-        grinder.logger.info('before process.')
+
+        def videoPath = Paths.get("./resources/upload-test-video.mp4")
+        if (Files.exists(videoPath)) {
+            sharedVideoData = Files.readAllBytes(videoPath)
+            grinder.logger.info("Loaded shared video data: ${sharedVideoData.length / (1024 * 1024)} MB")
+        }
     }
 
     @BeforeThread
@@ -70,6 +85,8 @@ class TestRunner {
         getStoryboardPreviewTest.record(this, 'getStoryboardPreview')
         getStoryboardTest.record(this, 'getStoryboard')
         getSceneTest.record(this, 'getScene')
+        uploadVideoTest.record(this, 'uploadVideo')
+        createRecapTest.record(this, 'createRecapReservation')
 
         grinder.statistics.delayReports = true
     }
@@ -141,6 +158,8 @@ class TestRunner {
         Thread.sleep(1000)
 
         // 3. Scene 상세 조회
+        String usedStoryboardId = '8c2746c4-4613-47f8-8799-235fec7f359d'  // 사용한 스토리보드 ID 저장
+
         if (storyboardResponse.getBodyText()) {
             JsonSlurper jsonSlurper = new JsonSlurper()
             def responseData = jsonSlurper.parseText(storyboardResponse.getBodyText())
@@ -161,6 +180,39 @@ class TestRunner {
                 }
             }
         }
+
+        // 4. 영상 업로드
+        grinder.logger.info("=== Starting Video Upload Phase ===")
+        HTTPResponse uploadResponse = uploadVideo(usedStoryboardId)
+        Thread.sleep(1000)
+
+        // 5. 리캡 예약 생성
+        if (uploadResponse.getBodyText()) {
+            JsonSlurper jsonSlurper = new JsonSlurper()
+            def uploadData = jsonSlurper.parseText(uploadResponse.getBodyText())
+            String videoId = uploadData?.data
+
+            if (videoId) {
+                grinder.logger.info("Video uploaded with ID: ${videoId}")
+
+                // 리캡 예약 생성
+                grinder.logger.info("Creating recap reservation...")
+                HTTPResponse recapResponse = createRecapReservation(videoId)
+
+                if (recapResponse.getBodyText()) {
+                    def recapData = jsonSlurper.parseText(recapResponse.getBodyText())
+                    grinder.logger.info("Recap reservation created: ${recapData}")
+                }
+
+                Thread.sleep(2000)
+            } else {
+                grinder.logger.error("Failed to extract video ID from upload response")
+            }
+        } else {
+            grinder.logger.error("Empty response from video upload")
+        }
+
+        grinder.logger.info("=== Scenario A Completed ===")
     }
 
     HTTPResponse getAuthUrl() {
@@ -216,6 +268,88 @@ class TestRunner {
     HTTPResponse getScene(String sceneId) {
         HTTPResponse response = request.GET("https://api.orv.im/api/v0/storyboard/scene/${sceneId}")
         assert response.statusCode == 200 : "Scene should load"
+        return response
+    }
+
+    HTTPResponse uploadVideo(String storyboardId) {
+        // nGrinder 리소스에서 비디오 파일 로드
+        def videoData = sharedVideoData
+
+        if (videoData == null) {
+            grinder.logger.error("Shared video data not loaded")
+            assert false : "Video data not available"
+        }
+
+        grinder.logger.info("Video file size: ${videoData.length / (1024 * 1024)} MB")
+
+        // Multipart 요청 생성
+        def boundary = "----WebKitFormBoundary${System.currentTimeMillis()}"
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, 'UTF-8'), true)
+
+        // storyboardId 파라미터
+        writer.append("--${boundary}\r\n")
+        writer.append('Content-Disposition: form-data; name="storyboardId"\r\n')
+        writer.append('\r\n')
+        writer.append("${storyboardId}\r\n")
+
+        // video 파일
+        writer.append("--${boundary}\r\n")
+        writer.append('Content-Disposition: form-data; name="video"; filename="recording.mp4"\r\n')
+        writer.append('Content-Type: video/mp4\r\n')
+        writer.append('\r\n')
+        writer.flush()
+
+        baos.write(videoData)
+
+        writer.append('\r\n')
+        writer.append("--${boundary}--\r\n")
+        writer.flush()
+
+        // 헤더 설정
+        Map<String, String> uploadHeaders = new HashMap<>(HEADERS)
+        uploadHeaders['Content-Type'] = "multipart/form-data; boundary=${boundary}".toString()
+
+        HTTPRequest uploadRequest = new HTTPRequest()
+        uploadRequest.headers = uploadHeaders
+
+        grinder.logger.info("Starting video upload...")
+        HTTPResponse response = uploadRequest.POST(
+            'https://api.orv.im/api/v0/archive/recorded-video',
+            baos.toByteArray()
+        )
+
+        assert response.statusCode == 200 : "Video upload should succeed (got ${response.statusCode})"
+        grinder.logger.info("Video uploaded successfully")
+        return response
+    }
+
+    HTTPResponse createRecapReservation(String videoId) {
+        JsonBuilder jsonBuilder = new JsonBuilder([
+            videoId: videoId,
+            scheduledAt: ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
+                .plusWeeks(1)
+                .withHour(19)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0)
+                .toString()
+        ])
+
+        Map<String, String> recapHeaders = new HashMap<>(HEADERS)
+        recapHeaders['Content-Type'] = 'application/json'
+
+        HTTPRequest recapRequest = new HTTPRequest()
+        recapRequest.headers = recapHeaders
+
+        grinder.logger.info("Creating recap reservation for video ${videoId}")
+        HTTPResponse response = recapRequest.POST(
+            'https://api.orv.im/api/v0/reservation/recap/video',
+            jsonBuilder.toString().getBytes('UTF-8')
+        )
+
+        assert response.statusCode == 200 : "Recap reservation should succeed (got ${response.statusCode})"
+        grinder.logger.info("Recap reservation created successfully")
         return response
     }
 }
