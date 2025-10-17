@@ -3,7 +3,7 @@ package com.orv.api.unit.domain.archive;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orv.api.domain.archive.ArchiveController;
-import com.orv.api.domain.archive.VideoRepository;
+import com.orv.api.domain.archive.ArchiveService;
 import com.orv.api.domain.archive.dto.Video;
 import com.orv.api.domain.archive.dto.VideoMetadataUpdateForm;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.restdocs.payload.PayloadDocumentation;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -44,7 +43,7 @@ public class ArchiveControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private VideoRepository videoRepository;
+    private ArchiveService archiveService;
 
     @Test
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
@@ -58,7 +57,7 @@ public class ArchiveControllerTest {
         String storyboardIdValue = "3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
 
         String videoId = "3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
-        when(videoRepository.save(any(), any())).thenReturn(Optional.of(videoId));
+        when(archiveService.uploadRecordedVideo(any(), any(), anyLong(), any(), any())).thenReturn(Optional.of(videoId));
 
         // when
         ResultActions resultActions = mockMvc.perform(multipart("/api/v0/archive/recorded-video")
@@ -97,7 +96,7 @@ public class ArchiveControllerTest {
         video.setRunningTime(523);
         video.setThumbnailUrl("https://api.orv.im/test-thumbnail.url.jpg");
 
-        when(videoRepository.findById(video.getId())).thenReturn(Optional.of(video));
+        when(archiveService.getVideo(video.getId())).thenReturn(Optional.of(video));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/archive/video/{videoId}", video.getId()));
@@ -141,7 +140,7 @@ public class ArchiveControllerTest {
         String title = "test title";
         VideoMetadataUpdateForm updateForm = new VideoMetadataUpdateForm(title);
 
-        when(videoRepository.updateTitle(UUID.fromString(videoId), title)).thenReturn(true);
+        when(archiveService.updateVideoTitle(UUID.fromString(videoId), title)).thenReturn(true);
 
         // when
         ResultActions resultActions = mockMvc.perform(patch("/api/v0/archive/video/{videoId}", videoId)
@@ -178,7 +177,7 @@ public class ArchiveControllerTest {
 
         MockMultipartFile thumbnail = new MockMultipartFile("thumbnail", "test-thumbnail.png", "image/png", thumbnailStream);
 
-        when(videoRepository.updateThumbnail(any(), any(), any())).thenReturn(true);
+        when(archiveService.updateVideoThumbnail(any(), any(), any())).thenReturn(true);
 
         // when
         ResultActions resultActions = mockMvc.perform(multipart(HttpMethod.PUT, "/api/v0/archive/video/{videoId}/thumbnail", videoId)
@@ -230,7 +229,7 @@ public class ArchiveControllerTest {
         video2.setRunningTime(523);
         video2.setThumbnailUrl("https://api.orv.im/test-thumbnail.url.jpg");
 
-        when(videoRepository.findByMemberId(any(), anyInt(), anyInt())).thenReturn(List.of(video1, video2));
+        when(archiveService.getMyVideos(any(), anyInt(), anyInt())).thenReturn(List.of(video1, video2));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/archive/videos/my"));
