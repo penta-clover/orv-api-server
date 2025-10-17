@@ -1,15 +1,15 @@
-// ReservationIntegrationTest.java
 package com.orv.api.integration.domain.reservation;
+
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.auth.JwtTokenProvider;
-import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
-import com.orv.api.domain.reservation.dto.RecapContent;
-import com.orv.api.domain.reservation.dto.RecapReservationRequest;
-import com.orv.api.domain.reservation.dto.RecapServerResponse;
-import com.orv.api.infra.recap.RecapClient;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.quartz.Scheduler;
@@ -24,13 +24,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import com.orv.api.domain.auth.JwtTokenProvider;
+import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
+import com.orv.api.domain.reservation.dto.RecapContent;
+import com.orv.api.domain.reservation.dto.RecapReservationRequest;
+import com.orv.api.domain.reservation.dto.RecapServerResponse;
+import com.orv.api.infra.recap.RecapClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -65,22 +64,29 @@ public class ReservationIntegrationTest {
     @MockitoBean
     private RecapClient recapClient;
 
-    private static final String testMemberId = "054c3e8a-3387-4eb3-ac8a-31a48221f192";
+    private String testMemberId;
 
-    private static final String testStoryboardId = "614c3e8a-3387-4eb3-ac8a-31a48221f192";
+    private String testStoryboardId;
 
-    private static final String testTopicId = "4d2add55-fa18-44de-bfc2-bb863222ffe0";
+    private String testTopicId;
 
-    private static final String testVideoId = "5d2add55-fa18-44de-bfc2-bb863222ffe0";
+    private String testVideoId;
 
-    private static final String testScene1Id = "6C9B9D49-24A3-4179-93A4-92F66C530653";
+    private String testScene1Id;
 
-    private static final String testScene2Id = "F1173A37-4B82-4870-B132-92C7AE5DAC58";
+    private String testScene2Id;
 
     private static String token;
 
     @BeforeEach
     public void setUp() {
+        testMemberId = UUID.randomUUID().toString();
+        testStoryboardId = UUID.randomUUID().toString();
+        testTopicId = UUID.randomUUID().toString();
+        testVideoId = UUID.randomUUID().toString();
+        testScene1Id = UUID.randomUUID().toString();
+        testScene2Id = UUID.randomUUID().toString();
+
         // 테스트 실행 전, SecurityContext에 테스트용 회원 ID 설정
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(testMemberId, null));
