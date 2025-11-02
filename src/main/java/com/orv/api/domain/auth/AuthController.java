@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -62,7 +63,9 @@ public class AuthController {
 
             token = jwtTokenProvider.createToken(
                     mem.getId().toString(),
-                    Map.of("provider", mem.getProvider(), "socialId", mem.getSocialId(), "roles", roles.get()));
+                    Map.of("provider", mem.getProvider(),
+                            "socialId", mem.getSocialId(),
+                            "roles", roles.get().stream().map(Role::getId).collect(Collectors.toList())));
         } else {
             // 미가입 사용자
             String temporaryId = UUID.randomUUID().toString();
