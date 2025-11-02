@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v0/archive/video/*").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/actuator/metrics/**").permitAll()
+                        .requestMatchers("/actuator/prometheus/**").permitAll()
                         .requestMatchers("/api/v0/health").permitAll()
                         .requestMatchers("/api/v0/member/*/profile").permitAll()
                         .requestMatchers("/api/v0/reservation/interview/*").permitAll()
