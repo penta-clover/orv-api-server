@@ -45,8 +45,9 @@ class TestRunner {
 
     @BeforeProcess
     static void beforeProcess() {
-        HTTPRequestControl.connectionTimeout = 30000
-        HTTPRequestControl.socketTimeout = 30000
+        // 비디오 업로드를 고려하여 타임아웃을 충분히 길게 설정 (30분)
+        HTTPRequestControl.connectionTimeout = 1800000  // 30분
+        HTTPRequestControl.socketTimeout = 1800000      // 30분
 
         getAuthUrlTest = new GTest(1, 'GetAuthUrl')
         getAuthCallbackTest = new GTest(2, 'GetAuthCallback')
