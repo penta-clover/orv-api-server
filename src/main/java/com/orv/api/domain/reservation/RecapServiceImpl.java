@@ -182,12 +182,12 @@ public class RecapServiceImpl implements RecapService {
         // 3. Create request body
         RecapServerRequest requestBody = new RecapServerRequest(audioS3Url, interviewScenario);
 
-        // 4. Call API via RecapClient
-        recapClient.requestRecap(requestBody).ifPresent(response -> {
-            log.info("Successfully received recap from server for video ID: {}. Storing results...", video.getId());
-            recapResultRepository.save(recapReservationId, response.getRecapContent())
-                    .ifPresent(recapResultId -> log.info("Recap results stored successfully with result ID: {}", recapResultId));
-        });
+        // 4. Call API via RecapClient (보류)
+        // recapClient.requestRecap(requestBody).ifPresent(response -> {
+        //     log.info("Successfully received recap from server for video ID: {}. Storing results...", video.getId());
+        //     recapResultRepository.save(recapReservationId, response.getRecapContent())
+        //             .ifPresent(recapResultId -> log.info("Recap results stored successfully with result ID: {}", recapResultId));
+        // });
     }
 
     @Override
