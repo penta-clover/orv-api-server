@@ -6,6 +6,7 @@ import com.orv.api.domain.archive.dto.VideoMetadata;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,4 +23,13 @@ public interface VideoRepository {
     boolean updateThumbnail(UUID videoId, InputStream thumbnail, ImageMetadata imageMetadata);
 
     Optional<InputStream> getVideoStream(UUID videoId);
+
+    // v1 API methods
+    String createPendingVideo(UUID storyboardId, UUID memberId);
+
+    URL generatePresignedPutUrl(String s3Key, long expirationMinutes);
+
+    boolean checkObjectExists(String s3Key);
+
+    boolean updateVideoUrlAndStatus(UUID videoId, String videoUrl, String status);
 }

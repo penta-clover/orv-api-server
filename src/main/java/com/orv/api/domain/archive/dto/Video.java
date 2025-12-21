@@ -20,4 +20,5 @@ public class Video {
     private String thumbnailUrl;
     private Integer runningTime;
     private String title;
+    private String status;
 }

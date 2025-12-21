@@ -1,13 +1,16 @@
 package com.orv.api.domain.archive;
 
+import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
 import com.orv.api.domain.archive.dto.ImageMetadata;
 import com.orv.api.domain.archive.dto.Video;
 import com.orv.api.domain.archive.dto.VideoMetadata;
-import com.orv.api.domain.storyboard.dto.Storyboard;
-import lombok.RequiredArgsConstructor;
+import com.orv.api.domain.archive.dto.VideoStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -16,14 +19,13 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
-import com.amazonaws.services.s3.model.S3Object;
-
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.*;
 
 @Repository
+@Slf4j
 public class S3VideoRepository implements VideoRepository {
     private final AmazonS3 amazonS3Client;
 
@@ -35,13 +37,17 @@ public class S3VideoRepository implements VideoRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsertVideo;
+    private final SimpleJdbcInsert simpleJdbcInsertPendingVideo;
 
     public S3VideoRepository(AmazonS3 amazonS3Client, JdbcTemplate jdbcTemplate) {
         this.amazonS3Client = amazonS3Client;
         this.jdbcTemplate = jdbcTemplate;
         this.simpleJdbcInsertVideo = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("video")
-                .usingColumns("id", "storyboard_id", "member_id", "video_url", "thumbnail_url", "running_time", "title");
+                .usingColumns("id", "storyboard_id", "member_id", "video_url", "thumbnail_url", "running_time", "title", "status");
+        this.simpleJdbcInsertPendingVideo = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("video")
+                .usingColumns("id", "storyboard_id", "member_id", "status");
     }
 
     public Optional<String> save(InputStream inputStream, VideoMetadata videoMetadata) {
@@ -65,6 +71,7 @@ public class S3VideoRepository implements VideoRepository {
             parameters.put("thumbnail_url", "https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-archive-video-thumbnail.png");
             parameters.put("running_time", videoMetadata.getRunningTime());
             parameters.put("title", videoMetadata.getTitle());
+            parameters.put("status", VideoStatus.UPLOADED.name());
             simpleJdbcInsertVideo.execute(new MapSqlParameterSource(parameters));
 
             return Optional.of(fileId.toString());
@@ -76,26 +83,26 @@ public class S3VideoRepository implements VideoRepository {
 
     @Override
     public Optional<Video> findById(UUID videoId) {
-        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title FROM video WHERE id = ?";
+        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title, status FROM video WHERE id = ?";
 
         try {
             Video video = jdbcTemplate.queryForObject(sql, new Object[]{videoId}, new BeanPropertyRowMapper<>(Video.class));
             return Optional.of(video);
         } catch (EmptyResultDataAccessException e) {
-            e.printStackTrace();
+            log.debug("Video not found: {}", videoId);
             return Optional.empty();
         }
     }
 
     @Override
     public List<Video> findByMemberId(UUID memberId, int offset, int limit) {
-        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title FROM video WHERE member_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?";
+        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title, status FROM video WHERE member_id = ? AND status != 'PENDING' ORDER BY created_at DESC LIMIT ? OFFSET ?";
 
         try {
             List<Video> videos = jdbcTemplate.query(sql, new Object[]{memberId, limit, offset}, new BeanPropertyRowMapper<>(Video.class));
             return videos;
         } catch (EmptyResultDataAccessException e) {
-            e.printStackTrace();
+            log.debug("No videos found for member: {}", memberId);
             return Collections.emptyList();
         }
     }
@@ -162,5 +169,68 @@ public class S3VideoRepository implements VideoRepository {
             e.printStackTrace();
             return Optional.empty();
         }
+    }
+
+    // v1 API methods
+
+    @Override
+    public String createPendingVideo(UUID storyboardId, UUID memberId) {
+        String videoId = UUID.randomUUID().toString();
+
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("id", videoId);
+        parameters.put("storyboard_id", storyboardId.toString());
+        parameters.put("member_id", memberId.toString());
+        parameters.put("status", VideoStatus.PENDING.name());
+
+        simpleJdbcInsertPendingVideo.execute(new MapSqlParameterSource(parameters));
+
+        return videoId;
+    }
+
+    @Override
+    public URL generatePresignedPutUrl(String s3Key, long expirationMinutes) {
+        Date expiration = calcDateAfterMinutes(expirationMinutes);
+
+        GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, s3Key)
+                .withMethod(HttpMethod.PUT)
+                .withExpiration(expiration);
+
+        return amazonS3Client.generatePresignedUrl(request);
+    }
+
+    @Override
+    public boolean checkObjectExists(String s3Key) {
+        try {
+            ObjectMetadata metadata = amazonS3Client.getObjectMetadata(bucket, s3Key);
+            return metadata != null && metadata.getContentLength() > 0;
+        } catch (AmazonS3Exception e) {
+            if (e.getStatusCode() == 404) {
+                return false;
+            }
+            throw e;
+        }
+    }
+
+    @Override
+    public boolean updateVideoUrlAndStatus(UUID videoId, String videoUrl, String status) {
+        try {
+            String defaultThumbnail = "https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-archive-video-thumbnail.png";
+            int updated = jdbcTemplate.update(
+                    "UPDATE video SET video_url = ?, thumbnail_url = ?, status = ? WHERE id = ?",
+                    videoUrl, defaultThumbnail, status, videoId
+            );
+            return updated > 0;
+        } catch (Exception e) {
+            log.error("Failed to update video url and status: {}", videoId, e);
+            return false;
+        }
+    }
+
+    private Date calcDateAfterMinutes(long minutes) {
+        Date date = new Date();
+        long expTimeMillis = date.getTime() + (1000 * 60 * minutes);
+        date.setTime(expTimeMillis);
+        return date;
     }
 }

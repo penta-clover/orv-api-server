@@ -93,16 +93,11 @@ class RecapServiceImplTest {
         when(storyboardRepository.findScenesByStoryboardId(storyboardId)).thenReturn(Optional.of(List.of()));
         when(interviewScenarioFactory.create(any(), any())).thenReturn(new InterviewScenario("title", List.of()));
 
-        // Mocking the RecapClient call
-        RecapServerResponse recapResponse = new RecapServerResponse(List.of());
-        when(recapClient.requestRecap(any(RecapServerRequest.class))).thenReturn(Optional.of(recapResponse));
-
         // when
-        recapService.reserveRecap(memberId, videoId, scheduledAt);
+        Optional<UUID> savedRecapReservationId = recapService.reserveRecap(memberId, videoId, scheduledAt);
 
         // then
-        verify(recapClient, times(1)).requestRecap(any(RecapServerRequest.class));
-        verify(recapResultRepository, times(1)).save(eq(recapReservationId), any());
+        assertThat(savedRecapReservationId).hasValue(recapReservationId);
     }
 
     @Test

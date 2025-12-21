@@ -625,6 +625,11 @@ Content-Length: 102
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">비디오의 제목 (default: null)</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>data.status</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>String</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">비디오 상태 (PENDING, UPLOADED)</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -646,7 +651,7 @@ Vary: Origin
 Vary: Access-Control-Request-Method
 Vary: Access-Control-Request-Headers
 Content-Type: application/json
-Content-Length: 463
+Content-Length: 490
 
 {
   "statusCode" : "200",
@@ -656,10 +661,11 @@ Content-Length: 463
     "storyboardId" : "e5895e70-7713-4a35-b12f-2521af77524b",
     "memberId" : "1fae8d62-fdfb-47b2-a91d-182bec52ef47",
     "videoUrl" : "https://api.orv.im/test-video.url.mp4",
-    "createdAt" : "2025-07-21T00:50:07.618618",
+    "createdAt" : "2025-12-21T20:28:27.780119",
     "thumbnailUrl" : "https://api.orv.im/test-thumbnail.url.jpg",
     "runningTime" : 523,
-    "title" : "video title"
+    "title" : "video title",
+    "status" : "UPLOADED"
   }
 }</code></pre>
 </div>

@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.orv.api.domain.archive.dto.ImageMetadata;
+import com.orv.api.domain.archive.dto.PresignedUrlResponse;
 import com.orv.api.domain.archive.dto.Video;
 
 public interface ArchiveService {
@@ -18,4 +19,9 @@ public interface ArchiveService {
     boolean updateVideoTitle(UUID videoId, String title);
     
     boolean updateVideoThumbnail(UUID videoId, InputStream thumbnailStream, ImageMetadata metadata);
+
+    // v1 API methods
+    PresignedUrlResponse requestUploadUrl(UUID storyboardId, UUID memberId);
+
+    Optional<String> confirmUpload(UUID videoId, UUID memberId);
 }

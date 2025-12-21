@@ -6,6 +6,7 @@ import com.orv.api.domain.archive.ArchiveController;
 import com.orv.api.domain.archive.ArchiveService;
 import com.orv.api.domain.archive.dto.Video;
 import com.orv.api.domain.archive.dto.VideoMetadataUpdateForm;
+import com.orv.api.domain.archive.dto.VideoStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
@@ -95,6 +96,7 @@ public class ArchiveControllerTest {
         video.setCreatedAt(LocalDateTime.now());
         video.setRunningTime(523);
         video.setThumbnailUrl("https://api.orv.im/test-thumbnail.url.jpg");
+        video.setStatus(VideoStatus.UPLOADED.name());
 
         when(archiveService.getVideo(video.getId())).thenReturn(Optional.of(video));
 
@@ -127,7 +129,8 @@ public class ArchiveControllerTest {
                                 fieldWithPath("data.createdAt").description("비디오의 생성 시각"),
                                 fieldWithPath("data.thumbnailUrl").description("비디오의 썸네일 URL"),
                                 fieldWithPath("data.runningTime").description("비디오의 재생 시간(초)"),
-                                fieldWithPath("data.title").description("비디오의 제목 (default: null)")
+                                fieldWithPath("data.title").description("비디오의 제목 (default: null)"),
+                                fieldWithPath("data.status").description("비디오 상태 (PENDING, UPLOADED)")
                         )
                 ));
     }
@@ -217,7 +220,7 @@ public class ArchiveControllerTest {
         video1.setCreatedAt(LocalDateTime.now());
         video1.setRunningTime(523);
         video1.setThumbnailUrl("https://api.orv.im/test-thumbnail.url.jpg");
-
+        video1.setStatus(VideoStatus.UPLOADED.name());
 
         Video video2 = new Video();
         video2.setId(UUID.fromString("24c4dfc2-8bec-4d77-849f-57462d50d36e"));
@@ -228,6 +231,7 @@ public class ArchiveControllerTest {
         video2.setCreatedAt(LocalDateTime.now());
         video2.setRunningTime(523);
         video2.setThumbnailUrl("https://api.orv.im/test-thumbnail.url.jpg");
+        video2.setStatus(VideoStatus.UPLOADED.name());
 
         when(archiveService.getMyVideos(any(), anyInt(), anyInt())).thenReturn(List.of(video1, video2));
 
@@ -267,7 +271,8 @@ public class ArchiveControllerTest {
                                 fieldWithPath("data[].createdAt").description("비디오의 생성 시각"),
                                 fieldWithPath("data[].thumbnailUrl").description("비디오의 썸네일 URL"),
                                 fieldWithPath("data[].runningTime").description("비디오의 재생 시간(초)"),
-                                fieldWithPath("data[].title").description("비디오의 제목 (default: null)")
+                                fieldWithPath("data[].title").description("비디오의 제목 (default: null)"),
+                                fieldWithPath("data[].status").description("비디오 상태 (PENDING, UPLOADED)")
                         )
                 ));
 
