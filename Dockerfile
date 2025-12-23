@@ -8,4 +8,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 ADD build/libs/api-0.0.1-SNAPSHOT.jar spring-app.jar
-ENTRYPOINT ["java", "-jar", "spring-app.jar"]
+ENTRYPOINT ["java", \
+    "-XX:+HeapDumpOnOutOfMemoryError", \
+    "-XX:HeapDumpPath=/var/log/app/heapdump.hprof", \
+    "-jar", "spring-app.jar"]
