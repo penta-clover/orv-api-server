@@ -1,21 +1,28 @@
 package com.orv.api.domain.admin;
 
 import com.orv.api.domain.archive.ArchiveService;
+import com.orv.api.domain.archive.VideoRepository;
+import com.orv.api.domain.archive.dto.Video;
+import com.orv.api.domain.auth.MemberRepository;
+import com.orv.api.domain.auth.dto.Member;
 import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v0/admin")
+@RequestMapping("/api/admin")
 @RequiredArgsConstructor
 @Slf4j
 public class AdminController {
 
     private final ArchiveService archiveService;
+    private final MemberRepository memberRepository;
+    private final VideoRepository videoRepository;
 
     @GetMapping("/")
     public ApiResponse checkAdmin() {
@@ -32,5 +39,19 @@ public class AdminController {
         } else {
             return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);
         }
+    }
+
+    @GetMapping("/members")
+    public ApiResponse getMembersByProvider(@RequestParam String provider) {
+        log.info("Admin get members by provider request: {}", provider);
+        List<Member> members = memberRepository.findByProvider(provider);
+        return ApiResponse.success(members, 200);
+    }
+
+    @GetMapping("/archive/videos")
+    public ApiResponse getVideosByMemberId(@RequestParam UUID memberId) {
+        log.info("Admin get videos by member id request: {}", memberId);
+        List<Video> videos = videoRepository.findAllByMemberId(memberId);
+        return ApiResponse.success(videos, 200);
     }
 }

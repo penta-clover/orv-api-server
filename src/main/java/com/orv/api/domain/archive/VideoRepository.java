@@ -24,6 +24,8 @@ public interface VideoRepository {
 
     Optional<InputStream> getVideoStream(UUID videoId);
 
+    List<Video> findAllByMemberId(UUID memberId);
+
     // v1 API methods
     String createPendingVideo(UUID storyboardId, UUID memberId);
 

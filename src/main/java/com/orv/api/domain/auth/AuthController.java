@@ -65,7 +65,7 @@ public class AuthController {
                     mem.getId().toString(),
                     Map.of("provider", mem.getProvider(),
                             "socialId", mem.getSocialId(),
-                            "roles", roles.get().stream().map(Role::getId).collect(Collectors.toList())));
+                            "roles", roles.get().stream().map(Role::getName).collect(Collectors.toList())));
         } else {
             // 미가입 사용자
             String temporaryId = UUID.randomUUID().toString();

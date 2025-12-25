@@ -107,4 +107,10 @@ public class JdbcMemberRepository implements MemberRepository {
             return Optional.empty();
         }
     }
+
+    @Override
+    public List<Member> findByProvider(String provider) {
+        String sql = "SELECT id, nickname, provider, social_id, email, profile_image_url, created_at, phone_number, birthday, gender, name FROM member WHERE provider = ?";
+        return jdbcTemplate.query(sql, new Object[]{provider}, new BeanPropertyRowMapper<>(Member.class));
+    }
 }

@@ -63,4 +63,15 @@ public class MemoryMemberRepository implements MemberRepository {
         Member member = store.get(memberId.toString());
         return Optional.of(member);
     }
+
+    @Override
+    public List<Member> findByProvider(String provider) {
+        List<Member> result = new ArrayList<>();
+        for (Member member : store.values()) {
+            if (provider.equals(member.getProvider())) {
+                result.add(member);
+            }
+        }
+        return result;
+    }
 }

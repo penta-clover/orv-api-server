@@ -12,5 +12,6 @@ public interface MemberRepository {
     Optional<Member> findByNickname(String nickname);
     Optional<Member> findById(UUID memberId);
     Optional<List<Role>> findRolesById(UUID memberId);
+    List<Member> findByProvider(String provider);
     Member save(Member member);
 }

@@ -257,4 +257,10 @@ public class S3VideoRepository implements VideoRepository {
             return false;
         }
     }
+
+    @Override
+    public List<Video> findAllByMemberId(UUID memberId) {
+        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title, status FROM video WHERE member_id = ?";
+        return jdbcTemplate.query(sql, new Object[]{memberId}, new BeanPropertyRowMapper<>(Video.class));
+    }
 }
