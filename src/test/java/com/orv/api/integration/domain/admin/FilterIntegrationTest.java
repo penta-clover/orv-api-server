@@ -50,7 +50,7 @@ public class FilterIntegrationTest {
         when(adminController.checkAdmin()).thenReturn(ApiResponse.success("You are an admin!", 200));
 
         // when
-        ResultActions resultActions = mockMvc.perform(get("/api/v0/admin/")
+        ResultActions resultActions = mockMvc.perform(get("/api/admin/")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON));
 
@@ -66,7 +66,7 @@ public class FilterIntegrationTest {
         when(adminController.checkAdmin()).thenReturn(ApiResponse.success("You are an admin!", 200));
 
         // when
-        ResultActions resultActions = mockMvc.perform(get("/api/v0/admin/")
+        ResultActions resultActions = mockMvc.perform(get("/api/admin/")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON));
 
