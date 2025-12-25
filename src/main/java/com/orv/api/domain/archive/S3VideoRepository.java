@@ -96,7 +96,7 @@ public class S3VideoRepository implements VideoRepository {
 
     @Override
     public List<Video> findByMemberId(UUID memberId, int offset, int limit) {
-        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title, status FROM video WHERE member_id = ? AND status != 'PENDING' ORDER BY created_at DESC LIMIT ? OFFSET ?";
+        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title, status FROM video WHERE member_id = ? AND status = 'UPLOADED' ORDER BY created_at DESC LIMIT ? OFFSET ?";
 
         try {
             List<Video> videos = jdbcTemplate.query(sql, new Object[]{memberId, limit, offset}, new BeanPropertyRowMapper<>(Video.class));
@@ -232,5 +232,29 @@ public class S3VideoRepository implements VideoRepository {
         long expTimeMillis = date.getTime() + (1000 * 60 * minutes);
         date.setTime(expTimeMillis);
         return date;
+    }
+
+    @Override
+    public boolean deleteVideo(UUID videoId) {
+        try {
+            // 1. S3에서 영상 파일 삭제 (파일이 없어도 S3 deleteObject는 예외 없이 성공 반환)
+            String s3Key = "archive/videos/" + videoId;
+            try {
+                amazonS3Client.deleteObject(bucket, s3Key);
+                log.info("Deleted video file from S3: {}", s3Key);
+            } catch (AmazonS3Exception e) {
+                log.warn("Failed to delete video file from S3 (continuing anyway): {}", s3Key, e);
+            }
+
+            // 2. DB에서 status를 DELETED로 변경
+            int updated = jdbcTemplate.update(
+                    "UPDATE video SET status = ? WHERE id = ?",
+                    VideoStatus.DELETED.name(), videoId
+            );
+            return updated > 0;
+        } catch (Exception e) {
+            log.error("Failed to delete video: {}", videoId, e);
+            return false;
+        }
     }
 }

@@ -209,4 +209,9 @@ public class ArchiveServiceImpl implements ArchiveService {
 
         return Optional.of(videoId.toString());
     }
+
+    @Override
+    public boolean deleteVideo(UUID videoId) {
+        return videoRepository.deleteVideo(videoId);
+    }
 }

@@ -19,6 +19,8 @@ public interface ArchiveService {
     boolean updateVideoTitle(UUID videoId, String title);
     
     boolean updateVideoThumbnail(UUID videoId, InputStream thumbnailStream, ImageMetadata metadata);
+    
+    boolean deleteVideo(UUID videoId);
 
     // v1 API methods
     PresignedUrlResponse requestUploadUrl(UUID storyboardId, UUID memberId);

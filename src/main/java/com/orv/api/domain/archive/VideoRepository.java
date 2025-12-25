@@ -32,4 +32,6 @@ public interface VideoRepository {
     boolean checkObjectExists(String s3Key);
 
     boolean updateVideoUrlAndStatus(UUID videoId, String videoUrl, String status);
+
+    boolean deleteVideo(UUID videoId);
 }
