@@ -1,11 +1,17 @@
 package com.orv.api.unit.domain.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.auth.*;
-import com.orv.api.domain.auth.dto.JoinForm;
-import com.orv.api.domain.auth.dto.Member;
-import com.orv.api.domain.auth.dto.SocialUserInfo;
-import com.orv.api.domain.auth.dto.ValidationResult;
+import com.orv.api.domain.auth.service.MemberService;
+import com.orv.api.domain.auth.controller.AuthController;
+import com.orv.api.domain.auth.repository.MemberRepository;
+import com.orv.api.domain.auth.service.JwtTokenService;
+import com.orv.api.domain.auth.service.SocialAuthService;
+import com.orv.api.domain.auth.service.SocialAuthServiceResolver;
+import com.orv.api.domain.auth.service.dto.JoinForm;
+import com.orv.api.domain.auth.service.dto.Member;
+import com.orv.api.domain.auth.service.dto.SocialUserInfo;
+import com.orv.api.domain.auth.service.dto.ValidationResult;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +56,7 @@ public class AuthControllerTest {
 
     // AuthController가 의존하는 빈들을 모킹합니다.
     @MockitoBean
-    private SocialAuthServiceFactory socialAuthServiceFactory;
+    private SocialAuthServiceResolver socialAuthServiceFactory;
 
     @MockitoBean
     private MemberService memberService;
@@ -59,7 +65,7 @@ public class AuthControllerTest {
     private MemberRepository memberRepository;
 
     @MockitoBean
-    private JwtTokenProvider jwtTokenProvider;
+    private JwtTokenService jwtTokenProvider;
 
     // SocialAuthService도 모킹 (컨트롤러 내부에서 사용됨)
     @MockitoBean

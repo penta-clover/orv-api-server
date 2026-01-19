@@ -1,7 +1,8 @@
 package com.orv.api.unit.domain.reservation;
 
-import com.orv.api.domain.media.dto.InterviewAudioRecording;
-import com.orv.api.domain.reservation.RecapRepository;
+import com.orv.api.domain.media.service.dto.InterviewAudioRecording;
+import com.orv.api.domain.reservation.repository.RecapRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

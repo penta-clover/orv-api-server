@@ -1,9 +1,10 @@
 package com.orv.api.unit.domain.storyboard;
 
-import com.orv.api.domain.auth.MemberRepository;
-import com.orv.api.domain.storyboard.StoryboardRepository;
-import com.orv.api.domain.storyboard.dto.Scene;
-import com.orv.api.domain.storyboard.dto.Storyboard;
+import com.orv.api.domain.auth.repository.MemberRepository;
+import com.orv.api.domain.storyboard.repository.StoryboardRepository;
+import com.orv.api.domain.storyboard.service.dto.Scene;
+import com.orv.api.domain.storyboard.service.dto.Storyboard;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

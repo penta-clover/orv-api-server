@@ -1,10 +1,10 @@
 package com.orv.api.unit.domain;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.reservation.dto.InterviewScenario;
-import com.orv.api.domain.reservation.dto.RecapContent;
-import com.orv.api.domain.reservation.dto.RecapServerRequest;
-import com.orv.api.domain.reservation.dto.RecapServerResponse;
+import com.orv.api.domain.reservation.controller.dto.RecapServerRequest;
+import com.orv.api.domain.reservation.controller.dto.RecapServerResponse;
+import com.orv.api.domain.reservation.service.dto.InterviewScenario;
+import com.orv.api.domain.reservation.service.dto.RecapContent;
 import com.orv.api.infra.recap.RecapClientImpl;
 
 import org.junit.jupiter.api.BeforeEach;

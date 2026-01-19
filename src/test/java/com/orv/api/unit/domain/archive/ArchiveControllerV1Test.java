@@ -1,10 +1,11 @@
 package com.orv.api.unit.domain.archive;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.archive.ArchiveControllerV1;
-import com.orv.api.domain.archive.ArchiveService;
-import com.orv.api.domain.archive.dto.ConfirmUploadRequest;
-import com.orv.api.domain.archive.dto.PresignedUrlResponse;
+import com.orv.api.domain.archive.controller.ArchiveControllerV1;
+import com.orv.api.domain.archive.controller.dto.ConfirmUploadRequest;
+import com.orv.api.domain.archive.service.ArchiveService;
+import com.orv.api.domain.archive.service.dto.PresignedUrlInfo;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
@@ -52,7 +53,7 @@ public class ArchiveControllerV1Test {
         String uploadUrl = "https://orv-bucket.s3.ap-northeast-2.amazonaws.com/archive/videos/" + videoId + "?X-Amz-Algorithm=...";
         Instant expiresAt = Instant.now().plusSeconds(3600);
 
-        PresignedUrlResponse response = new PresignedUrlResponse(videoId, uploadUrl, expiresAt);
+        PresignedUrlInfo response = new PresignedUrlInfo(videoId, uploadUrl, expiresAt);
         when(archiveService.requestUploadUrl(any(UUID.class), any(UUID.class))).thenReturn(response);
 
         // when

@@ -1,9 +1,10 @@
 package com.orv.api.unit.domain.auth;
 
 
-import com.orv.api.domain.auth.MemberController;
-import com.orv.api.domain.auth.MemberService;
-import com.orv.api.domain.auth.dto.MemberInfo;
+import com.orv.api.domain.auth.controller.MemberController;
+import com.orv.api.domain.auth.service.MemberService;
+import com.orv.api.domain.auth.service.dto.MemberInfo;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;

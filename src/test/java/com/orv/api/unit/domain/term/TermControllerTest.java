@@ -2,9 +2,10 @@ package com.orv.api.unit.domain.term;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.term.TermController;
-import com.orv.api.domain.term.TermRepository;
-import com.orv.api.domain.term.dto.TermAgreementForm;
+import com.orv.api.domain.term.controller.TermController;
+import com.orv.api.domain.term.repository.TermRepository;
+import com.orv.api.domain.term.service.dto.TermAgreementForm;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;

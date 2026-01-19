@@ -1,7 +1,5 @@
 package com.orv.api.infra.recap;
 
-import com.orv.api.domain.reservation.dto.RecapServerRequest;
-import com.orv.api.domain.reservation.dto.RecapServerResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,6 +10,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+
+import com.orv.api.domain.reservation.controller.dto.RecapServerRequest;
+import com.orv.api.domain.reservation.controller.dto.RecapServerResponse;
 
 import java.util.Optional;
 

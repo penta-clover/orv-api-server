@@ -1,10 +1,11 @@
 package com.orv.api.unit.domain.media;
 
-import com.orv.api.domain.media.AudioExtractService;
-import com.orv.api.domain.media.AudioExtractServiceImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.orv.api.domain.media.service.AudioExtractService;
+import com.orv.api.domain.media.service.AudioExtractServiceImpl;
 
 import java.io.File;
 import java.io.FileOutputStream;

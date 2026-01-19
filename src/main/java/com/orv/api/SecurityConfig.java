@@ -1,7 +1,8 @@
 package com.orv.api;
 
-import com.orv.api.domain.auth.JwtAuthorizationFilter;
-import com.orv.api.domain.auth.JwtTokenProvider;
+import com.orv.api.domain.auth.controller.JwtAuthorizationFilter;
+import com.orv.api.domain.auth.service.JwtTokenService;
+
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +25,7 @@ import java.util.List;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtTokenService jwtTokenService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationConfiguration authConfig) throws Exception {
@@ -59,7 +60,7 @@ public class SecurityConfig {
                             response.getWriter().write("{\"error\": \"Unauthorized\"}");
                         })
                 )
-                .addFilterBefore(new JwtAuthorizationFilter(authenticationManager, jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthorizationFilter(authenticationManager, jwtTokenService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

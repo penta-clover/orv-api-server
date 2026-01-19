@@ -6,15 +6,16 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.orv.api.domain.auth.MemberRepository;
-import com.orv.api.domain.auth.dto.Member;
-import com.orv.api.domain.reservation.RecapRepository;
-import com.orv.api.domain.reservation.ReservationNotificationService;
-import com.orv.api.domain.reservation.ReservationRepository;
-import com.orv.api.domain.reservation.ReservationServiceImpl;
-import com.orv.api.domain.reservation.dto.InterviewReservation;
-import com.orv.api.domain.storyboard.StoryboardRepository;
-import com.orv.api.domain.storyboard.dto.Topic;
+import com.orv.api.domain.auth.repository.MemberRepository;
+import com.orv.api.domain.auth.service.dto.Member;
+import com.orv.api.domain.reservation.repository.RecapRepository;
+import com.orv.api.domain.reservation.repository.ReservationRepository;
+import com.orv.api.domain.reservation.service.ReservationNotificationService;
+import com.orv.api.domain.reservation.service.ReservationServiceImpl;
+import com.orv.api.domain.reservation.service.dto.InterviewReservation;
+import com.orv.api.domain.storyboard.repository.StoryboardRepository;
+import com.orv.api.domain.storyboard.service.dto.Topic;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

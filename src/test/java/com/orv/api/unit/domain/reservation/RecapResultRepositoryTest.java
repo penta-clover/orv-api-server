@@ -1,8 +1,9 @@
 package com.orv.api.unit.domain.reservation;
 
-import com.orv.api.domain.reservation.RecapResultRepository;
-import com.orv.api.domain.reservation.dto.RecapAnswerSummaryResponse;
-import com.orv.api.domain.reservation.dto.RecapResultResponse;
+import com.orv.api.domain.reservation.repository.RecapResultRepository;
+import com.orv.api.domain.reservation.controller.dto.RecapAnswerSummaryResponse;
+import com.orv.api.domain.reservation.controller.dto.RecapResultResponse;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

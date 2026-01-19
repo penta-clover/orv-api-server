@@ -1,10 +1,11 @@
 package com.orv.api.unit.domain.auth;
 
-import com.orv.api.domain.auth.MemberRepository;
-import com.orv.api.domain.auth.MemberService;
-import com.orv.api.domain.auth.dto.Member;
-import com.orv.api.domain.auth.dto.MemberInfo;
-import com.orv.api.domain.auth.dto.ValidationResult;
+import com.orv.api.domain.auth.repository.MemberRepository;
+import com.orv.api.domain.auth.service.MemberService;
+import com.orv.api.domain.auth.service.dto.Member;
+import com.orv.api.domain.auth.service.dto.MemberInfo;
+import com.orv.api.domain.auth.service.dto.ValidationResult;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;

@@ -1,9 +1,10 @@
 package com.orv.api.unit.domain.storyboard;
 
-import com.orv.api.domain.storyboard.TopicController;
-import com.orv.api.domain.storyboard.TopicRepository;
-import com.orv.api.domain.storyboard.dto.Storyboard;
-import com.orv.api.domain.storyboard.dto.Topic;
+import com.orv.api.domain.storyboard.controller.TopicController;
+import com.orv.api.domain.storyboard.repository.TopicRepository;
+import com.orv.api.domain.storyboard.service.dto.Storyboard;
+import com.orv.api.domain.storyboard.service.dto.Topic;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;

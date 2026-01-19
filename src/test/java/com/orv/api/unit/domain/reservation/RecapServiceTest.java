@@ -1,9 +1,11 @@
 package com.orv.api.unit.domain.reservation;
 
-import com.orv.api.domain.reservation.RecapResultRepository;
-import com.orv.api.domain.reservation.RecapService;
-import com.orv.api.domain.reservation.dto.RecapAnswerSummaryResponse;
-import com.orv.api.domain.reservation.dto.RecapResultResponse;
+import com.orv.api.domain.reservation.repository.RecapResultRepository;
+import com.orv.api.domain.reservation.service.RecapService;
+import com.orv.api.domain.reservation.controller.dto.RecapAnswerSummaryResponse;
+import com.orv.api.domain.reservation.controller.dto.RecapResultResponse;
+import com.orv.api.domain.reservation.service.dto.RecapResultInfo;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,11 +46,14 @@ class RecapServiceTest {
                 .thenReturn(Optional.of(expectedResponse));
 
         // When
-        Optional<RecapResultResponse> result = recapService.getRecapResult(recapReservationId);
+        Optional<RecapResultInfo> result = recapService.getRecapResult(recapReservationId);
 
         // Then
         assertThat(result).isPresent();
-        assertThat(result.get()).isEqualTo(expectedResponse);
+        assertThat(result.get().getRecapResultId()).isEqualTo(expectedResponse.getRecapResultId());
+        assertThat(result.get().getCreatedAt()).isEqualTo(expectedResponse.getCreatedAt());
+        assertThat(result.get().getAnswerSummaries()).hasSize(2);
+        assertThat(result.get().getAnswerSummaries().get(0).getSceneId()).isEqualTo(answerSummaries.get(0).getSceneId());
     }
 
     @Test
@@ -62,7 +67,7 @@ class RecapServiceTest {
                 .thenReturn(Optional.empty());
 
         // When
-        Optional<RecapResultResponse> result = recapService.getRecapResult(nonExistentRecapReservationId);
+        Optional<RecapResultInfo> result = recapService.getRecapResult(nonExistentRecapReservationId);
 
         // Then
         assertThat(result).isEmpty();

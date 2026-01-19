@@ -24,11 +24,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.orv.api.domain.auth.JwtTokenProvider;
-import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
-import com.orv.api.domain.reservation.dto.RecapContent;
-import com.orv.api.domain.reservation.dto.RecapReservationRequest;
-import com.orv.api.domain.reservation.dto.RecapServerResponse;
+import com.orv.api.domain.auth.service.JwtTokenService;
+import com.orv.api.domain.reservation.controller.dto.InterviewReservationRequest;
+import com.orv.api.domain.reservation.controller.dto.RecapReservationRequest;
+import com.orv.api.domain.reservation.controller.dto.RecapServerResponse;
+import com.orv.api.domain.reservation.service.dto.RecapContent;
 import com.orv.api.infra.recap.RecapClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,7 +56,7 @@ public class ReservationIntegrationTest {
     private Scheduler scheduler;
 
     @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private JwtTokenService jwtTokenProvider;
 
     @MockitoBean
     private AmazonS3 amazonS3;

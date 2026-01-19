@@ -1,15 +1,19 @@
 package com.orv.api.unit.domain.reservation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.reservation.RecapService;
-import com.orv.api.domain.reservation.ReservationController;
-import com.orv.api.domain.reservation.ReservationService;
-import com.orv.api.domain.reservation.dto.InterviewReservation;
-import com.orv.api.domain.reservation.dto.InterviewReservationRequest;
-import com.orv.api.domain.reservation.dto.RecapAudioResponse;
-import com.orv.api.domain.reservation.dto.RecapReservationRequest;
-import com.orv.api.domain.reservation.dto.RecapResultResponse;
-import com.orv.api.domain.reservation.dto.RecapAnswerSummaryResponse;
+import com.orv.api.domain.reservation.controller.ReservationController;
+import com.orv.api.domain.reservation.service.RecapService;
+import com.orv.api.domain.reservation.service.ReservationService;
+import com.orv.api.domain.reservation.service.dto.InterviewReservation;
+import com.orv.api.domain.reservation.controller.dto.InterviewReservationRequest;
+import com.orv.api.domain.reservation.controller.dto.RecapAnswerSummaryResponse;
+import com.orv.api.domain.reservation.controller.dto.RecapAudioResponse;
+import com.orv.api.domain.reservation.controller.dto.RecapReservationRequest;
+import com.orv.api.domain.reservation.controller.dto.RecapResultResponse;
+import com.orv.api.domain.reservation.service.dto.RecapResultInfo;
+import com.orv.api.domain.reservation.service.dto.RecapAnswerSummaryInfo;
+import com.orv.api.domain.reservation.service.dto.RecapAudioInfo;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
@@ -258,10 +262,10 @@ public class ReservationControllerTest {
         UUID sceneId1 = UUID.fromString("b1b2c3d4-e5f6-7890-1234-567890abcdef");
         UUID sceneId2 = UUID.fromString("c1c2d3e4-f5a6-7890-1234-567890abcdef");
 
-        RecapAnswerSummaryResponse summary1 = new RecapAnswerSummaryResponse(sceneId1, "Question for scene 1", "Summary for scene 1");
-        RecapAnswerSummaryResponse summary2 = new RecapAnswerSummaryResponse(sceneId2, "Question for scene 2", "Summary for scene 2");
+        RecapAnswerSummaryInfo summary1 = new RecapAnswerSummaryInfo(sceneId1, "Question for scene 1", "Summary for scene 1");
+        RecapAnswerSummaryInfo summary2 = new RecapAnswerSummaryInfo(sceneId2, "Question for scene 2", "Summary for scene 2");
 
-        RecapResultResponse mockResponse = new RecapResultResponse(
+        RecapResultInfo mockResponse = new RecapResultInfo(
                 recapResultId,
                 ZonedDateTime.now().toOffsetDateTime(),
                 Arrays.asList(summary1, summary2)
@@ -310,7 +314,7 @@ public class ReservationControllerTest {
         Integer runningTime = 324;
         OffsetDateTime createdAt = OffsetDateTime.now();
 
-        RecapAudioResponse mockResponse = new RecapAudioResponse(
+        RecapAudioInfo mockResponse = new RecapAudioInfo(
                 audioId,
                 audioUrl,
                 runningTime,

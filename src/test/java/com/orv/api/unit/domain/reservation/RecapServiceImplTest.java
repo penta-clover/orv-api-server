@@ -1,22 +1,20 @@
 package com.orv.api.unit.domain.reservation;
 
-import com.orv.api.domain.archive.AudioRepository;
-import com.orv.api.domain.archive.VideoRepository;
-import com.orv.api.domain.archive.dto.Video;
-import com.orv.api.domain.media.AudioCompressionService;
-import com.orv.api.domain.media.AudioExtractService;
+import com.orv.api.domain.archive.repository.AudioRepository;
+import com.orv.api.domain.archive.repository.VideoRepository;
+import com.orv.api.domain.archive.service.dto.Video;
 import com.orv.api.domain.media.repository.InterviewAudioRecordingRepository;
-import com.orv.api.domain.reservation.dto.RecapServerRequest;
-import com.orv.api.domain.reservation.dto.RecapServerResponse;
-import com.orv.api.domain.reservation.dto.RecapAudioResponse;
-import com.orv.api.domain.reservation.RecapRepository;
-import com.orv.api.domain.reservation.RecapResultRepository;
-import com.orv.api.domain.reservation.RecapServiceImpl;
-import com.orv.api.domain.reservation.dto.InterviewScenario;
-import com.orv.api.domain.media.dto.InterviewAudioRecording;
-import com.orv.api.domain.storyboard.InterviewScenarioFactory;
-import com.orv.api.domain.storyboard.StoryboardRepository;
-import com.orv.api.domain.storyboard.dto.Storyboard;
+import com.orv.api.domain.media.service.AudioCompressionService;
+import com.orv.api.domain.media.service.AudioExtractService;
+import com.orv.api.domain.media.service.dto.InterviewAudioRecording;
+import com.orv.api.domain.reservation.repository.RecapRepository;
+import com.orv.api.domain.reservation.repository.RecapResultRepository;
+import com.orv.api.domain.reservation.service.RecapServiceImpl;
+import com.orv.api.domain.reservation.service.dto.InterviewScenario;
+import com.orv.api.domain.reservation.service.dto.RecapAudioInfo;
+import com.orv.api.domain.storyboard.repository.StoryboardRepository;
+import com.orv.api.domain.storyboard.service.InterviewScenarioConverter;
+import com.orv.api.domain.storyboard.service.dto.Storyboard;
 import com.orv.api.infra.recap.RecapClient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -60,7 +58,7 @@ class RecapServiceImplTest {
     @Mock
     private StoryboardRepository storyboardRepository;
     @Mock
-    private InterviewScenarioFactory interviewScenarioFactory;
+    private InterviewScenarioConverter interviewScenarioFactory;
     @Mock
     private RecapClient recapClient;
 
@@ -86,7 +84,7 @@ class RecapServiceImplTest {
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
         when(videoRepository.getVideoStream(videoId)).thenReturn(Optional.of(InputStream.nullInputStream()));
         when(audioRepository.save(any(), any())).thenReturn(Optional.of(java.net.URI.create("s3://audio-url")));
-        when(interviewAudioRecordingRepository.save(any())).thenReturn(mock(com.orv.api.domain.media.dto.InterviewAudioRecording.class));
+        when(interviewAudioRecordingRepository.save(any())).thenReturn(mock(com.orv.api.domain.media.service.dto.InterviewAudioRecording.class));
 
         // Mocking storyboard and scenario creation
         when(storyboardRepository.findById(storyboardId)).thenReturn(Optional.of(storyboard));
@@ -125,15 +123,15 @@ class RecapServiceImplTest {
                 .thenReturn(Optional.of(mockAudioRecording));
 
         // when
-        Optional<RecapAudioResponse> result = recapService.getRecapAudio(recapReservationId);
+        Optional<RecapAudioInfo> result = recapService.getRecapAudio(recapReservationId);
 
         // then
         assertThat(result).isPresent();
-        RecapAudioResponse response = result.get();
-        assertThat(response.getAudioId()).isEqualTo(audioId);
-        assertThat(response.getAudioUrl()).isEqualTo(audioUrl);
-        assertThat(response.getRunningTime()).isEqualTo(runningTime);
-        assertThat(response.getCreatedAt()).isEqualTo(createdAt);
+        RecapAudioInfo info = result.get();
+        assertThat(info.getAudioId()).isEqualTo(audioId);
+        assertThat(info.getAudioUrl()).isEqualTo(audioUrl);
+        assertThat(info.getRunningTime()).isEqualTo(runningTime);
+        assertThat(info.getCreatedAt()).isEqualTo(createdAt);
 
         verify(recapRepository, times(1)).findAudioByRecapReservationId(recapReservationId);
     }

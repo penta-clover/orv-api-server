@@ -1,11 +1,12 @@
 package com.orv.api.integration.domain.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.auth.AuthController;
-import com.orv.api.domain.auth.JwtTokenProvider;
-import com.orv.api.domain.auth.MemberRepository;
-import com.orv.api.domain.auth.dto.JoinForm;
-import com.orv.api.domain.auth.dto.Member;
+import com.orv.api.domain.auth.controller.AuthController;
+import com.orv.api.domain.auth.repository.MemberRepository;
+import com.orv.api.domain.auth.service.JwtTokenService;
+import com.orv.api.domain.auth.service.dto.JoinForm;
+import com.orv.api.domain.auth.service.dto.Member;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,7 @@ public class AuthControllerIntegrationTest {
     private MemberRepository memberRepository;
 
     @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private JwtTokenService jwtTokenProvider;
 
     @AfterEach
     void tearDown() {

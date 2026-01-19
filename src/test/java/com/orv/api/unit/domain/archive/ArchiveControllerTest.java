@@ -2,11 +2,12 @@ package com.orv.api.unit.domain.archive;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.archive.ArchiveController;
-import com.orv.api.domain.archive.ArchiveService;
-import com.orv.api.domain.archive.dto.Video;
-import com.orv.api.domain.archive.dto.VideoMetadataUpdateForm;
-import com.orv.api.domain.archive.dto.VideoStatus;
+import com.orv.api.domain.archive.controller.ArchiveController;
+import com.orv.api.domain.archive.controller.dto.VideoMetadataUpdateForm;
+import com.orv.api.domain.archive.service.ArchiveService;
+import com.orv.api.domain.archive.service.dto.Video;
+import com.orv.api.domain.archive.service.dto.VideoStatus;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;

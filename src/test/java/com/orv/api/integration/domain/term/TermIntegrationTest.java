@@ -1,8 +1,9 @@
 package com.orv.api.integration.domain.term;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.auth.JwtTokenProvider;
-import com.orv.api.domain.term.dto.TermAgreementForm;
+import com.orv.api.domain.auth.service.JwtTokenService;
+import com.orv.api.domain.term.service.dto.TermAgreementForm;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,7 @@ public class TermIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private JwtTokenService jwtTokenProvider;
     private static final String testMemberId = "054c3e8a-3387-4eb3-ac8a-31a48221f192";
     private String token;
 

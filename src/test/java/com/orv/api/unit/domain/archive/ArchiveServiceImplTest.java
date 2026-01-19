@@ -1,10 +1,12 @@
 package com.orv.api.unit.domain.archive;
 
-import com.orv.api.domain.archive.ArchiveServiceImpl;
-import com.orv.api.domain.archive.VideoRepository;
-import com.orv.api.domain.archive.dto.PresignedUrlResponse;
-import com.orv.api.domain.archive.dto.Video;
-import com.orv.api.domain.archive.dto.VideoStatus;
+import com.orv.api.domain.archive.repository.VideoRepository;
+import com.orv.api.domain.archive.service.ArchiveServiceImpl;
+import com.orv.api.domain.archive.controller.dto.PresignedUrlResponse;
+import com.orv.api.domain.archive.service.dto.PresignedUrlInfo;
+import com.orv.api.domain.archive.service.dto.Video;
+import com.orv.api.domain.archive.service.dto.VideoStatus;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,12 +47,12 @@ class ArchiveServiceImplTest {
         when(videoRepository.generatePresignedPutUrl(eq("archive/videos/" + videoId), eq(60L))).thenReturn(presignedUrl);
 
         // when
-        PresignedUrlResponse response = archiveService.requestUploadUrl(storyboardId, memberId);
+        PresignedUrlInfo presignedUrlInfo = archiveService.requestUploadUrl(storyboardId, memberId);
 
         // then
-        assertThat(response.getVideoId()).isEqualTo(videoId);
-        assertThat(response.getUploadUrl()).isEqualTo(presignedUrl.toString());
-        assertThat(response.getExpiresAt()).isNotNull();
+        assertThat(presignedUrlInfo.getVideoId()).isEqualTo(videoId);
+        assertThat(presignedUrlInfo.getUploadUrl()).isEqualTo(presignedUrl.toString());
+        assertThat(presignedUrlInfo.getExpiresAt()).isNotNull();
 
         verify(videoRepository).createPendingVideo(storyboardId, memberId);
         verify(videoRepository).generatePresignedPutUrl(eq("archive/videos/" + videoId), eq(60L));

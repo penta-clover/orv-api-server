@@ -1,7 +1,8 @@
 package com.orv.api.integration.domain.storyboard;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.auth.JwtTokenProvider;
+import com.orv.api.domain.auth.service.JwtTokenService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class TopicIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private JwtTokenService jwtTokenProvider;
 
 
     private static final String testTopicId = "ba4c3e8a-3387-4eb3-ac8a-31a48221f192";
