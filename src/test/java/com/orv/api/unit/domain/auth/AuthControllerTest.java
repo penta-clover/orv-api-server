@@ -3,7 +3,6 @@ package com.orv.api.unit.domain.auth;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orv.api.domain.auth.service.MemberService;
 import com.orv.api.domain.auth.controller.AuthController;
-import com.orv.api.domain.auth.repository.MemberRepository;
 import com.orv.api.domain.auth.service.JwtTokenService;
 import com.orv.api.domain.auth.service.SocialAuthService;
 import com.orv.api.domain.auth.service.SocialAuthServiceResolver;
@@ -62,9 +61,6 @@ public class AuthControllerTest {
     private MemberService memberService;
 
     @MockitoBean
-    private MemberRepository memberRepository;
-
-    @MockitoBean
     private JwtTokenService jwtTokenProvider;
 
     // SocialAuthService도 모킹 (컨트롤러 내부에서 사용됨)
@@ -115,8 +111,8 @@ public class AuthControllerTest {
 
         when(socialAuthServiceFactory.getSocialAuthService(provider)).thenReturn(socialAuthService);
         when(socialAuthService.getUserInfo(code)).thenReturn(socialUserInfo);
-        when(memberRepository.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.of(existingMember));
-        when(memberRepository.findRolesById(existingMember.getId())).thenReturn(Optional.of(Collections.emptyList()));
+        when(memberService.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.of(existingMember));
+        when(memberService.findRolesById(existingMember.getId())).thenReturn(Optional.of(Collections.emptyList()));
         when(jwtTokenProvider.createToken(eq(existingMember.getId().toString()), any(Map.class))).thenReturn(token);
 
         // 가입된 유저일 경우, isNewUser는 false
@@ -153,7 +149,7 @@ public class AuthControllerTest {
         // 미가입 유저로 처리 (Optional.empty())
         when(socialAuthServiceFactory.getSocialAuthService(provider)).thenReturn(socialAuthService);
         when(socialAuthService.getUserInfo(code)).thenReturn(socialUserInfo);
-        when(memberRepository.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.empty());
+        when(memberService.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.empty());
 
         // 미가입 유저일 경우, 임시 ID가 생성되지만 테스트에서는 그 값을 신경쓰지 않고 토큰만 모킹
         String token = "dummyJwtTokenNew";

@@ -1,6 +1,5 @@
 package com.orv.api.domain.auth.controller;
 
-import com.orv.api.domain.auth.repository.MemberRepository;
 import com.orv.api.domain.auth.service.JwtTokenService;
 import com.orv.api.domain.auth.service.MemberService;
 import com.orv.api.domain.auth.service.SocialAuthService;
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v0/auth/")
 public class AuthController {
     private final SocialAuthServiceResolver socialAuthServiceFactory;
-    private final MemberRepository memberRepository;
     private final MemberService memberService;
     private final JwtTokenService jwtTokenService;
 
@@ -50,7 +48,7 @@ public class AuthController {
         SocialAuthService socialAuthService = socialAuthServiceFactory.getSocialAuthService(provider);
         SocialUserInfo userInfo = socialAuthService.getUserInfo(code);
 
-        Optional<Member> member = memberRepository.findByProviderAndSocialId(userInfo.getProvider(), userInfo.getId());
+        Optional<Member> member = memberService.findByProviderAndSocialId(userInfo.getProvider(), userInfo.getId());
 
         String token;
         boolean isRegistered = member.isPresent();
@@ -58,7 +56,7 @@ public class AuthController {
         if (isRegistered) {
             // 가입된 사용자
             Member mem = member.get();
-            Optional<List<Role>> roles = memberRepository.findRolesById(mem.getId());
+            Optional<List<Role>> roles = memberService.findRolesById(mem.getId());
 
             if (roles.isEmpty()) {
                 // 권한 조회에 실패한 경우

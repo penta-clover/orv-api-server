@@ -1,7 +1,7 @@
 package com.orv.api.unit.domain.storyboard;
 
 import com.orv.api.domain.storyboard.controller.TopicController;
-import com.orv.api.domain.storyboard.repository.TopicRepository;
+import com.orv.api.domain.storyboard.service.TopicService;
 import com.orv.api.domain.storyboard.service.dto.Storyboard;
 import com.orv.api.domain.storyboard.service.dto.Topic;
 
@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -39,7 +40,7 @@ public class TopicControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private TopicRepository topicRepository;
+    private TopicService topicService;
 
     @Test
     public void testGetTopics() throws Exception {
@@ -52,7 +53,7 @@ public class TopicControllerTest {
         topic.setHashtags(Collections.emptyList());
         List<Topic> topics = List.of(topic);
 
-        when(topicRepository.findTopicsByCategoryCode(any())).thenReturn(topics);
+        when(topicService.getTopicsByCategory(any())).thenReturn(topics);
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/topic/list"));
@@ -91,8 +92,7 @@ public class TopicControllerTest {
         storyboard.setTitle("테스트 스토리보드");
         storyboard.setStartSceneId(UUID.fromString("50c4dfc2-8bec-4d77-849f-57462d50d393"));
 
-        List<Storyboard> storyboards = List.of(storyboard);
-        when(topicRepository.findStoryboardsByTopicId(topicId)).thenReturn(storyboards);
+        when(topicService.getNextStoryboard(topicId)).thenReturn(Optional.of(storyboard));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/topic/{topicId}/storyboard/next", topicId.toString()));
@@ -130,7 +130,7 @@ public class TopicControllerTest {
         topic.setDescription("죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거");
         topic.setThumbnailUrl("https://www.naver.com/favicon.ico");
 
-        when(topicRepository.findTopicById(topicId)).thenReturn(java.util.Optional.of(topic));
+        when(topicService.getTopic(topicId)).thenReturn(java.util.Optional.of(topic));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/topic/{topicId}", topicId.toString()));

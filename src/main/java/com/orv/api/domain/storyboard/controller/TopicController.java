@@ -1,6 +1,6 @@
 package com.orv.api.domain.storyboard.controller;
 
-import com.orv.api.domain.storyboard.repository.TopicRepository;
+import com.orv.api.domain.storyboard.service.TopicService;
 import com.orv.api.domain.storyboard.service.dto.Storyboard;
 import com.orv.api.domain.storyboard.service.dto.Topic;
 import com.orv.api.global.dto.ApiResponse;
@@ -16,12 +16,12 @@ import java.util.UUID;
 @RequestMapping("/api/v0/topic")
 @RequiredArgsConstructor
 public class TopicController {
-    private final TopicRepository topicRepository;
+    private final TopicService topicService;
 
     @GetMapping("/list")
     public ApiResponse getTopics(@RequestParam(name = "category", required = false, defaultValue = "DEFAULT") String categoryCode) {
         try {
-            List<Topic> topics = topicRepository.findTopicsByCategoryCode(categoryCode);
+            List<Topic> topics = topicService.getTopicsByCategory(categoryCode);
             return ApiResponse.success(topics, 200);
         } catch (Exception e) {
             e.printStackTrace();
@@ -32,13 +32,13 @@ public class TopicController {
     @GetMapping("/{topicId}/storyboard/next")
     public ApiResponse getNextStoryboard(@PathVariable("topicId") String topicId) {
         try {
-            List<Storyboard> storyboards = topicRepository.findStoryboardsByTopicId(UUID.fromString(topicId));
+            Optional<Storyboard> storyboardOrEmpty = topicService.getNextStoryboard(UUID.fromString(topicId));
 
-            if (storyboards.size() < 1) {
+            if (storyboardOrEmpty.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);
             }
 
-            return ApiResponse.success(storyboards.get(0), 200);
+            return ApiResponse.success(storyboardOrEmpty.get(), 200);
         } catch (Exception e) {
             e.printStackTrace();
             return ApiResponse.fail(null, 500);
@@ -48,7 +48,7 @@ public class TopicController {
     @GetMapping("/{topicId}")
     public ApiResponse getTopic(@PathVariable("topicId") String topicId) {
         try {
-            Optional<Topic> topicOrEmpty = topicRepository.findTopicById(UUID.fromString(topicId));
+            Optional<Topic> topicOrEmpty = topicService.getTopic(UUID.fromString(topicId));
 
             if (topicOrEmpty.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);

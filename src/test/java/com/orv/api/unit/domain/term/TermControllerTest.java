@@ -3,7 +3,7 @@ package com.orv.api.unit.domain.term;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orv.api.domain.term.controller.TermController;
-import com.orv.api.domain.term.repository.TermRepository;
+import com.orv.api.domain.term.service.TermService;
 import com.orv.api.domain.term.service.dto.TermAgreementForm;
 
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.net.InetAddress;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,7 +40,7 @@ public class TermControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private TermRepository termRepository;
+    private TermService termService;
 
     @Test
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
@@ -52,7 +51,7 @@ public class TermControllerTest {
         termAgreementForm.setValue("Y");
 
         String agreementId = UUID.randomUUID().toString();
-        when(termRepository.saveAgreement(any(), any(), any(), any())).thenReturn(Optional.of(agreementId));
+        when(termService.createAgreement(any(UUID.class), any(String.class), any(String.class), any(String.class))).thenReturn(Optional.of(agreementId));
 
         // when
         mockMvc.perform(post("/api/v0/term/agreement")

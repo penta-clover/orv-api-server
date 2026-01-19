@@ -4,12 +4,14 @@ import com.orv.api.domain.auth.repository.MemberRepository;
 import com.orv.api.domain.auth.service.dto.Member;
 import com.orv.api.domain.auth.service.dto.MemberInfo;
 import com.orv.api.domain.auth.service.dto.MemberProfile;
+import com.orv.api.domain.auth.service.dto.Role;
 import com.orv.api.domain.auth.service.dto.ValidationResult;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -83,5 +85,13 @@ public class MemberService {
 
     private boolean isNicknameExists(String nickname) {
         return memberRepository.findByNickname(nickname).isPresent();
+    }
+
+    public Optional<Member> findByProviderAndSocialId(String provider, String socialId) {
+        return memberRepository.findByProviderAndSocialId(provider, socialId);
+    }
+
+    public Optional<List<Role>> findRolesById(UUID memberId) {
+        return memberRepository.findRolesById(memberId);
     }
 }
