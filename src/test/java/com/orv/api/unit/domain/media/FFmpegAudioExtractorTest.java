@@ -4,8 +4,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.orv.api.domain.media.service.AudioExtractService;
-import com.orv.api.domain.media.service.AudioExtractServiceImpl;
+import com.orv.api.domain.media.infrastructure.AudioExtractor;
+import com.orv.api.domain.media.infrastructure.FFmpegAudioExtractor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,10 +13,10 @@ import java.nio.file.Files;
 
 import static org.assertj.core.api.Assertions.*;
 
-public class AudioExtractServiceImplTest {
+public class FFmpegAudioExtractorTest {
     private File inputVideoFile;
     private File outputAudioFile;
-    private AudioExtractService audioExtractService = new AudioExtractServiceImpl();
+    private AudioExtractor audioExtractor = new FFmpegAudioExtractor();
 
     @BeforeEach
     void setUp() throws Exception {
@@ -44,7 +44,7 @@ public class AudioExtractServiceImplTest {
 
     @Test
     void testExtractAudio() throws Exception {
-        audioExtractService.extractAudio(inputVideoFile, outputAudioFile, "mp3");
+        audioExtractor.extractAudio(inputVideoFile, outputAudioFile, "mp3");
 
         assertThat(outputAudioFile.exists()).isTrue();
         assertThat(Files.size(outputAudioFile.toPath())).isGreaterThan(0);

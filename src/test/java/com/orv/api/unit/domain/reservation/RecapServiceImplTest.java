@@ -1,21 +1,10 @@
 package com.orv.api.unit.domain.reservation;
 
-import com.orv.api.domain.archive.repository.AudioRepository;
-import com.orv.api.domain.archive.repository.VideoRepository;
-import com.orv.api.domain.archive.service.dto.Video;
-import com.orv.api.domain.media.repository.InterviewAudioRecordingRepository;
-import com.orv.api.domain.media.service.AudioCompressionService;
-import com.orv.api.domain.media.service.AudioExtractService;
 import com.orv.api.domain.media.service.dto.InterviewAudioRecording;
 import com.orv.api.domain.reservation.repository.RecapRepository;
 import com.orv.api.domain.reservation.repository.RecapResultRepository;
 import com.orv.api.domain.reservation.service.RecapServiceImpl;
-import com.orv.api.domain.reservation.service.dto.InterviewScenario;
 import com.orv.api.domain.reservation.service.dto.RecapAudioInfo;
-import com.orv.api.domain.storyboard.repository.StoryboardRepository;
-import com.orv.api.domain.storyboard.service.InterviewScenarioConverter;
-import com.orv.api.domain.storyboard.service.dto.Storyboard;
-import com.orv.api.infra.recap.RecapClient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,10 +13,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,60 +29,27 @@ class RecapServiceImplTest {
     private RecapServiceImpl recapService;
 
     @Mock
-    private VideoRepository videoRepository;
-    @Mock
-    private AudioExtractService audioExtractService;
-    @Mock
-    private AudioCompressionService audioCompressionService;
-    @Mock
-    private AudioRepository audioRepository;
-    @Mock
-    private InterviewAudioRecordingRepository interviewAudioRecordingRepository;
-    @Mock
     private RecapRepository recapRepository;
     @Mock
     private RecapResultRepository recapResultRepository;
-    @Mock
-    private StoryboardRepository storyboardRepository;
-    @Mock
-    private InterviewScenarioConverter interviewScenarioFactory;
-    @Mock
-    private RecapClient recapClient;
 
     @Test
-    @DisplayName("리캡 예약 시 RecapClient를 통해 외부 API를 호출하고 결과를 저장한다")
-    void reserveRecap_callsRecapClientAndSavesResult() throws IOException {
+    @DisplayName("리캡 예약 시 Repository를 통해 저장한다")
+    void reserveRecap_savesToRepository() {
         // given
         UUID memberId = UUID.randomUUID();
         UUID videoId = UUID.randomUUID();
-        UUID storyboardId = UUID.randomUUID();
         UUID recapReservationId = UUID.randomUUID();
         ZonedDateTime scheduledAt = ZonedDateTime.now();
 
-        Video video = new Video();
-        video.setId(videoId);
-        video.setStoryboardId(storyboardId);
-
-        Storyboard storyboard = new Storyboard();
-
-        // Mocking the entire audio processing flow to simplify the test
-        // In a real scenario, this might be a separate, more detailed test.
         when(recapRepository.reserveRecap(any(), any(), any())).thenReturn(Optional.of(recapReservationId));
-        when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
-        when(videoRepository.getVideoStream(videoId)).thenReturn(Optional.of(InputStream.nullInputStream()));
-        when(audioRepository.save(any(), any())).thenReturn(Optional.of(java.net.URI.create("s3://audio-url")));
-        when(interviewAudioRecordingRepository.save(any())).thenReturn(mock(com.orv.api.domain.media.service.dto.InterviewAudioRecording.class));
-
-        // Mocking storyboard and scenario creation
-        when(storyboardRepository.findById(storyboardId)).thenReturn(Optional.of(storyboard));
-        when(storyboardRepository.findScenesByStoryboardId(storyboardId)).thenReturn(Optional.of(List.of()));
-        when(interviewScenarioFactory.create(any(), any())).thenReturn(new InterviewScenario("title", List.of()));
 
         // when
         Optional<UUID> savedRecapReservationId = recapService.reserveRecap(memberId, videoId, scheduledAt);
 
         // then
         assertThat(savedRecapReservationId).hasValue(recapReservationId);
+        verify(recapRepository, times(1)).reserveRecap(memberId, videoId, scheduledAt.toLocalDateTime());
     }
 
     @Test

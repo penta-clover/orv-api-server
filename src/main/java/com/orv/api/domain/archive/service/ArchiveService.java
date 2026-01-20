@@ -14,6 +14,8 @@ public interface ArchiveService {
 
     Optional<Video> getVideo(UUID videoId);
 
+    Optional<InputStream> getVideoStream(UUID videoId);
+
     List<Video> getMyVideos(UUID memberId, int page, int pageSize);
 
     boolean updateVideoTitle(UUID videoId, String title);

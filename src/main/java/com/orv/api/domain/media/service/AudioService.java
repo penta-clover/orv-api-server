@@ -2,6 +2,8 @@ package com.orv.api.domain.media.service;
 
 import com.orv.api.domain.archive.repository.AudioRepository;
 import com.orv.api.domain.archive.service.dto.AudioMetadata;
+import com.orv.api.domain.media.infrastructure.AudioCompressor;
+import com.orv.api.domain.media.infrastructure.AudioExtractor;
 import com.orv.api.domain.media.repository.InterviewAudioRecordingRepository;
 import com.orv.api.domain.media.service.dto.InterviewAudioRecording;
 
@@ -16,91 +18,101 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @Slf4j
 public class AudioService {
 
-    private final AudioExtractService audioExtractService;
-    private final AudioCompressionService audioCompressionService;
+    private final AudioExtractor audioExtractor;
+    private final AudioCompressor audioCompressor;
     private final InterviewAudioRecordingRepository audioRecordingRepository;
     private final AudioRepository audioRepository;
 
-    public AudioService(AudioExtractService audioExtractService,
-                        AudioCompressionService audioCompressionService,
+    public AudioService(AudioExtractor audioExtractor,
+                        AudioCompressor audioCompressor,
                         InterviewAudioRecordingRepository audioRecordingRepository,
                         AudioRepository audioRepository) {
-        this.audioExtractService = audioExtractService;
-        this.audioCompressionService = audioCompressionService;
+        this.audioExtractor = audioExtractor;
+        this.audioCompressor = audioCompressor;
         this.audioRecordingRepository = audioRecordingRepository;
         this.audioRepository = audioRepository;
     }
 
-    public InterviewAudioRecording processAndSaveAudio(
-            File inputVideoFile, UUID storyboardId, UUID memberId, String title) throws IOException {
-
-        // 1. 임시 파일 경로 설정
-        Path tempAudioExtractedPath = null;
-        Path tempAudioCompressedPath = null;
+    public InterviewAudioRecording extractAndSaveAudioFromVideo(
+            InputStream videoStream, UUID storyboardId, UUID memberId, String title, Integer runningTime) throws IOException {
+        
+        File tempVideoFile = null;
         File tempAudioExtractedFile = null;
         File tempAudioCompressedFile = null;
 
         try {
-            tempAudioExtractedPath = Files.createTempFile("extracted_audio_", ".wav"); // 추출된 오디오 (임시)
-            tempAudioCompressedPath = Files.createTempFile("compressed_audio_", ".opus"); // 압축된 오디오 (임시)
-            tempAudioExtractedFile = tempAudioExtractedPath.toFile();
-            tempAudioCompressedFile = tempAudioCompressedPath.toFile();
+            tempVideoFile = convertStreamToFile(videoStream);
 
-            // 2. 오디오 추출 (비디오 -> WAV)
-            log.info("비디오에서 오디오 추출 시작: {}", inputVideoFile.getAbsolutePath());
-            audioExtractService.extractAudio(inputVideoFile, tempAudioExtractedFile, "wav");
-            log.info("오디오 추출 완료: {}", tempAudioExtractedFile.getAbsolutePath());
+            tempAudioExtractedFile = createTempFile("extracted_audio_", ".wav");
+            audioExtractor.extractAudio(tempVideoFile, tempAudioExtractedFile, "wav");
 
-            // 3. 오디오 압축 (WAV -> Opus)
-            log.info("오디오 압축 시작: {}", tempAudioExtractedFile.getAbsolutePath());
-            audioCompressionService.compress(tempAudioExtractedFile, tempAudioCompressedFile);
-            log.info("오디오 압축 완료: {}", tempAudioCompressedFile.getAbsolutePath());
+            tempAudioCompressedFile = createTempFile("compressed_audio_", ".opus");
+            audioCompressor.compress(tempAudioExtractedFile, tempAudioCompressedFile);
 
-            // 4. S3에 업로드
-            // TODO: running_time 계산 (FFmpeg 등으로 정확한 시간 획득 필요)
-            int runningTime = 60; // 현재는 임시값 (예: 60초)
-            URI resourceUrl;
-            try (InputStream inputStream = new FileInputStream(tempAudioCompressedFile)) {
-                AudioMetadata audioMetadata = new AudioMetadata(
-                        storyboardId,
-                        memberId,
-                        title,
-                        "audio/opus",
-                        runningTime,
-                        tempAudioCompressedFile.length()
-                );
-                Optional<URI> urlOptional = audioRepository.save(inputStream, audioMetadata);
-                resourceUrl = urlOptional.orElseThrow(() -> new IOException("S3에 오디오 파일 업로드 실패"));
-            }
+            URI resourceUrl = uploadAudioToS3(tempAudioCompressedFile, storyboardId, memberId, title, runningTime);
 
-            // 5. 메타데이터 저장
-            InterviewAudioRecording audioRecording = InterviewAudioRecording.builder()
-                    .id(UUID.randomUUID())
-                    .storyboardId(storyboardId)
-                    .memberId(memberId)
-                    .audioUrl(resourceUrl.toString())
-                    .createdAt(OffsetDateTime.now())
-                    .runningTime(runningTime)
-                    .build();
-
-            return audioRecordingRepository.save(audioRecording);
+            return saveAudioMetadata(resourceUrl, storyboardId, memberId, runningTime);
 
         } finally {
-            // 임시 파일 정리
-            if (tempAudioExtractedFile != null && tempAudioExtractedFile.exists()) {
-                Files.deleteIfExists(tempAudioExtractedPath);
-                log.info("임시 추출 오디오 파일 삭제: {}", tempAudioExtractedFile.getAbsolutePath());
-            }
-            if (tempAudioCompressedFile != null && tempAudioCompressedFile.exists()) {
-                Files.deleteIfExists(tempAudioCompressedPath);
-                log.info("임시 압축 오디오 파일 삭제: {}", tempAudioCompressedFile.getAbsolutePath());
+            cleanupTempFile(tempVideoFile);
+            cleanupTempFile(tempAudioExtractedFile);
+            cleanupTempFile(tempAudioCompressedFile);
+        }
+    }
+
+    private File convertStreamToFile(InputStream videoStream) throws IOException {
+        Path tempPath = Files.createTempFile("recap_video_", ".mp4");
+        Files.copy(videoStream, tempPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempPath.toFile();
+        log.info("Video downloaded to temporary file: {}", tempFile.getAbsolutePath());
+        return tempFile;
+    }
+
+    private File createTempFile(String prefix, String suffix) throws IOException {
+        return Files.createTempFile(prefix, suffix).toFile();
+    }
+
+    private URI uploadAudioToS3(File audioFile, UUID storyboardId, UUID memberId, String title, Integer runningTime) throws IOException {
+        try (InputStream inputStream = new FileInputStream(audioFile)) {
+            AudioMetadata audioMetadata = new AudioMetadata(
+                    storyboardId,
+                    memberId,
+                    title,
+                    "audio/opus",
+                    runningTime != null ? runningTime : 0,
+                    audioFile.length()
+            );
+            return audioRepository.save(inputStream, audioMetadata)
+                    .orElseThrow(() -> new IOException("S3에 오디오 파일 업로드 실패"));
+        }
+    }
+
+    private InterviewAudioRecording saveAudioMetadata(URI resourceUrl, UUID storyboardId, UUID memberId, Integer runningTime) {
+        InterviewAudioRecording audioRecording = InterviewAudioRecording.builder()
+                .id(UUID.randomUUID())
+                .storyboardId(storyboardId)
+                .memberId(memberId)
+                .audioUrl(resourceUrl.toString())
+                .createdAt(OffsetDateTime.now())
+                .runningTime(runningTime != null ? runningTime : 0)
+                .build();
+
+        return audioRecordingRepository.save(audioRecording);
+    }
+
+    private void cleanupTempFile(File file) {
+        if (file != null && file.exists()) {
+            try {
+                Files.deleteIfExists(file.toPath());
+                log.info("임시 파일 삭제: {}", file.getAbsolutePath());
+            } catch (IOException e) {
+                log.warn("임시 파일 삭제 실패: {}", file.getAbsolutePath(), e);
             }
         }
     }

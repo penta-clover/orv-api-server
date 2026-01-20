@@ -89,6 +89,11 @@ public class ArchiveServiceImpl implements ArchiveService {
     }
 
     @Override
+    public Optional<InputStream> getVideoStream(UUID videoId) {
+        return videoRepository.getVideoStream(videoId);
+    }
+
+    @Override
     public List<Video> getMyVideos(UUID memberId, int page, int pageSize) {
         int offset = page * pageSize;
         return videoRepository.findByMemberId(memberId, offset, pageSize);

@@ -3,6 +3,7 @@ package com.orv.api.domain.admin.orchestrator;
 import com.orv.api.domain.admin.controller.dto.MemberResponse;
 import com.orv.api.domain.admin.controller.dto.VideoResponse;
 import com.orv.api.domain.admin.service.AdminService;
+import com.orv.api.domain.archive.service.ArchiveService;
 import com.orv.api.domain.archive.service.dto.Video;
 import com.orv.api.domain.auth.service.dto.Member;
 import lombok.RequiredArgsConstructor;
@@ -16,9 +17,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminOrchestrator {
     private final AdminService adminService;
+    private final ArchiveService archiveService;
 
     public boolean deleteVideo(UUID videoId) {
-        return adminService.deleteVideo(videoId);
+        return archiveService.deleteVideo(videoId);
     }
 
     public List<MemberResponse> getMembersByProvider(String provider) {

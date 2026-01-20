@@ -1,7 +1,6 @@
 package com.orv.api.domain.admin.service;
 
 import com.orv.api.domain.archive.repository.VideoRepository;
-import com.orv.api.domain.archive.service.ArchiveService;
 import com.orv.api.domain.archive.service.dto.Video;
 import com.orv.api.domain.auth.repository.MemberRepository;
 import com.orv.api.domain.auth.service.dto.Member;
@@ -16,7 +15,6 @@ import java.util.UUID;
 public class AdminService {
     private final MemberRepository memberRepository;
     private final VideoRepository videoRepository;
-    private final ArchiveService archiveService;
 
     public List<Member> getMembersByProvider(String provider) {
         return memberRepository.findByProvider(provider);
@@ -24,9 +22,5 @@ public class AdminService {
 
     public List<Video> getVideosByMemberId(UUID memberId) {
         return videoRepository.findAllByMemberId(memberId);
-    }
-
-    public boolean deleteVideo(UUID videoId) {
-        return archiveService.deleteVideo(videoId);
     }
 }

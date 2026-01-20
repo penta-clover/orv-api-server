@@ -1,15 +1,28 @@
 package com.orv.api.domain.reservation.orchestrator;
 
+import com.orv.api.domain.archive.service.ArchiveService;
+import com.orv.api.domain.archive.service.dto.Video;
+import com.orv.api.domain.media.service.AudioService;
+import com.orv.api.domain.media.service.dto.InterviewAudioRecording;
 import com.orv.api.domain.reservation.controller.dto.*;
 import com.orv.api.domain.reservation.service.RecapService;
+import com.orv.api.domain.reservation.service.ReservationNotificationService;
 import com.orv.api.domain.reservation.service.ReservationService;
 import com.orv.api.domain.reservation.service.dto.InterviewReservation;
+import com.orv.api.domain.reservation.service.dto.InterviewScenario;
 import com.orv.api.domain.reservation.service.dto.RecapAudioInfo;
 import com.orv.api.domain.reservation.service.dto.RecapResultInfo;
+import com.orv.api.domain.storyboard.repository.StoryboardRepository;
+import com.orv.api.domain.storyboard.service.InterviewScenarioConverter;
+import com.orv.api.domain.storyboard.service.dto.Scene;
+import com.orv.api.domain.storyboard.service.dto.Storyboard;
+import com.orv.api.infra.recap.RecapClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
@@ -20,12 +33,27 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ReservationOrchestrator {
     private final ReservationService reservationService;
     private final RecapService recapService;
+    private final ArchiveService archiveService;
+    private final AudioService audioService;
+    private final ReservationNotificationService reservationNotificationService;
+    private final StoryboardRepository storyboardRepository;
+    private final InterviewScenarioConverter interviewScenarioFactory;
+    private final RecapClient recapClient;
 
     public Optional<InterviewReservationResponse> reserveInterview(UUID memberId, UUID storyboardId, OffsetDateTime scheduledAt) throws Exception {
+        // 1. Create Reservation
         Optional<UUID> reservationId = reservationService.reserveInterview(memberId, storyboardId, scheduledAt);
+        if (reservationId.isEmpty()) {
+            throw new Exception("Failed to reserve interview");
+        }
+
+        // 2. Send Notification
+        reservationNotificationService.sendInterviewConfirmation(memberId, storyboardId, reservationId.get(), scheduledAt);
+
         return reservationId.map(id -> new InterviewReservationResponse(
                 id,
                 memberId,
@@ -36,7 +64,15 @@ public class ReservationOrchestrator {
     }
 
     public Optional<InterviewReservationResponse> reserveInstantInterview(UUID memberId, UUID storyboardId) throws Exception {
+        // 1. Create Instant Reservation
         Optional<UUID> reservationId = reservationService.reserveInstantInterview(memberId, storyboardId);
+        if (reservationId.isEmpty()) {
+            throw new Exception("Failed to reserve instant interview");
+        }
+
+        // 2. Send Notification (Immediate)
+        reservationNotificationService.sendInstantInterviewPreview(memberId, storyboardId, reservationId.get());
+
         return reservationId.map(id -> new InterviewReservationResponse(
                 id,
                 memberId,
@@ -63,14 +99,77 @@ public class ReservationOrchestrator {
     }
 
     public Optional<RecapReservationResponse> reserveRecap(UUID memberId, UUID videoId, ZonedDateTime scheduledAt) throws IOException {
-        Optional<UUID> recapId = recapService.reserveRecap(memberId, videoId, scheduledAt);
-        return recapId.map(id -> new RecapReservationResponse(
-                id,
+        // 1. Create Recap Reservation in DB
+        Optional<UUID> recapIdOptional = recapService.reserveRecap(memberId, videoId, scheduledAt);
+        if (recapIdOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        UUID recapReservationId = recapIdOptional.get();
+
+        // 2. Get Video Info & Stream
+        Video video = archiveService.getVideo(videoId)
+                .orElseThrow(() -> new IOException("Video with ID " + videoId + " not found."));
+        
+        Optional<InputStream> videoStreamOptional = archiveService.getVideoStream(videoId);
+        if (videoStreamOptional.isEmpty()) {
+            throw new IOException("Failed to retrieve video stream for video ID " + videoId);
+        }
+
+        // 3. Extract and save audio
+        InterviewAudioRecording audioRecording;
+        try (InputStream videoStream = videoStreamOptional.get()) {
+             audioRecording = audioService.extractAndSaveAudioFromVideo(
+                    videoStream,
+                    video.getStoryboardId(),
+                    memberId,
+                    video.getTitle() != null ? video.getTitle() + " (Recap Audio)" : "Recap Audio",
+                    video.getRunningTime()
+            );
+        }
+
+        // 4. Link Audio to Reservation
+        recapService.linkAudioRecording(recapReservationId, audioRecording.getId());
+
+        // 5. Call Recap Server
+        callRecapServer(recapReservationId, video, audioRecording.getAudioUrl());
+
+        return Optional.of(new RecapReservationResponse(
+                recapReservationId,
                 memberId,
                 videoId,
                 scheduledAt.toLocalDateTime(),
                 LocalDateTime.now()
         ));
+    }
+
+    private void callRecapServer(UUID recapReservationId, Video video, String audioS3Url) {
+        try {
+            // 1. Get storyboard and scene info
+            Storyboard storyboard = storyboardRepository.findById(video.getStoryboardId())
+                    .orElseThrow(() -> new RuntimeException("Storyboard not found for ID: " + video.getStoryboardId()));
+
+            List<Scene> allScenes = storyboardRepository.findScenesByStoryboardId(video.getStoryboardId())
+                    .orElseThrow(() -> new RuntimeException("Scenes not found for Storyboard ID: " + video.getStoryboardId()));
+
+            // 2. Create InterviewScenario using the factory
+            InterviewScenario interviewScenario = interviewScenarioFactory.create(storyboard, allScenes);
+
+            // 3. Create request body
+            RecapServerRequest requestBody = new RecapServerRequest(audioS3Url, interviewScenario);
+
+            // 4. Call API via RecapClient
+            /*
+            recapClient.requestRecap(requestBody).ifPresent(response -> {
+                log.info("Successfully received recap from server for video ID: {}. Storing results...", video.getId());
+                recapService.saveRecapResult(recapReservationId, response.getRecapContent())
+                        .ifPresent(recapResultId -> log.info("Recap results stored successfully with result ID: {}", recapResultId));
+            });
+            */
+            log.info("Prepared to call Recap Server for reservation ID: {}", recapReservationId);
+
+        } catch (Exception e) {
+            log.error("Failed to prepare/call recap server for reservation ID: {}", recapReservationId, e);
+        }
     }
 
     public Optional<RecapResultResponse> getRecapResult(UUID recapReservationId) {
