@@ -190,7 +190,8 @@ public class S3VideoRepository implements VideoRepository {
     }
 
     @Override
-    public URL generatePresignedPutUrl(String s3Key, long expirationMinutes) {
+    public URL generateUploadUrl(UUID videoId, long expirationMinutes) {
+        String s3Key = "archive/videos/" + videoId;
         Date expiration = calcDateAfterMinutes(expirationMinutes);
 
         GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, s3Key)
@@ -201,7 +202,8 @@ public class S3VideoRepository implements VideoRepository {
     }
 
     @Override
-    public boolean checkObjectExists(String s3Key) {
+    public boolean checkUploadComplete(UUID videoId) {
+        String s3Key = "archive/videos/" + videoId;
         try {
             ObjectMetadata metadata = amazonS3Client.getObjectMetadata(bucket, s3Key);
             return metadata != null && metadata.getContentLength() > 0;

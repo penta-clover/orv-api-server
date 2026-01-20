@@ -44,7 +44,7 @@ class ArchiveServiceImplTest {
         URL presignedUrl = new URL("https://bucket.s3.amazonaws.com/archive/videos/" + videoId + "?X-Amz-Signature=...");
 
         when(videoRepository.createPendingVideo(storyboardId, memberId)).thenReturn(videoId);
-        when(videoRepository.generatePresignedPutUrl(eq("archive/videos/" + videoId), eq(60L))).thenReturn(presignedUrl);
+        when(videoRepository.generateUploadUrl(eq(UUID.fromString(videoId)), eq(60L))).thenReturn(presignedUrl);
 
         // when
         PresignedUrlInfo presignedUrlInfo = archiveService.requestUploadUrl(storyboardId, memberId);
@@ -55,7 +55,7 @@ class ArchiveServiceImplTest {
         assertThat(presignedUrlInfo.getExpiresAt()).isNotNull();
 
         verify(videoRepository).createPendingVideo(storyboardId, memberId);
-        verify(videoRepository).generatePresignedPutUrl(eq("archive/videos/" + videoId), eq(60L));
+        verify(videoRepository).generateUploadUrl(eq(UUID.fromString(videoId)), eq(60L));
     }
 
     @Test
@@ -74,7 +74,7 @@ class ArchiveServiceImplTest {
         ReflectionTestUtils.setField(archiveService, "cloudfrontDomain", cloudfrontDomain);
 
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
-        when(videoRepository.checkObjectExists("archive/videos/" + videoId)).thenReturn(true);
+        when(videoRepository.checkUploadComplete(videoId)).thenReturn(true);
         when(videoRepository.updateVideoUrlAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(true);
 
         // when
@@ -85,7 +85,7 @@ class ArchiveServiceImplTest {
         assertThat(result.get()).isEqualTo(videoId.toString());
 
         verify(videoRepository).findById(videoId);
-        verify(videoRepository).checkObjectExists("archive/videos/" + videoId);
+        verify(videoRepository).checkUploadComplete(videoId);
         verify(videoRepository).updateVideoUrlAndStatus(eq(videoId), eq(cloudfrontDomain + "/archive/videos/" + videoId), eq(VideoStatus.UPLOADED.name()));
     }
 
@@ -104,7 +104,7 @@ class ArchiveServiceImplTest {
         // then
         assertThat(result).isEmpty();
         verify(videoRepository).findById(videoId);
-        verify(videoRepository, never()).checkObjectExists(any());
+        verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
@@ -127,7 +127,7 @@ class ArchiveServiceImplTest {
 
         // then
         assertThat(result).isEmpty();
-        verify(videoRepository, never()).checkObjectExists(any());
+        verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
@@ -149,7 +149,7 @@ class ArchiveServiceImplTest {
 
         // then
         assertThat(result).isEmpty();
-        verify(videoRepository, never()).checkObjectExists(any());
+        verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
@@ -165,7 +165,7 @@ class ArchiveServiceImplTest {
         video.setStatus(VideoStatus.PENDING.name());
 
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
-        when(videoRepository.checkObjectExists("archive/videos/" + videoId)).thenReturn(false);
+        when(videoRepository.checkUploadComplete(videoId)).thenReturn(false);
 
         // when
         Optional<String> result = archiveService.confirmUpload(videoId, memberId);

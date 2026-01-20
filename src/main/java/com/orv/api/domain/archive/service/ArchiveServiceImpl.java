@@ -155,13 +155,10 @@ public class ArchiveServiceImpl implements ArchiveService {
         // 1. PENDING 상태로 video 레코드 생성
         String videoId = videoRepository.createPendingVideo(storyboardId, memberId);
 
-        // 2. S3 key 생성 (video.id 사용)
-        String s3Key = "archive/videos/" + videoId;
+        // 2. Presigned PUT URL 생성
+        URL presignedUrl = videoRepository.generateUploadUrl(UUID.fromString(videoId), PRESIGNED_URL_EXPIRATION_MINUTES);
 
-        // 3. Presigned PUT URL 생성
-        URL presignedUrl = videoRepository.generatePresignedPutUrl(s3Key, PRESIGNED_URL_EXPIRATION_MINUTES);
-
-        // 4. 만료 시간 계산
+        // 3. 만료 시간 계산
         Instant expiresAt = Instant.now().plusSeconds(PRESIGNED_URL_EXPIRATION_MINUTES * 60);
 
         return new PresignedUrlInfo(videoId, presignedUrl.toString(), expiresAt);
@@ -190,15 +187,14 @@ public class ArchiveServiceImpl implements ArchiveService {
             return Optional.empty();
         }
 
-        // 4. S3 headObject로 파일 존재 확인
-        String s3Key = "archive/videos/" + videoId;
-        if (!videoRepository.checkObjectExists(s3Key)) {
-            log.warn("Video file not found in S3: {}", s3Key);
+        // 4. 파일 업로드 완료 확인
+        if (!videoRepository.checkUploadComplete(videoId)) {
+            log.warn("Video file not uploaded: {}", videoId);
             return Optional.empty();
         }
 
         // 5. video_url 및 status 업데이트
-        String videoUrl = cloudfrontDomain + "/" + s3Key;
+        String videoUrl = cloudfrontDomain + "/archive/videos/" + videoId;
         boolean updated = videoRepository.updateVideoUrlAndStatus(
                 videoId,
                 videoUrl,

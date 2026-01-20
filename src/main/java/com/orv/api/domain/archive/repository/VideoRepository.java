@@ -29,9 +29,9 @@ public interface VideoRepository {
     // v1 API methods
     String createPendingVideo(UUID storyboardId, UUID memberId);
 
-    URL generatePresignedPutUrl(String s3Key, long expirationMinutes);
+    URL generateUploadUrl(UUID videoId, long expirationMinutes);
 
-    boolean checkObjectExists(String s3Key);
+    boolean checkUploadComplete(UUID videoId);
 
     boolean updateVideoUrlAndStatus(UUID videoId, String videoUrl, String status);
 
