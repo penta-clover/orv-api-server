@@ -1,8 +1,8 @@
 package com.orv.api.integration.domain.admin;
 
-import com.orv.api.JwtTokenProviderTestConfig;
-import com.orv.api.domain.admin.AdminController;
-import com.orv.api.domain.auth.JwtTokenProvider;
+import com.orv.api.JwtTokenServiceTestConfig;
+import com.orv.api.domain.admin.controller.AdminController;
+import com.orv.api.domain.auth.service.JwtTokenService;
 import com.orv.api.global.dto.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = AdminController.class)
 @AutoConfigureRestDocs(outputDir = "build/generated-snippets")
 @AutoConfigureMockMvc(addFilters = true)
-@Import(JwtTokenProviderTestConfig.class)
+@Import(JwtTokenServiceTestConfig.class)
 public class FilterIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
@@ -37,7 +37,7 @@ public class FilterIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private JwtTokenService jwtTokenProvider;
 
     @MockitoBean
     private AdminController adminController;

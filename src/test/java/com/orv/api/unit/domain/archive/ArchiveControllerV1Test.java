@@ -1,10 +1,11 @@
 package com.orv.api.unit.domain.archive;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.archive.ArchiveControllerV1;
-import com.orv.api.domain.archive.ArchiveService;
-import com.orv.api.domain.archive.dto.ConfirmUploadRequest;
-import com.orv.api.domain.archive.dto.PresignedUrlResponse;
+import com.orv.api.domain.archive.controller.ArchiveControllerV1;
+import com.orv.api.domain.archive.controller.dto.ConfirmUploadRequest;
+import com.orv.api.domain.archive.controller.dto.PresignedUrlResponse;
+import com.orv.api.domain.archive.orchestrator.ArchiveOrchestrator;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
@@ -41,7 +42,7 @@ public class ArchiveControllerV1Test {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private ArchiveService archiveService;
+    private ArchiveOrchestrator archiveOrchestrator;
 
     @Test
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
@@ -53,7 +54,7 @@ public class ArchiveControllerV1Test {
         Instant expiresAt = Instant.now().plusSeconds(3600);
 
         PresignedUrlResponse response = new PresignedUrlResponse(videoId, uploadUrl, expiresAt);
-        when(archiveService.requestUploadUrl(any(UUID.class), any(UUID.class))).thenReturn(response);
+        when(archiveOrchestrator.requestUploadUrl(any(UUID.class), any(UUID.class))).thenReturn(response);
 
         // when
         ResultActions result = mockMvc.perform(get("/api/v1/archive/upload-url")
@@ -100,7 +101,7 @@ public class ArchiveControllerV1Test {
         String videoId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
         ConfirmUploadRequest request = new ConfirmUploadRequest(videoId);
 
-        when(archiveService.confirmUpload(any(UUID.class), any(UUID.class)))
+        when(archiveOrchestrator.confirmUpload(any(UUID.class), any(UUID.class)))
                 .thenReturn(Optional.of(videoId));
 
         // when
@@ -132,7 +133,7 @@ public class ArchiveControllerV1Test {
         String videoId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
         ConfirmUploadRequest request = new ConfirmUploadRequest(videoId);
 
-        when(archiveService.confirmUpload(any(UUID.class), any(UUID.class)))
+        when(archiveOrchestrator.confirmUpload(any(UUID.class), any(UUID.class)))
                 .thenReturn(Optional.empty());
 
         // when

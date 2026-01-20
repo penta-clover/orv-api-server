@@ -1,10 +1,12 @@
 package com.orv.api.unit.domain.archive;
 
-import com.orv.api.domain.archive.ArchiveServiceImpl;
-import com.orv.api.domain.archive.VideoRepository;
-import com.orv.api.domain.archive.dto.PresignedUrlResponse;
-import com.orv.api.domain.archive.dto.Video;
-import com.orv.api.domain.archive.dto.VideoStatus;
+import com.orv.api.domain.archive.repository.VideoRepository;
+import com.orv.api.domain.archive.service.ArchiveServiceImpl;
+import com.orv.api.domain.archive.controller.dto.PresignedUrlResponse;
+import com.orv.api.domain.archive.service.dto.PresignedUrlInfo;
+import com.orv.api.domain.archive.service.dto.Video;
+import com.orv.api.domain.archive.service.dto.VideoStatus;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,18 +44,18 @@ class ArchiveServiceImplTest {
         URL presignedUrl = new URL("https://bucket.s3.amazonaws.com/archive/videos/" + videoId + "?X-Amz-Signature=...");
 
         when(videoRepository.createPendingVideo(storyboardId, memberId)).thenReturn(videoId);
-        when(videoRepository.generatePresignedPutUrl(eq("archive/videos/" + videoId), eq(60L))).thenReturn(presignedUrl);
+        when(videoRepository.generateUploadUrl(eq(UUID.fromString(videoId)), eq(60L))).thenReturn(presignedUrl);
 
         // when
-        PresignedUrlResponse response = archiveService.requestUploadUrl(storyboardId, memberId);
+        PresignedUrlInfo presignedUrlInfo = archiveService.requestUploadUrl(storyboardId, memberId);
 
         // then
-        assertThat(response.getVideoId()).isEqualTo(videoId);
-        assertThat(response.getUploadUrl()).isEqualTo(presignedUrl.toString());
-        assertThat(response.getExpiresAt()).isNotNull();
+        assertThat(presignedUrlInfo.getVideoId()).isEqualTo(videoId);
+        assertThat(presignedUrlInfo.getUploadUrl()).isEqualTo(presignedUrl.toString());
+        assertThat(presignedUrlInfo.getExpiresAt()).isNotNull();
 
         verify(videoRepository).createPendingVideo(storyboardId, memberId);
-        verify(videoRepository).generatePresignedPutUrl(eq("archive/videos/" + videoId), eq(60L));
+        verify(videoRepository).generateUploadUrl(eq(UUID.fromString(videoId)), eq(60L));
     }
 
     @Test
@@ -72,7 +74,7 @@ class ArchiveServiceImplTest {
         ReflectionTestUtils.setField(archiveService, "cloudfrontDomain", cloudfrontDomain);
 
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
-        when(videoRepository.checkObjectExists("archive/videos/" + videoId)).thenReturn(true);
+        when(videoRepository.checkUploadComplete(videoId)).thenReturn(true);
         when(videoRepository.updateVideoUrlAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(true);
 
         // when
@@ -83,7 +85,7 @@ class ArchiveServiceImplTest {
         assertThat(result.get()).isEqualTo(videoId.toString());
 
         verify(videoRepository).findById(videoId);
-        verify(videoRepository).checkObjectExists("archive/videos/" + videoId);
+        verify(videoRepository).checkUploadComplete(videoId);
         verify(videoRepository).updateVideoUrlAndStatus(eq(videoId), eq(cloudfrontDomain + "/archive/videos/" + videoId), eq(VideoStatus.UPLOADED.name()));
     }
 
@@ -102,7 +104,7 @@ class ArchiveServiceImplTest {
         // then
         assertThat(result).isEmpty();
         verify(videoRepository).findById(videoId);
-        verify(videoRepository, never()).checkObjectExists(any());
+        verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
@@ -125,7 +127,7 @@ class ArchiveServiceImplTest {
 
         // then
         assertThat(result).isEmpty();
-        verify(videoRepository, never()).checkObjectExists(any());
+        verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
@@ -147,7 +149,7 @@ class ArchiveServiceImplTest {
 
         // then
         assertThat(result).isEmpty();
-        verify(videoRepository, never()).checkObjectExists(any());
+        verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
@@ -163,7 +165,7 @@ class ArchiveServiceImplTest {
         video.setStatus(VideoStatus.PENDING.name());
 
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
-        when(videoRepository.checkObjectExists("archive/videos/" + videoId)).thenReturn(false);
+        when(videoRepository.checkUploadComplete(videoId)).thenReturn(false);
 
         // when
         Optional<String> result = archiveService.confirmUpload(videoId, memberId);

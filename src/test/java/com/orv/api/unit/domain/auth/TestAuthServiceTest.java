@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import com.orv.api.domain.auth.TestAuthService;
-import com.orv.api.domain.auth.dto.SocialUserInfo;
+import com.orv.api.domain.auth.service.TestAuthService;
+import com.orv.api.domain.auth.service.dto.SocialUserInfo;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;

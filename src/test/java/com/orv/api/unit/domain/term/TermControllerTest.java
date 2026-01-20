@@ -1,10 +1,10 @@
 package com.orv.api.unit.domain.term;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.term.TermController;
-import com.orv.api.domain.term.TermRepository;
-import com.orv.api.domain.term.dto.TermAgreementForm;
+import com.orv.api.domain.term.controller.TermController;
+import com.orv.api.domain.term.controller.dto.TermAgreementRequest;
+import com.orv.api.domain.term.orchestrator.TermOrchestrator;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
@@ -15,7 +15,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.net.InetAddress;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,23 +39,23 @@ public class TermControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private TermRepository termRepository;
+    private TermOrchestrator termOrchestrator;
 
     @Test
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
     public void testCreateAgreement() throws Exception {
         // given
-        TermAgreementForm termAgreementForm = new TermAgreementForm();
-        termAgreementForm.setTerm("privacy250301");
-        termAgreementForm.setValue("Y");
+        TermAgreementRequest termAgreementRequest = new TermAgreementRequest();
+        termAgreementRequest.setTerm("privacy250301");
+        termAgreementRequest.setValue("Y");
 
         String agreementId = UUID.randomUUID().toString();
-        when(termRepository.saveAgreement(any(), any(), any(), any())).thenReturn(Optional.of(agreementId));
+        when(termOrchestrator.createAgreement(any(UUID.class), any(TermAgreementRequest.class), any(String.class))).thenReturn(Optional.of(agreementId));
 
         // when
         mockMvc.perform(post("/api/v0/term/agreement")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(termAgreementForm)))
+                .content(objectMapper.writeValueAsString(termAgreementRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value(agreementId))
                 .andDo(

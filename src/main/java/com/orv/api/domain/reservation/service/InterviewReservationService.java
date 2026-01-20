@@ -1,0 +1,22 @@
+package com.orv.api.domain.reservation.service;
+
+import org.quartz.SchedulerException;
+import org.springframework.stereotype.Service;
+
+import com.orv.api.domain.reservation.service.dto.InterviewReservation;
+
+import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public interface InterviewReservationService {
+    Optional<InterviewReservation> getInterviewReservationById(UUID reservationId);
+    Optional<UUID> reserveInterview(UUID memberId, UUID storyboardId, OffsetDateTime reservedAt) throws Exception;
+    Optional<UUID> reserveInstantInterview(UUID memberId, UUID storyboardId) throws Exception;
+    Optional<List<InterviewReservation>> getForwardInterviews(UUID memberId, OffsetDateTime from);
+    boolean markInterviewAsDone(UUID interviewId);
+}

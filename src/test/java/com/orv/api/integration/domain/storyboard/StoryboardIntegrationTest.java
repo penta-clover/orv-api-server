@@ -1,7 +1,8 @@
 package com.orv.api.integration.domain.storyboard;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.auth.JwtTokenProvider;
+import com.orv.api.domain.auth.service.JwtTokenService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,7 @@ public class StoryboardIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private JwtTokenService jwtTokenProvider;
 
     // 테스트용 데이터
 

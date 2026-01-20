@@ -1,6 +1,5 @@
 package com.orv.api.domain.media.repository;
 
-import com.orv.api.domain.media.dto.InterviewAudioRecording;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -11,6 +10,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.orv.api.domain.media.service.dto.InterviewAudioRecording;
 
 @Repository
 public class JdbcInterviewAudioRecordingRepository implements InterviewAudioRecordingRepository {
