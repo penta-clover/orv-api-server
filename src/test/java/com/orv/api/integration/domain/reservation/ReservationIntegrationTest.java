@@ -26,10 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.orv.api.domain.auth.service.JwtTokenService;
 import com.orv.api.domain.reservation.controller.dto.InterviewReservationRequest;
-import com.orv.api.domain.reservation.controller.dto.RecapReservationRequest;
-import com.orv.api.domain.reservation.controller.dto.RecapServerResponse;
-import com.orv.api.domain.reservation.service.dto.RecapContent;
-import com.orv.api.infra.recap.RecapClient;
+import com.orv.api.domain.recap.controller.dto.RecapReservationRequest;
+import com.orv.api.domain.recap.infrastructure.RecapClient;
+import com.orv.api.domain.recap.service.dto.RecapContent;
+import com.orv.api.domain.recap.infrastructure.dto.RecapServerResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

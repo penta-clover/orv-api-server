@@ -6,8 +6,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.orv.api.domain.reservation.repository.ReservationRepository;
-import com.orv.api.domain.reservation.service.ReservationServiceImpl;
+import com.orv.api.domain.reservation.repository.InterviewReservationRepository;
+import com.orv.api.domain.reservation.service.InterviewReservationServiceImpl;
 import com.orv.api.domain.reservation.service.dto.InterviewReservation;
 
 import org.junit.jupiter.api.Test;
@@ -23,10 +23,10 @@ import java.util.*;
 public class ReservationServiceImplTest {
 
     @Mock
-    private ReservationRepository reservationRepository;
+    private InterviewReservationRepository interviewReservationRepository;
 
     @InjectMocks
-    private ReservationServiceImpl reservationService;
+    private InterviewReservationServiceImpl reservationService;
 
     @Test
     public void testReserveInterviewSuccess() throws Exception {
@@ -36,7 +36,7 @@ public class ReservationServiceImplTest {
         OffsetDateTime reservedAt = OffsetDateTime.now();
         UUID interviewId = UUID.randomUUID();
 
-        when(reservationRepository.reserveInterview(eq(memberId), eq(storyboardId), any()))
+        when(interviewReservationRepository.reserveInterview(eq(memberId), eq(storyboardId), any()))
                 .thenReturn(Optional.of(interviewId));
 
         // when
@@ -54,7 +54,7 @@ public class ReservationServiceImplTest {
         UUID storyboardId = UUID.randomUUID();
         OffsetDateTime reservedAt = OffsetDateTime.now();
 
-        when(reservationRepository.reserveInterview(eq(memberId), eq(storyboardId), any()))
+        when(interviewReservationRepository.reserveInterview(eq(memberId), eq(storyboardId), any()))
                 .thenReturn(Optional.empty());
 
         // when
@@ -74,7 +74,7 @@ public class ReservationServiceImplTest {
         OffsetDateTime from = OffsetDateTime.now();
         List<InterviewReservation> reservations = Arrays.asList(new InterviewReservation(), new InterviewReservation());
 
-        when(reservationRepository.getReservedInterviews(eq(memberId), eq(from)))
+        when(interviewReservationRepository.getReservedInterviews(eq(memberId), eq(from)))
                 .thenReturn(Optional.of(reservations));
 
         // when
@@ -89,7 +89,7 @@ public class ReservationServiceImplTest {
     public void testMarkInterviewAsDone() {
         // given
         UUID interviewId = UUID.randomUUID();
-        when(reservationRepository.changeInterviewReservationStatus(eq(interviewId), eq("done")))
+        when(interviewReservationRepository.changeInterviewReservationStatus(eq(interviewId), eq("done")))
                 .thenReturn(true);
 
         // when

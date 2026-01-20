@@ -1,8 +1,8 @@
 package com.orv.api.unit.domain.storyboard;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.reservation.service.dto.InterviewScenario;
-import com.orv.api.domain.reservation.service.dto.SceneInfo;
+import com.orv.api.domain.recap.service.dto.InterviewScenario;
+import com.orv.api.domain.recap.service.dto.SceneInfo;
 import com.orv.api.domain.storyboard.service.InterviewScenarioConverter;
 import com.orv.api.domain.storyboard.service.dto.Scene;
 import com.orv.api.domain.storyboard.service.dto.Storyboard;
