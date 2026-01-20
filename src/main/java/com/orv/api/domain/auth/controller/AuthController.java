@@ -1,10 +1,11 @@
 package com.orv.api.domain.auth.controller;
 
-import com.orv.api.domain.auth.service.JwtTokenService;
-import com.orv.api.domain.auth.service.MemberService;
-import com.orv.api.domain.auth.service.SocialAuthService;
-import com.orv.api.domain.auth.service.SocialAuthServiceResolver;
-import com.orv.api.domain.auth.service.dto.*;
+import com.orv.api.domain.auth.controller.dto.ValidationResultResponse;
+import com.orv.api.domain.auth.orchestrator.AuthOrchestrator;
+import com.orv.api.domain.auth.service.dto.JoinForm;
+import com.orv.api.domain.auth.service.dto.Member;
+import com.orv.api.domain.auth.service.dto.Role;
+import com.orv.api.domain.auth.service.dto.SocialUserInfo;
 import com.orv.api.global.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,9 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @RequestMapping("/api/v0/auth/")
 public class AuthController {
-    private final SocialAuthServiceResolver socialAuthServiceFactory;
-    private final MemberService memberService;
-    private final JwtTokenService jwtTokenService;
+    private final AuthOrchestrator authOrchestrator;
 
     @Value("${security.frontend.callback-url}")
     private String callbackUrl;
@@ -34,10 +33,7 @@ public class AuthController {
     @GetMapping("/login/{provider}")
     public void login(@PathVariable String provider, HttpServletResponse response) throws IOException {
         String state = UUID.randomUUID().toString(); // CSRF 공격 방지를 위해 랜덤값 사용
-
-        SocialAuthService socialAuthService = socialAuthServiceFactory.getSocialAuthService(provider);
-        String authUrl = socialAuthService.getAuthorizationUrl(state);
-
+        String authUrl = authOrchestrator.getAuthorizationUrl(provider, state);
         response.sendRedirect(authUrl);
     }
 
@@ -45,10 +41,8 @@ public class AuthController {
     public void callback(@PathVariable String provider, HttpServletRequest request, HttpServletResponse response) throws IOException {
         String code = request.getParameter("code");
 
-        SocialAuthService socialAuthService = socialAuthServiceFactory.getSocialAuthService(provider);
-        SocialUserInfo userInfo = socialAuthService.getUserInfo(code);
-
-        Optional<Member> member = memberService.findByProviderAndSocialId(userInfo.getProvider(), userInfo.getId());
+        SocialUserInfo userInfo = authOrchestrator.getUserInfo(provider, code);
+        Optional<Member> member = authOrchestrator.findByProviderAndSocialId(userInfo.getProvider(), userInfo.getId());
 
         String token;
         boolean isRegistered = member.isPresent();
@@ -56,7 +50,7 @@ public class AuthController {
         if (isRegistered) {
             // 가입된 사용자
             Member mem = member.get();
-            Optional<List<Role>> roles = memberService.findRolesById(mem.getId());
+            Optional<List<Role>> roles = authOrchestrator.findRolesById(mem.getId());
 
             if (roles.isEmpty()) {
                 // 권한 조회에 실패한 경우
@@ -64,7 +58,7 @@ public class AuthController {
                 return;
             }
 
-            token = jwtTokenService.createToken(
+            token = authOrchestrator.createToken(
                     mem.getId().toString(),
                     Map.of("provider", mem.getProvider(),
                             "socialId", mem.getSocialId(),
@@ -72,7 +66,7 @@ public class AuthController {
         } else {
             // 미가입 사용자
             String temporaryId = UUID.randomUUID().toString();
-            token = jwtTokenService.createToken(
+            token = authOrchestrator.createToken(
                     temporaryId,
                     Map.of("provider", userInfo.getProvider(), "socialId", userInfo.getId(), "roles", List.of()));
         }
@@ -82,20 +76,20 @@ public class AuthController {
     }
 
     @GetMapping("/nicknames")
-    public ApiResponse<ValidationResult> validNickname(@RequestParam("nickname") String nickname) {
-        ValidationResult validationResult = memberService.validateNickname(nickname);
+    public ApiResponse<ValidationResultResponse> validNickname(@RequestParam("nickname") String nickname) {
+        ValidationResultResponse validationResult = authOrchestrator.validateNickname(nickname);
         return ApiResponse.success(validationResult, 200);
     }
 
     @PostMapping("/join")
     public ApiResponse<Object> join(@RequestBody JoinForm joinForm, @RequestHeader("Authorization") String authHeader) {
         String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
-        Map<String, ?> payload = jwtTokenService.getPayload(token);
+        Map<String, ?> payload = authOrchestrator.getPayload(token);
         String provider = (String) payload.get("provider");
         String socialId = (String) payload.get("socialId");
         String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        memberService.join(memberId, joinForm.getNickname(), joinForm.getGender(), joinForm.getBirthDay(), provider, socialId, joinForm.getPhoneNumber());
+        authOrchestrator.join(memberId, joinForm.getNickname(), joinForm.getGender(), joinForm.getBirthDay(), provider, socialId, joinForm.getPhoneNumber());
 
         return ApiResponse.success(null, 200);
     }

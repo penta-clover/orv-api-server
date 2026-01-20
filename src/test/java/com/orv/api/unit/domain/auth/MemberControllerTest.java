@@ -2,8 +2,8 @@ package com.orv.api.unit.domain.auth;
 
 
 import com.orv.api.domain.auth.controller.MemberController;
-import com.orv.api.domain.auth.service.MemberService;
-import com.orv.api.domain.auth.service.dto.MemberInfo;
+import com.orv.api.domain.auth.controller.dto.MemberInfoResponse;
+import com.orv.api.domain.auth.orchestrator.MemberOrchestrator;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
@@ -38,19 +37,19 @@ public class MemberControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private MemberService memberService;
+    private MemberOrchestrator memberOrchestrator;
 
     @Test
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
     public void testGetMyInfo() throws Exception {
         // given
-        MemberInfo myInfo = new MemberInfo();
+        MemberInfoResponse myInfo = new MemberInfoResponse();
         myInfo.setId(UUID.fromString("054c3e8a-3387-4eb3-ac8a-31a48221f192"));
         myInfo.setNickname("현준");
         myInfo.setProfileImageUrl("https://www.naver.com/favicon.ico");
         myInfo.setCreatedAt(LocalDateTime.now());
 
-        when(memberService.getMyInfo(any())).thenReturn(myInfo);
+        when(memberOrchestrator.getMyInfo(any())).thenReturn(myInfo);
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/member/my-info"));

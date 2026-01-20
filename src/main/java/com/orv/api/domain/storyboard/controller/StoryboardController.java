@@ -1,8 +1,7 @@
 package com.orv.api.domain.storyboard.controller;
 
-import com.orv.api.domain.storyboard.controller.dto.StoryboardPreviewResponse;
-import com.orv.api.domain.storyboard.service.StoryboardService;
-import com.orv.api.domain.storyboard.service.dto.*;
+import com.orv.api.domain.storyboard.controller.dto.*;
+import com.orv.api.domain.storyboard.orchestrator.StoryboardOrchestrator;
 import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +19,11 @@ import java.util.UUID;
 @RequestMapping("/api/v0/storyboard")
 @RequiredArgsConstructor
 public class StoryboardController {
-    private final StoryboardService storyboardService;
+    private final StoryboardOrchestrator storyboardOrchestrator;
 
     @GetMapping("/{storyboardId}")
     public ApiResponse getStoryboard(@PathVariable String storyboardId) {
-        Optional<Storyboard> foundStoryboard = storyboardService.getStoryboard(UUID.fromString(storyboardId));
+        Optional<StoryboardResponse> foundStoryboard = storyboardOrchestrator.getStoryboard(UUID.fromString(storyboardId));
 
         if (foundStoryboard.isEmpty()) {
             return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);
@@ -37,7 +36,7 @@ public class StoryboardController {
     public ApiResponse getAllScene(@PathVariable String storyboardId) {
         try {
             UUID storyboardUUID = UUID.fromString(storyboardId);
-            Optional<List<Scene>> scenesOrEmpty = storyboardService.getAllScenes(storyboardUUID);
+            Optional<List<SceneResponse>> scenesOrEmpty = storyboardOrchestrator.getAllScenes(storyboardUUID);
 
             if (scenesOrEmpty.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
@@ -52,7 +51,7 @@ public class StoryboardController {
     @GetMapping("/scene/{sceneId}")
     public ApiResponse getScene(@PathVariable String sceneId) {
         String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
-        Optional<Scene> foundScene = storyboardService.getSceneAndUpdateUsageHistory(
+        Optional<SceneResponse> foundScene = storyboardOrchestrator.getSceneAndUpdateUsageHistory(
                 UUID.fromString(sceneId),
                 UUID.fromString(memberId)
         );
@@ -67,27 +66,19 @@ public class StoryboardController {
     @GetMapping("/{storyboardId}/preview")
     public ApiResponse getStoryboardPreview(@PathVariable String storyboardId) {
         UUID storyboardUUID = UUID.fromString(storyboardId);
-        Optional<StoryboardPreviewInfo> previewInfoOrEmpty = storyboardService.getStoryboardPreview(storyboardUUID);
+        Optional<StoryboardPreviewResponse> previewOrEmpty = storyboardOrchestrator.getStoryboardPreview(storyboardUUID);
 
-        if (previewInfoOrEmpty.isEmpty()) {
+        if (previewOrEmpty.isEmpty()) {
             return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);
         }
 
-        // Convert Service DTO to Controller DTO
-        StoryboardPreviewInfo previewInfo = previewInfoOrEmpty.get();
-        StoryboardPreviewResponse response = new StoryboardPreviewResponse(
-                previewInfo.getStoryboardId(),
-                previewInfo.getQuestionCount(),
-                previewInfo.getQuestions()
-        );
-
-        return ApiResponse.success(response, 200);
+        return ApiResponse.success(previewOrEmpty.get(), 200);
     }
 
     @GetMapping("/{storyboardId}/topic/list")
     public ApiResponse getTopicsOfStoryboard(@PathVariable String storyboardId) {
         UUID storyboardUUID = UUID.fromString(storyboardId);
-        Optional<List<Topic>> topicsOrEmpty = storyboardService.getTopicsOfStoryboard(storyboardUUID);
+        Optional<List<TopicResponse>> topicsOrEmpty = storyboardOrchestrator.getTopicsOfStoryboard(storyboardUUID);
 
         if (topicsOrEmpty.isEmpty()) {
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);

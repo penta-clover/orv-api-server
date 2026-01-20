@@ -1,8 +1,8 @@
 package com.orv.api.domain.auth.controller;
 
-import com.orv.api.domain.auth.service.MemberService;
-import com.orv.api.domain.auth.service.dto.MemberInfo;
-import com.orv.api.domain.auth.service.dto.MemberProfile;
+import com.orv.api.domain.auth.controller.dto.MemberInfoResponse;
+import com.orv.api.domain.auth.controller.dto.MemberProfileResponse;
+import com.orv.api.domain.auth.orchestrator.MemberOrchestrator;
 import com.orv.api.global.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,18 +17,18 @@ import java.util.UUID;
 @RequestMapping("/api/v0/member")
 @RequiredArgsConstructor
 public class MemberController {
-    private final MemberService memberService;
+    private final MemberOrchestrator memberOrchestrator;
 
     @GetMapping("/my-info")
     public ApiResponse getMyInfo() {
         UUID myId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
-        MemberInfo myInfo = memberService.getMyInfo(myId);
+        MemberInfoResponse myInfo = memberOrchestrator.getMyInfo(myId);
         return ApiResponse.success(myInfo, 200);
     }
 
     @GetMapping("/{memberId}/profile")
     public ApiResponse getMemberProfile(@PathVariable UUID memberId) {
-        MemberProfile memberProfile = memberService.getProfile(memberId);
+        MemberProfileResponse memberProfile = memberOrchestrator.getProfile(memberId);
         return ApiResponse.success(memberProfile, 200);
     }
 }

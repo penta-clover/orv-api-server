@@ -1,7 +1,7 @@
 package com.orv.api.domain.term.controller;
 
-import com.orv.api.domain.term.service.TermService;
-import com.orv.api.domain.term.service.dto.TermAgreementForm;
+import com.orv.api.domain.term.controller.dto.TermAgreementRequest;
+import com.orv.api.domain.term.orchestrator.TermOrchestrator;
 import com.orv.api.global.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -17,18 +17,17 @@ import java.util.UUID;
 @RequestMapping("/api/v0/term")
 @Slf4j
 public class TermController {
-    private final TermService termService;
+    private final TermOrchestrator termOrchestrator;
 
     @PostMapping("/agreement")
-    public ApiResponse createAgreement(@RequestBody TermAgreementForm termAgreementForm, HttpServletRequest request) {
+    public ApiResponse createAgreement(@RequestBody TermAgreementRequest termAgreementRequest, HttpServletRequest request) {
         try {
             String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
             String clientIp = extractClientIp(request);
 
-            Optional<String> agreementId = termService.createAgreement(
+            Optional<String> agreementId = termOrchestrator.createAgreement(
                     UUID.fromString(memberId),
-                    termAgreementForm.getTerm(),
-                    termAgreementForm.getValue(),
+                    termAgreementRequest,
                     clientIp
             );
 

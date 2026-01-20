@@ -2,17 +2,8 @@ package com.orv.api.unit.domain.reservation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orv.api.domain.reservation.controller.ReservationController;
-import com.orv.api.domain.reservation.service.RecapService;
-import com.orv.api.domain.reservation.service.ReservationService;
-import com.orv.api.domain.reservation.service.dto.InterviewReservation;
-import com.orv.api.domain.reservation.controller.dto.InterviewReservationRequest;
-import com.orv.api.domain.reservation.controller.dto.RecapAnswerSummaryResponse;
-import com.orv.api.domain.reservation.controller.dto.RecapAudioResponse;
-import com.orv.api.domain.reservation.controller.dto.RecapReservationRequest;
-import com.orv.api.domain.reservation.controller.dto.RecapResultResponse;
-import com.orv.api.domain.reservation.service.dto.RecapResultInfo;
-import com.orv.api.domain.reservation.service.dto.RecapAnswerSummaryInfo;
-import com.orv.api.domain.reservation.service.dto.RecapAudioInfo;
+import com.orv.api.domain.reservation.orchestrator.ReservationOrchestrator;
+import com.orv.api.domain.reservation.controller.dto.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,10 +45,7 @@ public class ReservationControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private ReservationService reservationService;
-
-    @MockitoBean
-    private RecapService recapService;
+    private ReservationOrchestrator reservationOrchestrator;
 
     @Test
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
@@ -70,7 +58,18 @@ public class ReservationControllerTest {
         String formattedTime = request.getReservedAt().format(formatter);
 
         String generatedId = "e5895e70-7713-4a35-b12f-2521af77524b";
-        when(reservationService.reserveInterview(any(), any(), any())).thenReturn(Optional.of(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b")));
+        UUID memberId = UUID.fromString("054c3e8a-3387-4eb3-ac8a-31a48221f192");
+        UUID storyboardId = UUID.fromString(request.getStoryboardId());
+
+        InterviewReservationResponse response = new InterviewReservationResponse(
+            UUID.fromString(generatedId),
+            memberId,
+            storyboardId,
+            request.getReservedAt().toLocalDateTime(),
+            LocalDateTime.now()
+        );
+
+        when(reservationOrchestrator.reserveInterview(any(), any(), any())).thenReturn(Optional.of(response));
 
         // when
         ResultActions resultActions = mockMvc.perform(post("/api/v0/reservation/interview")
@@ -109,9 +108,15 @@ public class ReservationControllerTest {
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
     public void testGetReservedInterviews() throws Exception {
         // given
-        when(reservationService.getForwardInterviews(any(), any())).thenReturn(Optional.of(List.of(
-                new InterviewReservation(UUID.fromString("e5895e70-7713-4a32-b15f-2521af77524b"), UUID.fromString("054c3e8a-3387-4eb3-ac8a-31a48221f192"), UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"), LocalDateTime.now().plusHours(5), LocalDateTime.now())
-        )));
+        InterviewReservationResponse response = new InterviewReservationResponse(
+                UUID.fromString("e5895e70-7713-4a32-b15f-2521af77524b"),
+                UUID.fromString("054c3e8a-3387-4eb3-ac8a-31a48221f192"),
+                UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"),
+                LocalDateTime.now().plusHours(5),
+                LocalDateTime.now()
+        );
+
+        when(reservationOrchestrator.getForwardInterviews(any(), any())).thenReturn(Optional.of(List.of(response)));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/interview/forward")
@@ -146,7 +151,7 @@ public class ReservationControllerTest {
     public void testDoneInterview() throws Exception {
         // given
         UUID interviewId = UUID.fromString("e5895e70-7713-4a32-b15f-2521af77524b");
-        when(reservationService.markInterviewAsDone(any())).thenReturn(true);
+        when(reservationOrchestrator.markInterviewAsDone(any())).thenReturn(true);
 
         // when
         ResultActions resultActions = mockMvc.perform(patch("/api/v0/reservation/interview/{interviewId}/done", interviewId));
@@ -177,7 +182,15 @@ public class ReservationControllerTest {
         String formattedTime = request.getScheduledAt().format(formatter);
 
         String generatedId = "d23abc70-7713-4a35-b12f-2521af77524b";
-        when(recapService.reserveRecap(any(), any(), any())).thenReturn(Optional.of(UUID.fromString(generatedId)));
+        RecapReservationResponse response = new RecapReservationResponse(
+            UUID.fromString(generatedId),
+            UUID.fromString("054c3e8a-3387-4eb3-ac8a-31a48221f192"),
+            UUID.fromString(request.getVideoId()),
+            request.getScheduledAt().toLocalDateTime(),
+            LocalDateTime.now()
+        );
+
+        when(reservationOrchestrator.reserveRecap(any(), any(), any())).thenReturn(Optional.of(response));
 
         // when
         ResultActions resultActions = mockMvc.perform(post("/api/v0/reservation/recap/video")
@@ -222,9 +235,10 @@ public class ReservationControllerTest {
         UUID storyboardId = UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b");
         LocalDateTime scheduledAt = LocalDateTime.now().plusDays(1);
         LocalDateTime createdAt = LocalDateTime.now();
-        InterviewReservation reservation = new InterviewReservation(reservationId, memberId, storyboardId, scheduledAt, createdAt);
+        
+        InterviewReservationResponse response = new InterviewReservationResponse(reservationId, memberId, storyboardId, scheduledAt, createdAt);
 
-        when(reservationService.getInterviewReservationById(any())).thenReturn(Optional.of(reservation));
+        when(reservationOrchestrator.getInterviewReservationById(any())).thenReturn(Optional.of(response));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/interview/{reservationId}", reservationId));
@@ -262,16 +276,16 @@ public class ReservationControllerTest {
         UUID sceneId1 = UUID.fromString("b1b2c3d4-e5f6-7890-1234-567890abcdef");
         UUID sceneId2 = UUID.fromString("c1c2d3e4-f5a6-7890-1234-567890abcdef");
 
-        RecapAnswerSummaryInfo summary1 = new RecapAnswerSummaryInfo(sceneId1, "Question for scene 1", "Summary for scene 1");
-        RecapAnswerSummaryInfo summary2 = new RecapAnswerSummaryInfo(sceneId2, "Question for scene 2", "Summary for scene 2");
+        RecapAnswerSummaryResponse summary1 = new RecapAnswerSummaryResponse(sceneId1, "Question for scene 1", "Summary for scene 1");
+        RecapAnswerSummaryResponse summary2 = new RecapAnswerSummaryResponse(sceneId2, "Question for scene 2", "Summary for scene 2");
 
-        RecapResultInfo mockResponse = new RecapResultInfo(
+        RecapResultResponse mockResponse = new RecapResultResponse(
                 recapResultId,
                 ZonedDateTime.now().toOffsetDateTime(),
                 Arrays.asList(summary1, summary2)
         );
 
-        when(recapService.getRecapResult(any(UUID.class))).thenReturn(Optional.of(mockResponse));
+        when(reservationOrchestrator.getRecapResult(any(UUID.class))).thenReturn(Optional.of(mockResponse));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/recap/{recapResultId}/result", recapResultId)
@@ -314,14 +328,14 @@ public class ReservationControllerTest {
         Integer runningTime = 324;
         OffsetDateTime createdAt = OffsetDateTime.now();
 
-        RecapAudioInfo mockResponse = new RecapAudioInfo(
+        RecapAudioResponse mockResponse = new RecapAudioResponse(
                 audioId,
                 audioUrl,
                 runningTime,
                 createdAt
         );
 
-        when(recapService.getRecapAudio(any(UUID.class))).thenReturn(Optional.of(mockResponse));
+        when(reservationOrchestrator.getRecapAudio(any(UUID.class))).thenReturn(Optional.of(mockResponse));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/recap/{recapReservationId}/audio", recapReservationId)

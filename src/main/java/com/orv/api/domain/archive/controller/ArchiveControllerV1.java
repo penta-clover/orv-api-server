@@ -1,7 +1,6 @@
 package com.orv.api.domain.archive.controller;
 
-import com.orv.api.domain.archive.service.ArchiveService;
-import com.orv.api.domain.archive.service.dto.PresignedUrlInfo;
+import com.orv.api.domain.archive.orchestrator.ArchiveOrchestrator;
 import com.orv.api.domain.archive.controller.dto.ConfirmUploadRequest;
 import com.orv.api.domain.archive.controller.dto.PresignedUrlResponse;
 import com.orv.api.global.dto.ApiResponse;
@@ -19,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class ArchiveControllerV1 {
-    private final ArchiveService archiveService;
+    private final ArchiveOrchestrator archiveOrchestrator;
 
     @GetMapping("/upload-url")
     public ApiResponse getUploadUrl(@RequestParam String storyboardId) {
@@ -28,15 +27,9 @@ public class ArchiveControllerV1 {
 
             log.info("Requesting upload URL for storyboard: {} by member: {}", storyboardId, memberId);
 
-            PresignedUrlInfo info = archiveService.requestUploadUrl(
+            PresignedUrlResponse response = archiveOrchestrator.requestUploadUrl(
                     UUID.fromString(storyboardId),
                     UUID.fromString(memberId)
-            );
-
-            PresignedUrlResponse response = new PresignedUrlResponse(
-                    info.getVideoId(),
-                    info.getUploadUrl(),
-                    info.getExpiresAt()
             );
 
             return ApiResponse.success(response, 200);
@@ -56,7 +49,7 @@ public class ArchiveControllerV1 {
 
             log.info("Confirming upload for video: {} by member: {}", request.getVideoId(), memberId);
 
-            Optional<String> result = archiveService.confirmUpload(
+            Optional<String> result = archiveOrchestrator.confirmUpload(
                     UUID.fromString(request.getVideoId()),
                     UUID.fromString(memberId)
             );

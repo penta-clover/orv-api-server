@@ -1,9 +1,9 @@
 package com.orv.api.unit.domain.storyboard;
 
 import com.orv.api.domain.storyboard.controller.TopicController;
-import com.orv.api.domain.storyboard.service.TopicService;
-import com.orv.api.domain.storyboard.service.dto.Storyboard;
-import com.orv.api.domain.storyboard.service.dto.Topic;
+import com.orv.api.domain.storyboard.controller.dto.StoryboardResponse;
+import com.orv.api.domain.storyboard.controller.dto.TopicResponse;
+import com.orv.api.domain.storyboard.orchestrator.TopicOrchestrator;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,20 +40,22 @@ public class TopicControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private TopicService topicService;
+    private TopicOrchestrator topicOrchestrator;
 
     @Test
     public void testGetTopics() throws Exception {
         // given
-        Topic topic = new Topic();
-        topic.setId(UUID.fromString("1be07a77-4c5b-4661-b0d4-d80502fbea98"));
-        topic.setName("죽음");
-        topic.setDescription("죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거");
-        topic.setThumbnailUrl("https://www.naver.com/favicon.ico");
-        topic.setHashtags(Collections.emptyList());
-        List<Topic> topics = List.of(topic);
+        UUID topicId = UUID.fromString("1be07a77-4c5b-4661-b0d4-d80502fbea98");
+        TopicResponse topic = new TopicResponse(
+                topicId,
+                "죽음",
+                "죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거",
+                "https://www.naver.com/favicon.ico",
+                Collections.emptyList()
+        );
+        List<TopicResponse> topics = List.of(topic);
 
-        when(topicService.getTopicsByCategory(any())).thenReturn(topics);
+        when(topicOrchestrator.getTopicsByCategory(any())).thenReturn(topics);
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/topic/list"));
@@ -62,7 +64,7 @@ public class TopicControllerTest {
         resultActions.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value("200"))
                 .andExpect(jsonPath("$.message").value("success"))
-                .andExpect(jsonPath("$.data[0].id").value(topic.getId().toString()))
+                .andExpect(jsonPath("$.data[0].id").value(topicId.toString()))
                 .andExpect(jsonPath("$.data[0].name").value("죽음"))
                 .andExpect(jsonPath("$.data[0].description").value("죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거"))
                 .andExpect(jsonPath("$.data[0].thumbnailUrl").value("https://www.naver.com/favicon.ico"))
@@ -87,12 +89,11 @@ public class TopicControllerTest {
     public void testGetNextStoryboard_whenStoryboardsExist() throws Exception {
         // given
         UUID topicId = UUID.fromString("1be07a77-4c5b-4661-b0d4-d80502fbea98");
-        Storyboard storyboard = new Storyboard();
-        storyboard.setId(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"));
-        storyboard.setTitle("테스트 스토리보드");
-        storyboard.setStartSceneId(UUID.fromString("50c4dfc2-8bec-4d77-849f-57462d50d393"));
+        UUID storyboardId = UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b");
+        UUID startSceneId = UUID.fromString("50c4dfc2-8bec-4d77-849f-57462d50d393");
+        StoryboardResponse storyboard = new StoryboardResponse(storyboardId, "테스트 스토리보드", startSceneId);
 
-        when(topicService.getNextStoryboard(topicId)).thenReturn(Optional.of(storyboard));
+        when(topicOrchestrator.getNextStoryboard(topicId)).thenReturn(Optional.of(storyboard));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/topic/{topicId}/storyboard/next", topicId.toString()));
@@ -101,9 +102,9 @@ public class TopicControllerTest {
         resultActions.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value("200"))
                 .andExpect(jsonPath("$.message").value("success"))
-                .andExpect(jsonPath("$.data.id").value(storyboard.getId().toString()))
+                .andExpect(jsonPath("$.data.id").value(storyboardId.toString()))
                 .andExpect(jsonPath("$.data.title").value(storyboard.getTitle()))
-                .andExpect(jsonPath("$.data.startSceneId").value(storyboard.getStartSceneId().toString()))
+                .andExpect(jsonPath("$.data.startSceneId").value(startSceneId.toString()))
                 .andDo(document("topic/get-next-storyboard-success",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -124,13 +125,15 @@ public class TopicControllerTest {
     public void testGetTopic() throws Exception {
         // given
         UUID topicId = UUID.fromString("1be07a77-4c5b-4661-b0d4-d80502fbea98");
-        Topic topic = new Topic();
-        topic.setId(topicId);
-        topic.setName("죽음");
-        topic.setDescription("죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거");
-        topic.setThumbnailUrl("https://www.naver.com/favicon.ico");
+        TopicResponse topic = new TopicResponse(
+                topicId,
+                "죽음",
+                "죽음은 현존재에게 가장 고유하고 확실한 가능성이다. - 하이데거",
+                "https://www.naver.com/favicon.ico",
+                null
+        );
 
-        when(topicService.getTopic(topicId)).thenReturn(java.util.Optional.of(topic));
+        when(topicOrchestrator.getTopic(topicId)).thenReturn(Optional.of(topic));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/topic/{topicId}", topicId.toString()));

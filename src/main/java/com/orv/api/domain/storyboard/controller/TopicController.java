@@ -1,8 +1,8 @@
 package com.orv.api.domain.storyboard.controller;
 
-import com.orv.api.domain.storyboard.service.TopicService;
-import com.orv.api.domain.storyboard.service.dto.Storyboard;
-import com.orv.api.domain.storyboard.service.dto.Topic;
+import com.orv.api.domain.storyboard.controller.dto.StoryboardResponse;
+import com.orv.api.domain.storyboard.controller.dto.TopicResponse;
+import com.orv.api.domain.storyboard.orchestrator.TopicOrchestrator;
 import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +16,12 @@ import java.util.UUID;
 @RequestMapping("/api/v0/topic")
 @RequiredArgsConstructor
 public class TopicController {
-    private final TopicService topicService;
+    private final TopicOrchestrator topicOrchestrator;
 
     @GetMapping("/list")
     public ApiResponse getTopics(@RequestParam(name = "category", required = false, defaultValue = "DEFAULT") String categoryCode) {
         try {
-            List<Topic> topics = topicService.getTopicsByCategory(categoryCode);
+            List<TopicResponse> topics = topicOrchestrator.getTopicsByCategory(categoryCode);
             return ApiResponse.success(topics, 200);
         } catch (Exception e) {
             e.printStackTrace();
@@ -32,7 +32,7 @@ public class TopicController {
     @GetMapping("/{topicId}/storyboard/next")
     public ApiResponse getNextStoryboard(@PathVariable("topicId") String topicId) {
         try {
-            Optional<Storyboard> storyboardOrEmpty = topicService.getNextStoryboard(UUID.fromString(topicId));
+            Optional<StoryboardResponse> storyboardOrEmpty = topicOrchestrator.getNextStoryboard(UUID.fromString(topicId));
 
             if (storyboardOrEmpty.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);
@@ -48,7 +48,7 @@ public class TopicController {
     @GetMapping("/{topicId}")
     public ApiResponse getTopic(@PathVariable("topicId") String topicId) {
         try {
-            Optional<Topic> topicOrEmpty = topicService.getTopic(UUID.fromString(topicId));
+            Optional<TopicResponse> topicOrEmpty = topicOrchestrator.getTopic(UUID.fromString(topicId));
 
             if (topicOrEmpty.isEmpty()) {
                 return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);

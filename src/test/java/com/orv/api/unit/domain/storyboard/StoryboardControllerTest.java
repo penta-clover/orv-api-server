@@ -1,11 +1,8 @@
 package com.orv.api.unit.domain.storyboard;
 
 import com.orv.api.domain.storyboard.controller.StoryboardController;
-import com.orv.api.domain.storyboard.service.StoryboardService;
-import com.orv.api.domain.storyboard.service.dto.Scene;
-import com.orv.api.domain.storyboard.service.dto.Storyboard;
-import com.orv.api.domain.storyboard.service.dto.StoryboardPreviewInfo;
-import com.orv.api.domain.storyboard.service.dto.Topic;
+import com.orv.api.domain.storyboard.controller.dto.*;
+import com.orv.api.domain.storyboard.orchestrator.StoryboardOrchestrator;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,26 +38,25 @@ public class StoryboardControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private StoryboardService storyboardService;
+    private StoryboardOrchestrator storyboardOrchestrator;
 
     @Test
     public void testGetStoryboard_whenStoryboardExists() throws Exception {
         // given
-        Storyboard storyboard = new Storyboard();
-        storyboard.setTitle("test title");
-        storyboard.setId(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"));
-        storyboard.setStartSceneId(UUID.fromString("50c4dfc2-8bec-4d77-849f-57462d50d393"));
+        UUID storyboardId = UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b");
+        UUID startSceneId = UUID.fromString("50c4dfc2-8bec-4d77-849f-57462d50d393");
+        StoryboardResponse storyboard = new StoryboardResponse(storyboardId, "test title", startSceneId);
 
-        when(storyboardService.getStoryboard(storyboard.getId())).thenReturn(Optional.of(storyboard));
+        when(storyboardOrchestrator.getStoryboard(storyboardId)).thenReturn(Optional.of(storyboard));
 
         // when
-        ResultActions resultActions = mockMvc.perform(get("/api/v0/storyboard/{storyboardId}", storyboard.getId()));
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/storyboard/{storyboardId}", storyboardId));
 
         // then
         resultActions.andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(storyboard.getId().toString()))
+                .andExpect(jsonPath("$.data.id").value(storyboardId.toString()))
                 .andExpect(jsonPath("$.data.title").value(storyboard.getTitle()))
-                .andExpect(jsonPath("$.data.startSceneId").value(storyboard.getStartSceneId().toString()))
+                .andExpect(jsonPath("$.data.startSceneId").value(startSceneId.toString()))
                 .andDo(document("storyboard/get-storyboard-success",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -82,7 +78,7 @@ public class StoryboardControllerTest {
     public void testGetStoryboard_whenStoryboardNotExists() throws Exception {
         // given
         UUID uuid = UUID.randomUUID();
-        when(storyboardService.getStoryboard(uuid)).thenReturn(Optional.empty());
+        when(storyboardOrchestrator.getStoryboard(uuid)).thenReturn(Optional.empty());
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/storyboard/{storyboardId}", uuid.toString()));
@@ -95,25 +91,23 @@ public class StoryboardControllerTest {
     @WithMockUser(username = "054c3e8a-3387-4eb3-ac8a-31a48221f192")
     public void testGetScene_whenSceneExists() throws Exception {
         // given
-        Scene scene = new Scene();
-        scene.setId(UUID.fromString("50c4dfc2-8bec-4d77-849f-57462d50d393"));
-        scene.setName("테스트 3");
-        scene.setSceneType("QUESTION");
-        scene.setContent("{ \"question\": \"당신에게 가장 소중한 것은 무엇인가요?\", \"nextSceneId\": \"" + UUID.randomUUID() + "\" }");
-        scene.setStoryboardId(UUID.randomUUID());
+        UUID sceneId = UUID.fromString("50c4dfc2-8bec-4d77-849f-57462d50d393");
+        UUID storyboardId = UUID.randomUUID();
+        String content = "{ \"question\": \"당신에게 가장 소중한 것은 무엇인가요?\", \"nextSceneId\": \"" + UUID.randomUUID() + "\" }";
+        SceneResponse scene = new SceneResponse(sceneId, "테스트 3", "QUESTION", content, storyboardId);
 
-        when(storyboardService.getSceneAndUpdateUsageHistory(eq(scene.getId()), any(UUID.class))).thenReturn(Optional.of(scene));
+        when(storyboardOrchestrator.getSceneAndUpdateUsageHistory(eq(sceneId), any(UUID.class))).thenReturn(Optional.of(scene));
 
         // when
-        ResultActions resultActions = mockMvc.perform(get("/api/v0/storyboard/scene/{sceneId}", scene.getId()));
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/storyboard/scene/{sceneId}", sceneId));
 
         // then
         resultActions.andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(scene.getId().toString()))
+                .andExpect(jsonPath("$.data.id").value(sceneId.toString()))
                 .andExpect(jsonPath("$.data.name").value(scene.getName()))
                 .andExpect(jsonPath("$.data.sceneType").value(scene.getSceneType()))
                 .andExpect(jsonPath("$.data.content").value(scene.getContent()))
-                .andExpect(jsonPath("$.data.storyboardId").value(scene.getStoryboardId().toString()))
+                .andExpect(jsonPath("$.data.storyboardId").value(storyboardId.toString()))
                 .andDo(document("storyboard/get-scene-success",
                         preprocessRequest(prettyPrint()),
                         preprocessResponse(prettyPrint()),
@@ -137,7 +131,7 @@ public class StoryboardControllerTest {
     public void testGetScene_whenSceneNotExists() throws Exception {
         // given
         UUID uuid = UUID.randomUUID();
-        when(storyboardService.getSceneAndUpdateUsageHistory(eq(uuid), any(UUID.class))).thenReturn(Optional.empty());
+        when(storyboardOrchestrator.getSceneAndUpdateUsageHistory(eq(uuid), any(UUID.class))).thenReturn(Optional.empty());
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/storyboard/scene/{sceneId}", uuid.toString()));
@@ -152,8 +146,8 @@ public class StoryboardControllerTest {
         UUID storyboardId = UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b");
 
         List<String> questions = List.of("나는 어떤 사람으로 기억되고 싶나요?", "유언장에는 어떤 내용을 적고 싶나요?");
-        StoryboardPreviewInfo previewInfo = new StoryboardPreviewInfo(storyboardId, 3, questions);
-        when(storyboardService.getStoryboardPreview(storyboardId)).thenReturn(Optional.of(previewInfo));
+        StoryboardPreviewResponse previewResponse = new StoryboardPreviewResponse(storyboardId, 3, questions);
+        when(storyboardOrchestrator.getStoryboardPreview(storyboardId)).thenReturn(Optional.of(previewResponse));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/storyboard/{storyboardId}/preview", storyboardId.toString()));
@@ -186,12 +180,12 @@ public class StoryboardControllerTest {
     public void testGetTopicsOfStoryboard() throws Exception {
         // given
         UUID storyboardId = UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b");
-        Optional<List<Topic>> topics = Optional.of(List.of(
-                new Topic(UUID.randomUUID(), "topic1", "topic1 description", "https://thumbnail.com/url1", Collections.emptyList()),
-                new Topic(UUID.randomUUID(), "topic2", "topic2 description", "https://thumbnail.com/url2", Collections.emptyList()))
+        Optional<List<TopicResponse>> topics = Optional.of(List.of(
+                new TopicResponse(UUID.randomUUID(), "topic1", "topic1 description", "https://thumbnail.com/url1", Collections.emptyList()),
+                new TopicResponse(UUID.randomUUID(), "topic2", "topic2 description", "https://thumbnail.com/url2", Collections.emptyList()))
         );
 
-        when(storyboardService.getTopicsOfStoryboard(storyboardId)).thenReturn(topics);
+        when(storyboardOrchestrator.getTopicsOfStoryboard(storyboardId)).thenReturn(topics);
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/storyboard/{storyboardId}/topic/list", storyboardId.toString()));

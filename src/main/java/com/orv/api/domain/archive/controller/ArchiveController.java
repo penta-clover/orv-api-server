@@ -1,9 +1,8 @@
 package com.orv.api.domain.archive.controller;
 
 import com.orv.api.domain.archive.controller.dto.VideoMetadataUpdateForm;
-import com.orv.api.domain.archive.service.ArchiveService;
-import com.orv.api.domain.archive.service.dto.ImageMetadata;
-import com.orv.api.domain.archive.service.dto.Video;
+import com.orv.api.domain.archive.controller.dto.VideoResponse;
+import com.orv.api.domain.archive.orchestrator.ArchiveOrchestrator;
 import com.orv.api.global.dto.ApiResponse;
 import com.orv.api.global.dto.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class ArchiveController {
-    private final ArchiveService archiveService;
+    private final ArchiveOrchestrator archiveOrchestrator;
 
     @PostMapping("/recorded-video")
     public ApiResponse uploadRecordedVideo(@RequestParam("video") MultipartFile video, @RequestParam("storyboardId") String storyboardId) {
@@ -30,7 +29,7 @@ public class ArchiveController {
             log.warn("storyboardId: {}", storyboardId);
 
             String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
-            Optional<String> videoId = archiveService.uploadRecordedVideo(
+            Optional<String> videoId = archiveOrchestrator.uploadRecordedVideo(
                     video.getInputStream(),
                     video.getContentType(),
                     video.getSize(),
@@ -53,20 +52,19 @@ public class ArchiveController {
 
     @GetMapping("/video/{videoId}")
     public ApiResponse getVideo(@PathVariable String videoId) {
-        Optional<Video> foundVideo = archiveService.getVideo(UUID.fromString(videoId));
+        Optional<VideoResponse> foundVideo = archiveOrchestrator.getVideo(UUID.fromString(videoId));
 
         if (foundVideo.isEmpty()) {
             return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);
         }
 
-        Video video = foundVideo.get();
-        return ApiResponse.success(video, 200);
+        return ApiResponse.success(foundVideo.get(), 200);
     }
 
     @GetMapping("/videos/my")
     public ApiResponse getMyVideos() {
         String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
-        List<Video> videos = archiveService.getMyVideos(UUID.fromString(memberId), 0, 100);
+        List<VideoResponse> videos = archiveOrchestrator.getMyVideos(UUID.fromString(memberId), 0, 100);
         return ApiResponse.success(videos, 200);
     }
 
@@ -74,7 +72,7 @@ public class ArchiveController {
     public ApiResponse changeVideoMetadata(@PathVariable("videoId") String videoId, @RequestBody VideoMetadataUpdateForm updateForm) {
         try {
             if (updateForm.getTitle() != null && !updateForm.getTitle().isEmpty()) {
-                boolean isSuccessful = archiveService.updateVideoTitle(UUID.fromString(videoId), updateForm.getTitle());
+                boolean isSuccessful = archiveOrchestrator.updateVideoTitle(UUID.fromString(videoId), updateForm.getTitle());
 
                 if (!isSuccessful) {
                     return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
@@ -91,7 +89,7 @@ public class ArchiveController {
     @PutMapping("/video/{videoId}/thumbnail")
     public ApiResponse changeVideoThumbnail(@PathVariable("videoId") String videoId, @RequestPart("thumbnail") MultipartFile thumbnail) {
         try {
-            boolean isSuccessful = archiveService.updateVideoThumbnail(UUID.fromString(videoId), thumbnail.getInputStream(), new ImageMetadata(thumbnail.getContentType(), thumbnail.getSize()));
+            boolean isSuccessful = archiveOrchestrator.updateVideoThumbnail(UUID.fromString(videoId), thumbnail.getInputStream(), thumbnail.getContentType(), thumbnail.getSize());
 
             if (!isSuccessful) {
                 return ApiResponse.fail(ErrorCode.UNKNOWN, 500);

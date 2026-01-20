@@ -1,15 +1,12 @@
 package com.orv.api.unit.domain.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.api.domain.auth.service.MemberService;
 import com.orv.api.domain.auth.controller.AuthController;
-import com.orv.api.domain.auth.service.JwtTokenService;
-import com.orv.api.domain.auth.service.SocialAuthService;
-import com.orv.api.domain.auth.service.SocialAuthServiceResolver;
+import com.orv.api.domain.auth.controller.dto.ValidationResultResponse;
+import com.orv.api.domain.auth.orchestrator.AuthOrchestrator;
 import com.orv.api.domain.auth.service.dto.JoinForm;
 import com.orv.api.domain.auth.service.dto.Member;
 import com.orv.api.domain.auth.service.dto.SocialUserInfo;
-import com.orv.api.domain.auth.service.dto.ValidationResult;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -53,19 +50,8 @@ public class AuthControllerTest {
     @Autowired
     private ObjectMapper objectMapper; // JSON 변환용
 
-    // AuthController가 의존하는 빈들을 모킹합니다.
     @MockitoBean
-    private SocialAuthServiceResolver socialAuthServiceFactory;
-
-    @MockitoBean
-    private MemberService memberService;
-
-    @MockitoBean
-    private JwtTokenService jwtTokenProvider;
-
-    // SocialAuthService도 모킹 (컨트롤러 내부에서 사용됨)
-    @MockitoBean
-    private SocialAuthService socialAuthService;
+    private AuthOrchestrator authOrchestrator;
 
     @Value("${security.frontend.callback-url}")
     private String callbackUrl;
@@ -76,8 +62,7 @@ public class AuthControllerTest {
         String provider = "kakao";
         String expectedAuthUrl = "https://kauth.kakao.com/oauth/authorize?state=testState";
 
-        when(socialAuthService.getAuthorizationUrl(anyString())).thenReturn(expectedAuthUrl);
-        when(socialAuthServiceFactory.getSocialAuthService(provider)).thenReturn(socialAuthService);
+        when(authOrchestrator.getAuthorizationUrl(eq(provider), anyString())).thenReturn(expectedAuthUrl);
 
         // when & then
         mockMvc.perform(get("/api/v0/auth/login/{provider}", provider))
@@ -109,11 +94,10 @@ public class AuthControllerTest {
 
         String token = "dummyJwtToken";
 
-        when(socialAuthServiceFactory.getSocialAuthService(provider)).thenReturn(socialAuthService);
-        when(socialAuthService.getUserInfo(code)).thenReturn(socialUserInfo);
-        when(memberService.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.of(existingMember));
-        when(memberService.findRolesById(existingMember.getId())).thenReturn(Optional.of(Collections.emptyList()));
-        when(jwtTokenProvider.createToken(eq(existingMember.getId().toString()), any(Map.class))).thenReturn(token);
+        when(authOrchestrator.getUserInfo(provider, code)).thenReturn(socialUserInfo);
+        when(authOrchestrator.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.of(existingMember));
+        when(authOrchestrator.findRolesById(existingMember.getId())).thenReturn(Optional.of(Collections.emptyList()));
+        when(authOrchestrator.createToken(eq(existingMember.getId().toString()), any(Map.class))).thenReturn(token);
 
         // 가입된 유저일 경우, isNewUser는 false
         String expectedRedirectUrl = callbackUrl + "?isNewUser=false&jwtToken=" + token;
@@ -147,13 +131,12 @@ public class AuthControllerTest {
         socialUserInfo.setId("12345");
 
         // 미가입 유저로 처리 (Optional.empty())
-        when(socialAuthServiceFactory.getSocialAuthService(provider)).thenReturn(socialAuthService);
-        when(socialAuthService.getUserInfo(code)).thenReturn(socialUserInfo);
-        when(memberService.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.empty());
+        when(authOrchestrator.getUserInfo(provider, code)).thenReturn(socialUserInfo);
+        when(authOrchestrator.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.empty());
 
         // 미가입 유저일 경우, 임시 ID가 생성되지만 테스트에서는 그 값을 신경쓰지 않고 토큰만 모킹
         String token = "dummyJwtTokenNew";
-        when(jwtTokenProvider.createToken(anyString(), any(Map.class))).thenReturn(token);
+        when(authOrchestrator.createToken(anyString(), any(Map.class))).thenReturn(token);
 
         // 가입되지 않은 경우, isNewUser는 true
         String expectedRedirectUrl = callbackUrl + "?isNewUser=true&jwtToken=" + token;
@@ -179,12 +162,12 @@ public class AuthControllerTest {
     public void testValidNickname_whenNicknameValid() throws Exception {
         // given
         String nickname = "abc가나123";
-        ValidationResult validationResult = new ValidationResult();
+        ValidationResultResponse validationResult = new ValidationResultResponse();
         validationResult.setNickname(nickname);
         validationResult.setIsValid(true);
         validationResult.setIsExists(false);
 
-        when(memberService.validateNickname(nickname)).thenReturn(validationResult);
+        when(authOrchestrator.validateNickname(nickname)).thenReturn(validationResult);
 
         // when
         mockMvc.perform(get("/api/v0/auth/nicknames").param("nickname", nickname))
@@ -229,11 +212,10 @@ public class AuthControllerTest {
                 "socialId", "testSocialId"
         );
 
-        // jwtTokenProvider.getPayload() 모킹
-        Mockito.when(jwtTokenProvider.getPayload(eq(token))).thenReturn(payload);
-        // memberService.join() 호출시 성공했다고 가정
-        Mockito.when(memberService.join(anyString(), anyString(), anyString(), any(), anyString(), anyString(), anyString()))
-                .thenReturn(true);
+        // authOrchestrator.getPayload() 모킹
+        Mockito.when(authOrchestrator.getPayload(eq(token))).thenReturn((Map) payload);
+        // authOrchestrator.join() 호출시 아무 동작 없음 (void)
+        Mockito.doNothing().when(authOrchestrator).join(anyString(), anyString(), anyString(), any(), anyString(), anyString(), anyString());
 
         // when & then
         mockMvc.perform(post("/api/v0/auth/join")

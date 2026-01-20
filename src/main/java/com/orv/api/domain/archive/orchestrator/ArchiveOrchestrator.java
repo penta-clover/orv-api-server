@@ -1,0 +1,78 @@
+package com.orv.api.domain.archive.orchestrator;
+
+import com.orv.api.domain.archive.controller.dto.PresignedUrlResponse;
+import com.orv.api.domain.archive.controller.dto.VideoResponse;
+import com.orv.api.domain.archive.service.ArchiveService;
+import com.orv.api.domain.archive.service.dto.ImageMetadata;
+import com.orv.api.domain.archive.service.dto.PresignedUrlInfo;
+import com.orv.api.domain.archive.service.dto.Video;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Component
+@RequiredArgsConstructor
+public class ArchiveOrchestrator {
+    private final ArchiveService archiveService;
+
+    public Optional<String> uploadRecordedVideo(InputStream inputStream, String contentType, long size, UUID storyboardId, UUID memberId) throws IOException {
+        return archiveService.uploadRecordedVideo(inputStream, contentType, size, storyboardId, memberId);
+    }
+
+    public Optional<VideoResponse> getVideo(UUID videoId) {
+        return archiveService.getVideo(videoId).map(this::toVideoResponse);
+    }
+
+    public List<VideoResponse> getMyVideos(UUID memberId, int offset, int limit) {
+        List<Video> videos = archiveService.getMyVideos(memberId, offset, limit);
+        return videos.stream()
+                .map(this::toVideoResponse)
+                .collect(Collectors.toList());
+    }
+
+    public boolean updateVideoTitle(UUID videoId, String title) {
+        return archiveService.updateVideoTitle(videoId, title);
+    }
+
+    public boolean updateVideoThumbnail(UUID videoId, InputStream inputStream, String contentType, long size) throws IOException {
+        return archiveService.updateVideoThumbnail(videoId, inputStream, new ImageMetadata(contentType, size));
+    }
+
+    // V1 API methods
+    public PresignedUrlResponse requestUploadUrl(UUID storyboardId, UUID memberId) {
+        PresignedUrlInfo info = archiveService.requestUploadUrl(storyboardId, memberId);
+        return toPresignedUrlResponse(info);
+    }
+
+    public Optional<String> confirmUpload(UUID videoId, UUID memberId) {
+        return archiveService.confirmUpload(videoId, memberId);
+    }
+
+    private VideoResponse toVideoResponse(Video video) {
+        return new VideoResponse(
+                video.getId(),
+                video.getStoryboardId(),
+                video.getMemberId(),
+                video.getVideoUrl(),
+                video.getCreatedAt(),
+                video.getThumbnailUrl(),
+                video.getRunningTime(),
+                video.getTitle(),
+                video.getStatus()
+        );
+    }
+
+    private PresignedUrlResponse toPresignedUrlResponse(PresignedUrlInfo info) {
+        return new PresignedUrlResponse(
+                info.getVideoId(),
+                info.getUploadUrl(),
+                info.getExpiresAt()
+        );
+    }
+}
