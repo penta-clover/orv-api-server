@@ -52,6 +52,12 @@ public class JdbcInterviewAudioRecordingRepository implements InterviewAudioReco
         }
     }
 
+    @Override
+    public void delete(UUID id) {
+        String sql = "DELETE FROM interview_audio_recording WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
+
     private static class InterviewAudioRecordingRowMapper implements RowMapper<InterviewAudioRecording> {
         @Override
         public InterviewAudioRecording mapRow(ResultSet rs, int rowNum) throws SQLException {
