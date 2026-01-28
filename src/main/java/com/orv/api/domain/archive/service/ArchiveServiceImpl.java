@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.orv.api.domain.archive.repository.VideoRepository;
 import com.orv.api.domain.archive.service.dto.ImageMetadata;
@@ -165,6 +166,7 @@ public class ArchiveServiceImpl implements ArchiveService {
     }
 
     @Override
+    @Transactional
     public Optional<String> confirmUpload(UUID videoId, UUID memberId) {
         // 1. video 레코드 조회
         Optional<Video> videoOpt = videoRepository.findById(videoId);
