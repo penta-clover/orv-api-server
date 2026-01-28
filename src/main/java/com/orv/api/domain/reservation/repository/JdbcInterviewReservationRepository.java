@@ -1,5 +1,9 @@
 package com.orv.api.domain.reservation.repository;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.*;
+
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -8,11 +12,8 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import com.orv.api.domain.reservation.ReservationStatus;
 import com.orv.api.domain.reservation.service.dto.InterviewReservation;
-
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.util.*;
 
 @Repository
 public class JdbcInterviewReservationRepository implements InterviewReservationRepository {
@@ -23,17 +24,23 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
         this.jdbcTemplate = jdbcTemplate;
         this.simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("interview_reservation")
-                .usingColumns("member_id", "storyboard_id", "scheduled_at")
+                .usingColumns("member_id", "storyboard_id", "scheduled_at", "reservation_status")
                 .usingGeneratedKeyColumns("id", "created_at");
     }
 
     @Override
     public Optional<UUID> reserveInterview(UUID memberId, UUID storyboardId, LocalDateTime scheduledAt) {
+        return reserveInterview(memberId, storyboardId, scheduledAt, ReservationStatus.PENDING);
+    }
+
+    @Override
+    public Optional<UUID> reserveInterview(UUID memberId, UUID storyboardId, LocalDateTime scheduledAt, ReservationStatus status) {
         Map<String, Object> params = new HashMap<>();
 
         params.put("member_id", memberId);
         params.put("storyboard_id", storyboardId);
         params.put("scheduled_at", scheduledAt);
+        params.put("reservation_status", status.getValue());
 
         KeyHolder keyHolder = (KeyHolder) simpleJdbcInsert.executeAndReturnKeyHolder(new MapSqlParameterSource(params));
         Map<String, Object> keys = keyHolder.getKeys();
@@ -66,9 +73,9 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
     }
 
     @Override
-    public boolean changeInterviewReservationStatus(UUID reservationId, String status) {
+    public boolean changeInterviewReservationStatus(UUID reservationId, ReservationStatus status) {
         String sql = "UPDATE interview_reservation SET reservation_status = ? WHERE id = ?";
-        return jdbcTemplate.update(sql, status, reservationId) > 0;
+        return jdbcTemplate.update(sql, status.getValue(), reservationId) > 0;
     }
 
     @Override
