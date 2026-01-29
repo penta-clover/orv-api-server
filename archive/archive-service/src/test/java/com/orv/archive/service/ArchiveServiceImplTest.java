@@ -1,11 +1,5 @@
 package com.orv.archive.service;
 
-import com.orv.archive.repository.VideoRepository;
-import com.orv.archive.service.ArchiveServiceImpl;
-import com.orv.archive.domain.PresignedUrlInfo;
-import com.orv.archive.domain.Video;
-import com.orv.archive.domain.VideoStatus;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +12,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.orv.archive.repository.VideoDurationCalculationJobRepository;
+import com.orv.archive.repository.VideoRepository;
+import com.orv.archive.domain.PresignedUrlInfo;
+import com.orv.archive.domain.Video;
+import com.orv.archive.domain.VideoStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,6 +33,9 @@ class ArchiveServiceImplTest {
     @Mock
     private VideoRepository videoRepository;
 
+    @Mock
+    private VideoDurationCalculationJobRepository videoDurationCalculationJobRepository;
+
     @Test
     @DisplayName("requestUploadUrl: PENDING 상태의 video 생성 후 Presigned URL 반환")
     void requestUploadUrl_createsPendingVideoAndReturnsPresignedUrl() throws MalformedURLException {
@@ -46,12 +49,12 @@ class ArchiveServiceImplTest {
         when(videoRepository.generateUploadUrl(eq(UUID.fromString(videoId)), eq(60L))).thenReturn(presignedUrl);
 
         // when
-        PresignedUrlInfo presignedUrlInfo = archiveService.requestUploadUrl(storyboardId, memberId);
+        PresignedUrlInfo response = archiveService.requestUploadUrl(storyboardId, memberId);
 
         // then
-        assertThat(presignedUrlInfo.getVideoId()).isEqualTo(videoId);
-        assertThat(presignedUrlInfo.getUploadUrl()).isEqualTo(presignedUrl.toString());
-        assertThat(presignedUrlInfo.getExpiresAt()).isNotNull();
+        assertThat(response.getVideoId()).isEqualTo(videoId);
+        assertThat(response.getUploadUrl()).isEqualTo(presignedUrl.toString());
+        assertThat(response.getExpiresAt()).isNotNull();
 
         verify(videoRepository).createPendingVideo(storyboardId, memberId);
         verify(videoRepository).generateUploadUrl(eq(UUID.fromString(videoId)), eq(60L));

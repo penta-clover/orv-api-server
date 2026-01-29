@@ -28,6 +28,7 @@ include 'archive:archive-orchestrator'
 include 'archive:archive-service'
 include 'archive:archive-repository'
 include 'archive:archive-repository-using-s3'
+include 'archive:archive-repository-using-jdbc'
 
 // Storyboard 도메인
 include 'storyboard:storyboard-domain'
@@ -77,6 +78,9 @@ include 'term:term-orchestrator'
 include 'term:term-service'
 include 'term:term-repository'
 include 'term:term-repository-using-jdbc'
+
+// Worker
+include 'duration-calculation-worker'
 
 // Admin 도메인
 include 'admin:admin-controller'

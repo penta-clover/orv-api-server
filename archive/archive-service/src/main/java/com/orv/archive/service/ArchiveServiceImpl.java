@@ -11,6 +11,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.net.URL;
+import java.time.Instant;
 
 import com.orv.archive.domain.*;
 import com.orv.archive.repository.VideoRepository;
@@ -20,6 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -29,12 +34,15 @@ public class ArchiveServiceImpl implements ArchiveService {
     private static final long PRESIGNED_URL_EXPIRATION_MINUTES = 60;
 
     private final VideoRepository videoRepository;
+    private final VideoDurationCalculationJobRepository videoDurationCalculationJobRepository;
 
     @Value("${cloud.aws.cloudfront.domain}")
     private String cloudfrontDomain;
 
     // TODO: 영상 처리 작업을 별도 서버로 분리한 후 아래의 영상 처리 작업 코드를 제거해야 함.
     @Override
+    @Deprecated
+    // TODO: 프론트엔드 의존성 해소 후 엔드포인트 제거
     public Optional<String> uploadRecordedVideo(InputStream videoStream, String contentType, long size, UUID storyboardId, UUID memberId) {
         File tempFile = null;
         try {
@@ -75,7 +83,7 @@ public class ArchiveServiceImpl implements ArchiveService {
         return videoRepository.updateThumbnail(videoId, thumbnailStream, metadata);
     }
 
-    // v1 API methods
+    // v1 API methods below
     @Override
     public PresignedUrlInfo requestUploadUrl(UUID storyboardId, UUID memberId) {
         // 1. PENDING 상태로 video 레코드 생성
@@ -133,8 +141,9 @@ public class ArchiveServiceImpl implements ArchiveService {
             return Optional.empty();
         }
 
-        // TODO: 큐에 영상 길이 측정 태스크 추가
-        // messageQueue.send(new VideoProcessingTask(videoId));
+        // 6. 영상 길이 측정 태스크 추가
+        videoDurationCalculationJobRepository.create(videoId);
+        log.info("Created duration extraction job for video: {}", videoId);
 
         return Optional.of(videoId.toString());
     }

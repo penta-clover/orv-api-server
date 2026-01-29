@@ -24,6 +24,7 @@ dependencies {
     implementation project(':archive:archive-orchestrator')
     implementation project(':archive:archive-service')
     implementation project(':archive:archive-repository-using-s3')
+    implementation project(':archive:archive-repository-using-jdbc')
 
     // Storyboard
     implementation project(':storyboard:storyboard-controller')
