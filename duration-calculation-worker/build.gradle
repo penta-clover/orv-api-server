@@ -34,3 +34,8 @@ dependencies {
     implementation 'org.bytedeco:javacv:1.5.11'
     implementation 'org.bytedeco:javacv-platform:1.5.11'
 }
+
+bootRun {
+    workingDir = rootProject.projectDir
+    args = ['--spring.profiles.active=worker']
+}
