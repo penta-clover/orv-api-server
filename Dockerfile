@@ -7,7 +7,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ADD build/libs/api-0.0.1-SNAPSHOT.jar spring-app.jar
+ADD orv-app/build/libs/orv-app-0.0.1-SNAPSHOT.jar spring-app.jar
 ENTRYPOINT ["java", \
     "-XX:+HeapDumpOnOutOfMemoryError", \
     "-XX:HeapDumpPath=/var/log/app/heapdump.hprof", \
