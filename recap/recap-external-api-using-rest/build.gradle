@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':recap:recap-domain')
+    implementation project(':recap:recap-external-api')
+    implementation 'org.springframework:spring-web'
+    implementation 'org.springframework:spring-context'
+}

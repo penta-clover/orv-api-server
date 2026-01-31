@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':notification:notification-domain')
+    implementation project(':notification:notification-external-api')
+    implementation 'org.springframework:spring-web'
+    implementation 'org.springframework:spring-context'
+}

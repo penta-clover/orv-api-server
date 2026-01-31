@@ -1,0 +1,9 @@
+dependencies {
+    implementation project(':storyboard:storyboard-domain')
+    implementation project(':storyboard:storyboard-repository')
+    implementation project(':recap:recap-domain')
+    implementation project(':recap:recap-external-api')
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-tx'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+}

@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':orv-common')
+    implementation project(':health:health-orchestrator')
+    implementation 'org.springframework:spring-web'
+    implementation 'jakarta.servlet:jakarta.servlet-api'
+}

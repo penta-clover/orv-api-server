@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':auth:auth-domain')
+    implementation project(':auth:auth-external-api')
+    implementation 'org.springframework:spring-web'
+    implementation 'org.springframework:spring-context'
+}

@@ -120,7 +120,8 @@ fabric.properties
 .idea/**/azureSettings.xml
 
 # Build files
-build/**/*
+**/build/
+**/bin/
 
 # Ignore start template
 .starttemplate

@@ -1,0 +1,11 @@
+dependencies {
+    implementation project(':recap:recap-domain')
+    implementation project(':archive:archive-domain')
+    implementation project(':archive:archive-service')
+    implementation project(':media:media-domain')
+    implementation project(':media:media-service')
+    implementation project(':storyboard:storyboard-domain')
+    implementation project(':storyboard:storyboard-repository')
+    implementation 'org.springframework:spring-context'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+}

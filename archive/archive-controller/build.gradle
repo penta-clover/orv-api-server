@@ -1,0 +1,9 @@
+dependencies {
+    implementation project(':orv-common')
+    implementation project(':archive:archive-domain')
+    implementation project(':archive:archive-orchestrator')
+    implementation 'org.springframework:spring-web'
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework.security:spring-security-core'
+    implementation 'jakarta.servlet:jakarta.servlet-api'
+}

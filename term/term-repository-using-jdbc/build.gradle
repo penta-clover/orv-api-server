@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':term:term-domain')
+    implementation project(':term:term-repository')
+    implementation 'org.springframework:spring-jdbc'
+    implementation 'org.springframework:spring-context'
+}

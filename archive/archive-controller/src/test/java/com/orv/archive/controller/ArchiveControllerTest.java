@@ -1,0 +1,211 @@
+package com.orv.archive.controller;
+
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.orv.archive.controller.ArchiveController;
+import com.orv.archive.controller.dto.VideoMetadataUpdateForm;
+import com.orv.archive.orchestrator.dto.VideoResponse;
+import com.orv.archive.orchestrator.ArchiveOrchestrator;
+import com.orv.archive.domain.VideoStatus;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@ExtendWith(MockitoExtension.class)
+public class ArchiveControllerTest {
+    private MockMvc mockMvc;
+
+    @Mock
+    private ArchiveOrchestrator archiveOrchestrator;
+
+    @InjectMocks
+    private ArchiveController archiveController;
+
+    @BeforeEach
+    void setUp() {
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mockMvc = MockMvcBuilders.standaloneSetup(archiveController)
+                .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
+                .build();
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken("054c3e8a-3387-4eb3-ac8a-31a48221f192", null, Collections.emptyList());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    @Test
+    public void testUploadRecordedVideo() throws Exception {
+        // given
+        InputStream videoStream = getClass().getResourceAsStream("/videos/upload-test-video.mp4");
+        assertNotNull(videoStream, "테스트 비디오 파일을 찾을 수 없습니다.");
+        MockMultipartFile video = new MockMultipartFile("video", "test.mp4", "video/mp4", videoStream);
+
+        // storyboardId를 MultipartFile로 생성
+        String storyboardIdValue = "3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
+
+        String videoId = "3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
+        when(archiveOrchestrator.uploadRecordedVideo(any(), any(), anyLong(), any(), any())).thenReturn(Optional.of(videoId));
+
+        // when
+        ResultActions resultActions = mockMvc.perform(multipart("/api/v0/archive/recorded-video")
+                .file(video)
+                .param("storyboardId", storyboardIdValue));
+
+        // then
+        resultActions
+                .andExpect(jsonPath("$.data").value(videoId));
+    }
+
+
+    @Test
+    public void testGetStoryboard_whenStoryboardExists() throws Exception {
+        // given
+        VideoResponse video = new VideoResponse();
+        video.setId(UUID.fromString("24c4dfc2-8bec-4d77-849f-57462d50d36e"));
+        video.setStoryboardId(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"));
+        video.setMemberId(UUID.fromString("1fae8d62-fdfb-47b2-a91d-182bec52ef47"));
+        video.setTitle("video title");
+        video.setVideoUrl("https://api.orv.im/test-video.url.mp4");
+        video.setCreatedAt(LocalDateTime.now());
+        video.setRunningTime(523);
+        video.setThumbnailUrl("https://api.orv.im/test-thumbnail.url.jpg");
+        video.setStatus(VideoStatus.UPLOADED.name());
+
+        when(archiveOrchestrator.getVideo(video.getId())).thenReturn(Optional.of(video));
+
+        // when
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/archive/video/{videoId}", video.getId()));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(video.getId().toString()))
+                .andExpect(jsonPath("$.data.storyboardId").value(video.getStoryboardId().toString()))
+                .andExpect(jsonPath("$.data.memberId").value(video.getMemberId().toString()))
+                .andExpect(jsonPath("$.data.title").value(video.getTitle()))
+                .andExpect(jsonPath("$.data.videoUrl").value(video.getVideoUrl()))
+                .andExpect(jsonPath("$.data.thumbnailUrl").value(video.getThumbnailUrl()))
+                .andExpect(jsonPath("$.data.runningTime").value(video.getRunningTime()))
+                .andExpect(jsonPath("$.data.title").value(video.getTitle()));
+    }
+
+    @Test
+    public void testChangeVideoMetadata() throws Exception {
+        // given
+        String videoId = "3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
+        String title = "test title";
+        VideoMetadataUpdateForm updateForm = new VideoMetadataUpdateForm(title);
+
+        when(archiveOrchestrator.updateVideoTitle(UUID.fromString(videoId), title)).thenReturn(true);
+
+        // when
+        ResultActions resultActions = mockMvc.perform(patch("/api/v0/archive/video/{videoId}", videoId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(updateForm)));
+
+        // then
+        resultActions
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    public void testUpdateThumbnail() throws Exception {
+        // given
+        String videoId = "3bc32ef3-2dfc-27a9-b9be-f2bec52efdf3";
+        InputStream thumbnailStream = getClass().getResourceAsStream("/images/test-thumbnail.png");
+        assertNotNull(thumbnailStream, "테스트 썸네일 파일을 찾을 수 없습니다.");
+
+        MockMultipartFile thumbnail = new MockMultipartFile("thumbnail", "test-thumbnail.png", "image/png", thumbnailStream);
+
+        when(archiveOrchestrator.updateVideoThumbnail(any(), any(), any(), anyLong())).thenReturn(true);
+
+        // when
+        ResultActions resultActions = mockMvc.perform(multipart(HttpMethod.PUT, "/api/v0/archive/video/{videoId}/thumbnail", videoId)
+                .file(thumbnail));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+
+    @Test
+    public void testGetMyVideos() throws Exception {
+        // given
+        VideoResponse video1 = new VideoResponse();
+        video1.setId(UUID.fromString("24c4dfc2-8bec-4d77-849f-57462d50d36e"));
+        video1.setStoryboardId(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"));
+        video1.setMemberId(UUID.fromString("1fae8d62-fdfb-47b2-a91d-182bec52ef47"));
+        video1.setTitle("video title");
+        video1.setVideoUrl("https://api.orv.im/test-video.url.mp4");
+        video1.setCreatedAt(LocalDateTime.now());
+        video1.setRunningTime(523);
+        video1.setThumbnailUrl("https://api.orv.im/test-thumbnail.url.jpg");
+        video1.setStatus(VideoStatus.UPLOADED.name());
+
+        VideoResponse video2 = new VideoResponse();
+        video2.setId(UUID.fromString("24c4dfc2-8bec-4d77-849f-57462d50d36e"));
+        video2.setStoryboardId(UUID.fromString("e5895e70-7713-4a35-b12f-2521af77524b"));
+        video2.setMemberId(UUID.fromString("1fae8d62-fdfb-47b2-a91d-182bec52ef47"));
+        video2.setTitle("video title");
+        video2.setVideoUrl("https://api.orv.im/test-video.url.mp4");
+        video2.setCreatedAt(LocalDateTime.now());
+        video2.setRunningTime(523);
+        video2.setThumbnailUrl("https://api.orv.im/test-thumbnail.url.jpg");
+        video2.setStatus(VideoStatus.UPLOADED.name());
+
+        when(archiveOrchestrator.getMyVideos(any(), anyInt(), anyInt())).thenReturn(List.of(video1, video2));
+
+        // when
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/archive/videos/my"));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].id").value(video1.getId().toString()))
+                .andExpect(jsonPath("$.data[0].storyboardId").value(video1.getStoryboardId().toString()))
+                .andExpect(jsonPath("$.data[0].memberId").value(video1.getMemberId().toString()))
+                .andExpect(jsonPath("$.data[0].title").value(video1.getTitle()))
+                .andExpect(jsonPath("$.data[0].videoUrl").value(video1.getVideoUrl()))
+                .andExpect(jsonPath("$.data[0].thumbnailUrl").value(video1.getThumbnailUrl()))
+                .andExpect(jsonPath("$.data[0].runningTime").value(video1.getRunningTime()))
+                .andExpect(jsonPath("$.data[0].title").value(video1.getTitle())
+                )
+                .andExpect(jsonPath("$.data[1].id").value(video2.getId().toString()))
+                .andExpect(jsonPath("$.data[1].storyboardId").value(video2.getStoryboardId().toString()))
+                .andExpect(jsonPath("$.data[1].memberId").value(video2.getMemberId().toString()))
+                .andExpect(jsonPath("$.data[1].title").value(video2.getTitle()))
+                .andExpect(jsonPath("$.data[1].videoUrl").value(video2.getVideoUrl()))
+                .andExpect(jsonPath("$.data[1].thumbnailUrl").value(video2.getThumbnailUrl()))
+                .andExpect(jsonPath("$.data[1].runningTime").value(video2.getRunningTime()))
+                .andExpect(jsonPath("$.data[1].title").value(video2.getTitle())
+                );
+
+    }
+}

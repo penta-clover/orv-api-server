@@ -1,113 +1,63 @@
 plugins {
-	id 'java'
-	id 'groovy'
-	id 'org.springframework.boot' version '3.4.2'
-	id 'io.spring.dependency-management' version '1.1.7'
-	id 'org.asciidoctor.jvm.convert' version '3.3.2'
+    id 'io.spring.dependency-management' version '1.1.7' apply false
 }
 
-group = 'com.orv'
-version = '0.0.1-SNAPSHOT'
+allprojects {
+    group = 'com.orv'
+    version = '0.0.1-SNAPSHOT'
 
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    repositories {
+        mavenCentral()
+    }
 }
 
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-}
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
 
-repositories {
-	mavenCentral()
-}
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
 
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-    compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	testImplementation 'org.springframework.security:spring-security-test'
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
 
-	// Database
-	runtimeOnly 'org.postgresql:postgresql:42.6.0'
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.2"
+        }
+    }
 
-	// test
-	testImplementation 'org.testcontainers:testcontainers'
-	testImplementation 'org.testcontainers:postgresql'
-	testImplementation 'org.testcontainers:junit-jupiter'
+    dependencies {
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        implementation 'org.slf4j:slf4j-api'
 
-	// .env loader
-	implementation "me.paulschwarz:spring-dotenv:3.0.0"
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testImplementation 'org.mockito:mockito-core'
+        testImplementation 'org.mockito:mockito-junit-jupiter'
+        testImplementation 'org.assertj:assertj-core'
+        testImplementation 'org.hamcrest:hamcrest'
+        testImplementation 'org.springframework:spring-test'
+        testImplementation 'org.springframework.boot:spring-boot-test'
+        testImplementation 'org.springframework.boot:spring-boot-test-autoconfigure'
+        testImplementation 'org.springframework.security:spring-security-test'
+        testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+        testImplementation 'com.fasterxml.jackson.core:jackson-databind'
+        testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+        testImplementation 'com.jayway.jsonpath:json-path'
+    }
 
-	// JWT
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	runtimeOnly('io.jsonwebtoken:jjwt-jackson:0.11.5')
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs.add('-parameters')
+    }
 
-	// REST Docs
-	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
-
-	// Flyway
-	implementation 'org.flywaydb:flyway-core'
-	implementation 'org.flywaydb:flyway-database-postgresql'
-
-	// AWS
-	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
-
-	// For FFmpeg Frame Grabber
-	implementation 'org.bytedeco:javacv:1.5.11'
-	implementation 'org.bytedeco:javacv-platform:1.5.11'
-
-	// Quartz
-	implementation 'org.springframework.boot:spring-boot-starter-quartz'
-
-	// Monitoring
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'io.micrometer:micrometer-registry-prometheus'
-}
-
-ext {
-	snippetsDir = file("build/generated-snippets")
-}
-
-tasks.named('test') {
-	useJUnitPlatform()
-	outputs.dir snippetsDir
-}
-
-asciidoctor {
-	inputs.dir snippetsDir
-	dependsOn test  // 테스트 후에 Asciidoctor가 실행되도록 설정
-	sources {
-		include '**/*.adoc'
-	}
-	attributes(
-			'snippets': snippetsDir.toString()
-	)
-	outputDir = layout.buildDirectory.dir("asciidoc/html5").get().asFile
-}
-
-task copyDocs(type: Copy) {
-	from layout.buildDirectory.dir("asciidoc/html5").get().asFile
-	into file("src/main/resources/static/docs")
-}
-
-bootJar {
-	dependsOn copyDocs
-}
-
-bootRun {
-	dependsOn copyDocs
-}
-
-processResources {
-	dependsOn copyDocs
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
 }

@@ -1,0 +1,155 @@
+plugins {
+    id 'org.springframework.boot' version '3.4.2'
+    id 'org.asciidoctor.jvm.convert' version '3.3.2'
+}
+
+dependencies {
+    // Common
+    implementation project(':orv-common')
+
+    // Health
+    implementation project(':health:health-controller')
+    implementation project(':health:health-orchestrator')
+    implementation project(':health:health-service')
+
+    // Auth
+    implementation project(':auth:auth-controller')
+    implementation project(':auth:auth-orchestrator')
+    implementation project(':auth:auth-service')
+    implementation project(':auth:auth-repository-using-jdbc')
+    implementation project(':auth:auth-external-api-using-rest')
+
+    // Archive
+    implementation project(':archive:archive-controller')
+    implementation project(':archive:archive-orchestrator')
+    implementation project(':archive:archive-service')
+    implementation project(':archive:archive-repository-using-s3')
+
+    // Storyboard
+    implementation project(':storyboard:storyboard-controller')
+    implementation project(':storyboard:storyboard-orchestrator')
+    implementation project(':storyboard:storyboard-service')
+    implementation project(':storyboard:storyboard-repository-using-jdbc')
+
+    // Media
+    implementation project(':media:media-service')
+    implementation project(':media:media-repository-using-s3')
+    implementation project(':media:media-repository-using-jdbc')
+    implementation project(':media:media-infrastructure-using-ffmpeg')
+
+    // Reservation
+    implementation project(':reservation:reservation-controller')
+    implementation project(':reservation:reservation-orchestrator')
+    implementation project(':reservation:reservation-service')
+    implementation project(':reservation:reservation-repository-using-jdbc')
+
+    // Notification
+    implementation project(':notification:notification-service')
+    implementation project(':notification:notification-external-api-using-bizgo')
+
+    // Recap
+    implementation project(':recap:recap-controller')
+    implementation project(':recap:recap-orchestrator')
+    implementation project(':recap:recap-service')
+    implementation project(':recap:recap-repository-using-jdbc')
+    implementation project(':recap:recap-external-api-using-rest')
+
+    // Term
+    implementation project(':term:term-controller')
+    implementation project(':term:term-orchestrator')
+    implementation project(':term:term-service')
+    implementation project(':term:term-repository-using-jdbc')
+
+    // Admin
+    implementation project(':admin:admin-controller')
+    implementation project(':admin:admin-orchestrator')
+    implementation project(':admin:admin-service')
+
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Database
+    runtimeOnly 'org.postgresql:postgresql:42.6.0'
+
+    // Flyway
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+
+    // .env loader
+    implementation 'me.paulschwarz:spring-dotenv:3.0.0'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+    // AWS
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+    // FFmpeg
+    implementation 'org.bytedeco:javacv:1.5.11'
+    implementation 'org.bytedeco:javacv-platform:1.5.11'
+
+    // Monitoring
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // REST Docs
+    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:junit-jupiter'
+
+    // Integration test dependencies - domain modules
+    testImplementation project(':auth:auth-domain')
+    testImplementation project(':auth:auth-repository')
+    testImplementation project(':term:term-domain')
+    testImplementation project(':recap:recap-domain')
+    testImplementation project(':recap:recap-external-api')
+}
+
+ext {
+    snippetsDir = file("build/generated-snippets")
+}
+
+tasks.named('test') {
+    outputs.dir snippetsDir
+}
+
+asciidoctor {
+    inputs.dir snippetsDir
+    dependsOn test
+    sources {
+        include '**/*.adoc'
+    }
+    attributes(
+            'snippets': snippetsDir.toString()
+    )
+    outputDir = layout.buildDirectory.dir("asciidoc/html5").get().asFile
+}
+
+task copyDocs(type: Copy) {
+    from layout.buildDirectory.dir("asciidoc/html5").get().asFile
+    into file("src/main/resources/static/docs")
+}
+
+bootJar {
+    dependsOn copyDocs
+}
+
+bootRun {
+    dependsOn copyDocs
+}
+
+processResources {
+    dependsOn copyDocs
+}

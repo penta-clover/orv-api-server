@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':orv-common')
+    implementation project(':storyboard:storyboard-domain')
+    implementation project(':storyboard:storyboard-service')
+    implementation 'org.springframework:spring-context'
+}

@@ -1,0 +1,7 @@
+dependencies {
+    implementation project(':archive:archive-domain')
+    implementation project(':archive:archive-repository')
+    implementation 'org.springframework:spring-jdbc'
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+}

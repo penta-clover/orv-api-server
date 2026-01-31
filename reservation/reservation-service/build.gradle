@@ -1,0 +1,12 @@
+dependencies {
+    implementation project(':reservation:reservation-domain')
+    implementation project(':reservation:reservation-repository')
+    implementation project(':notification:notification-service')
+    implementation project(':auth:auth-domain')
+    implementation project(':auth:auth-repository')
+    implementation project(':storyboard:storyboard-domain')
+    implementation project(':storyboard:storyboard-repository')
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-tx'
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
+}

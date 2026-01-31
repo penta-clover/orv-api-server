@@ -1,0 +1,19 @@
+package com.orv.recap.service;
+
+import com.orv.recap.domain.RecapAudioInfo;
+import com.orv.recap.domain.RecapContent;
+import com.orv.recap.domain.RecapResultInfo;
+
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface RecapService {
+    Optional<UUID> reserveRecap(UUID memberId, UUID videoId, ZonedDateTime scheduledAt);
+    void linkAudioRecording(UUID recapReservationId, UUID audioRecordingId);
+    Optional<UUID> saveRecapResult(UUID recapReservationId, List<RecapContent> recapContent);
+    Optional<RecapResultInfo> getRecapResult(UUID recapReservationId);
+    Optional<RecapAudioInfo> getRecapAudio(UUID recapReservationId);
+}

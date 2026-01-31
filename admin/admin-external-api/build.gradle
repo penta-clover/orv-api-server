@@ -1,0 +1,7 @@
+dependencies {
+    implementation project(':auth:auth-domain')
+    implementation project(':auth:auth-repository')
+    implementation project(':archive:archive-domain')
+    implementation project(':archive:archive-repository')
+    implementation 'org.springframework:spring-context'
+}

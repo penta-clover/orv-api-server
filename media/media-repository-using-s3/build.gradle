@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':media:media-domain')
+    implementation project(':media:media-repository')
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+}

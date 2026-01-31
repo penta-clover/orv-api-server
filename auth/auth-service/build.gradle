@@ -1,0 +1,10 @@
+dependencies {
+    implementation project(':auth:auth-domain')
+    implementation project(':auth:auth-repository')
+    implementation project(':auth:auth-external-api')
+    implementation 'org.springframework:spring-context'
+    implementation 'jakarta.annotation:jakarta.annotation-api'
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+}

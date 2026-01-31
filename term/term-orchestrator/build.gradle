@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':orv-common')
+    implementation project(':term:term-domain')
+    implementation project(':term:term-service')
+    implementation 'org.springframework:spring-context'
+}

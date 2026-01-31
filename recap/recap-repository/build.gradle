@@ -1,0 +1,4 @@
+dependencies {
+    implementation project(':recap:recap-domain')
+    implementation project(':media:media-domain')
+}

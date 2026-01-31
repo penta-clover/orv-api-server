@@ -1,1 +1,85 @@
-rootProject.name = 'api'
+rootProject.name = 'orv-api-server'
+
+// Main Application
+include 'orv-app'
+
+// Common
+include 'orv-common'
+
+// Health 도메인
+include 'health:health-controller'
+include 'health:health-orchestrator'
+include 'health:health-service'
+
+// Auth 도메인
+include 'auth:auth-domain'
+include 'auth:auth-controller'
+include 'auth:auth-orchestrator'
+include 'auth:auth-service'
+include 'auth:auth-repository'
+include 'auth:auth-repository-using-jdbc'
+include 'auth:auth-external-api'
+include 'auth:auth-external-api-using-rest'
+
+// Archive 도메인
+include 'archive:archive-domain'
+include 'archive:archive-controller'
+include 'archive:archive-orchestrator'
+include 'archive:archive-service'
+include 'archive:archive-repository'
+include 'archive:archive-repository-using-s3'
+
+// Storyboard 도메인
+include 'storyboard:storyboard-domain'
+include 'storyboard:storyboard-controller'
+include 'storyboard:storyboard-orchestrator'
+include 'storyboard:storyboard-service'
+include 'storyboard:storyboard-repository'
+include 'storyboard:storyboard-repository-using-jdbc'
+
+// Media 도메인
+include 'media:media-domain'
+include 'media:media-service'
+include 'media:media-repository'
+include 'media:media-repository-using-s3'
+include 'media:media-repository-using-jdbc'
+include 'media:media-infrastructure'
+include 'media:media-infrastructure-using-ffmpeg'
+
+// Reservation 도메인
+include 'reservation:reservation-domain'
+include 'reservation:reservation-controller'
+include 'reservation:reservation-orchestrator'
+include 'reservation:reservation-service'
+include 'reservation:reservation-repository'
+include 'reservation:reservation-repository-using-jdbc'
+
+// Notification 도메인
+include 'notification:notification-domain'
+include 'notification:notification-service'
+include 'notification:notification-external-api'
+include 'notification:notification-external-api-using-bizgo'
+
+// Recap 도메인
+include 'recap:recap-domain'
+include 'recap:recap-controller'
+include 'recap:recap-orchestrator'
+include 'recap:recap-service'
+include 'recap:recap-repository'
+include 'recap:recap-repository-using-jdbc'
+include 'recap:recap-external-api'
+include 'recap:recap-external-api-using-rest'
+
+// Term 도메인
+include 'term:term-domain'
+include 'term:term-controller'
+include 'term:term-orchestrator'
+include 'term:term-service'
+include 'term:term-repository'
+include 'term:term-repository-using-jdbc'
+
+// Admin 도메인
+include 'admin:admin-controller'
+include 'admin:admin-orchestrator'
+include 'admin:admin-service'
+include 'admin:admin-external-api'

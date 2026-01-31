@@ -1,0 +1,5 @@
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
+    implementation project(':notification:notification-domain')
+    implementation project(':notification:notification-external-api')
+}

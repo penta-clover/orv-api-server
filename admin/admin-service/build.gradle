@@ -1,0 +1,4 @@
+dependencies {
+    implementation project(':admin:admin-external-api')
+    implementation 'org.springframework:spring-context'
+}

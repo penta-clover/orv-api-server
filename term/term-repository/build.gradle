@@ -1,0 +1,4 @@
+dependencies {
+    implementation project(':term:term-domain')
+    implementation 'org.springframework:spring-context'
+}

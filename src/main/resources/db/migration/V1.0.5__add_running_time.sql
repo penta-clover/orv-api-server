@@ -1,2 +1,0 @@
-ALTER TABLE video
-    ADD COLUMN running_time INTEGER NOT NULL;

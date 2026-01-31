@@ -1,0 +1,8 @@
+dependencies {
+    implementation project(':archive:archive-domain')
+    implementation project(':archive:archive-repository')
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-tx'
+    implementation 'org.bytedeco:javacv:1.5.11'
+    implementation 'org.bytedeco:javacv-platform:1.5.11'
+}

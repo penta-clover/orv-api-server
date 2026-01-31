@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':orv-common')
+    implementation project(':archive:archive-domain')
+    implementation project(':archive:archive-service')
+    implementation 'org.springframework:spring-context'
+}

@@ -1,0 +1,7 @@
+dependencies {
+    implementation project(':media:media-domain')
+    implementation project(':media:media-infrastructure')
+    implementation 'org.springframework:spring-context'
+    implementation 'org.bytedeco:javacv:1.5.11'
+    implementation 'org.bytedeco:javacv-platform:1.5.11'
+}
