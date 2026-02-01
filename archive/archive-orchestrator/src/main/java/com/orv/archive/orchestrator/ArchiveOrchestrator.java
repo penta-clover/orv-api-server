@@ -50,7 +50,7 @@ public class ArchiveOrchestrator {
         return toPresignedUrlResponse(info);
     }
 
-    public Optional<String> confirmUpload(UUID videoId, UUID memberId) {
+    public String confirmUpload(UUID videoId, UUID memberId) {
         return archiveService.confirmUpload(videoId, memberId);
     }
 

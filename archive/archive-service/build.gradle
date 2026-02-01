@@ -1,4 +1,5 @@
 dependencies {
+    implementation project(':archive:archive-common')
     implementation project(':archive:archive-domain')
     implementation project(':archive:archive-repository')
     implementation 'org.springframework:spring-context'
