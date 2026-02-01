@@ -27,5 +27,5 @@ public interface ArchiveService {
     // v1 API methods
     PresignedUrlInfo requestUploadUrl(UUID storyboardId, UUID memberId);
 
-    Optional<String> confirmUpload(UUID videoId, UUID memberId);
+    String confirmUpload(UUID videoId, UUID memberId);
 }

@@ -22,6 +22,7 @@ include 'auth:auth-external-api'
 include 'auth:auth-external-api-using-rest'
 
 // Archive 도메인
+include 'archive:archive-common'
 include 'archive:archive-domain'
 include 'archive:archive-controller'
 include 'archive:archive-orchestrator'

@@ -44,27 +44,15 @@ public class ArchiveControllerV1 {
 
     @PostMapping("/recorded-video")
     public ApiResponse confirmRecordedVideo(@RequestBody ConfirmUploadRequest request) {
-        try {
-            String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
+        String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
 
-            log.info("Confirming upload for video: {} by member: {}", request.getVideoId(), memberId);
+        log.info("Confirming upload for video: {} by member: {}", request.getVideoId(), memberId);
 
-            Optional<String> result = archiveOrchestrator.confirmUpload(
-                    UUID.fromString(request.getVideoId()),
-                    UUID.fromString(memberId)
-            );
+        String videoId = archiveOrchestrator.confirmUpload(
+                UUID.fromString(request.getVideoId()),
+                UUID.fromString(memberId)
+        );
 
-            if (result.isEmpty()) {
-                return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);
-            }
-
-            return ApiResponse.success(result.get(), 200);
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid videoId format: {}", request.getVideoId());
-            return ApiResponse.fail(ErrorCode.UNKNOWN, 400);
-        } catch (Exception e) {
-            log.error("Failed to confirm upload", e);
-            return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
-        }
+        return ApiResponse.success(videoId, 200);
     }
 }
