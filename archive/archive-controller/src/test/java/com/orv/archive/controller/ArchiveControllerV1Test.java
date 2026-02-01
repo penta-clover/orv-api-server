@@ -3,7 +3,6 @@ package com.orv.archive.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.orv.archive.controller.ArchiveControllerV1;
 import com.orv.archive.controller.dto.ConfirmUploadRequest;
 import com.orv.archive.orchestrator.dto.PresignedUrlResponse;
 import com.orv.archive.orchestrator.ArchiveOrchestrator;
@@ -24,7 +23,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Instant;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -48,6 +46,7 @@ public class ArchiveControllerV1Test {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(archiveControllerV1)
+                .setControllerAdvice(new ArchiveControllerExceptionHandler())
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
                 .build();
 
@@ -87,7 +86,19 @@ public class ArchiveControllerV1Test {
         // then
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value("400"))
-                .andExpect(jsonPath("$.message").value("fail"));
+                .andExpect(jsonPath("$.message").value("Invalid storyboard ID format"))
+                .andExpect(jsonPath("$.data").value("INVALID_STORYBOARD_ID_FORMAT"));
+    }
+
+    @Test
+    void getUploadUrl_missingStoryboardId() throws Exception {
+        // when
+        ResultActions result = mockMvc.perform(get("/api/v1/archive/upload-url"));
+
+        // then
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value("400"))
+                .andExpect(jsonPath("$.data").value("MISSING_REQUIRED_FIELD"));
     }
 
     @Test
@@ -97,7 +108,7 @@ public class ArchiveControllerV1Test {
         ConfirmUploadRequest request = new ConfirmUploadRequest(videoId);
 
         when(archiveOrchestrator.confirmUpload(any(UUID.class), any(UUID.class)))
-                .thenReturn(Optional.of(videoId));
+                .thenReturn(videoId);
 
         // when
         ResultActions result = mockMvc.perform(post("/api/v1/archive/recorded-video")
@@ -107,26 +118,6 @@ public class ArchiveControllerV1Test {
         // then
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value(videoId));
-    }
-
-    @Test
-    void confirmRecordedVideo_videoNotFound() throws Exception {
-        // given
-        String videoId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
-        ConfirmUploadRequest request = new ConfirmUploadRequest(videoId);
-
-        when(archiveOrchestrator.confirmUpload(any(UUID.class), any(UUID.class)))
-                .thenReturn(Optional.empty());
-
-        // when
-        ResultActions result = mockMvc.perform(post("/api/v1/archive/recorded-video")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)));
-
-        // then
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode").value("404"))
-                .andExpect(jsonPath("$.message").value("fail"));
     }
 
     @Test
@@ -142,6 +133,41 @@ public class ArchiveControllerV1Test {
         // then
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value("400"))
-                .andExpect(jsonPath("$.message").value("fail"));
+                .andExpect(jsonPath("$.message").value("Invalid video ID format"))
+                .andExpect(jsonPath("$.data").value("INVALID_VIDEO_ID_FORMAT"));
+    }
+
+    @Test
+    void confirmRecordedVideo_nullVideoId() throws Exception {
+        // given
+        ConfirmUploadRequest request = new ConfirmUploadRequest(null);
+
+        // when
+        ResultActions result = mockMvc.perform(post("/api/v1/archive/recorded-video")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+
+        // then
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value("400"))
+                .andExpect(jsonPath("$.message").value("Invalid video ID format"))
+                .andExpect(jsonPath("$.data").value("INVALID_VIDEO_ID_FORMAT"));
+    }
+
+    @Test
+    void confirmRecordedVideo_blankVideoId() throws Exception {
+        // given
+        ConfirmUploadRequest request = new ConfirmUploadRequest("   ");
+
+        // when
+        ResultActions result = mockMvc.perform(post("/api/v1/archive/recorded-video")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+
+        // then
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value("400"))
+                .andExpect(jsonPath("$.message").value("Invalid video ID format"))
+                .andExpect(jsonPath("$.data").value("INVALID_VIDEO_ID_FORMAT"));
     }
 }

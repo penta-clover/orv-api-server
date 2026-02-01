@@ -7,4 +7,6 @@ dependencies {
     implementation 'org.springframework:spring-context'
     implementation 'org.springframework.security:spring-security-core'
     implementation 'jakarta.servlet:jakarta.servlet-api'
+    implementation 'jakarta.validation:jakarta.validation-api'
+    implementation 'org.hibernate.validator:hibernate-validator'
 }
