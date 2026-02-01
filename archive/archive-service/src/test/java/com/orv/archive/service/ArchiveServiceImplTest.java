@@ -1,10 +1,9 @@
 package com.orv.archive.service;
 
-import com.orv.archive.repository.VideoRepository;
-import com.orv.archive.service.ArchiveServiceImpl;
-import com.orv.archive.domain.PresignedUrlInfo;
-import com.orv.archive.domain.Video;
-import com.orv.archive.domain.VideoStatus;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,12 +13,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Optional;
-import java.util.UUID;
+import com.orv.archive.common.ArchiveErrorCode;
+import com.orv.archive.common.ArchiveException;
+import com.orv.archive.domain.PresignedUrlInfo;
+import com.orv.archive.domain.Video;
+import com.orv.archive.domain.VideoStatus;
+import com.orv.archive.repository.VideoRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -59,7 +61,7 @@ class ArchiveServiceImplTest {
 
     @Test
     @DisplayName("confirmUpload: S3에 파일 존재 시 status를 UPLOADED로 변경")
-    void confirmUpload_updatesStatusWhenFileExists() {
+    void confirmUpload_returnsVideoIdWhenSuccessful() {
         // given
         UUID videoId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
@@ -77,11 +79,10 @@ class ArchiveServiceImplTest {
         when(videoRepository.updateVideoUrlAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(true);
 
         // when
-        Optional<String> result = archiveService.confirmUpload(videoId, memberId);
+        String result = archiveService.confirmUpload(videoId, memberId);
 
         // then
-        assertThat(result).isPresent();
-        assertThat(result.get()).isEqualTo(videoId.toString());
+        assertThat(result).isEqualTo(videoId.toString());
 
         verify(videoRepository).findById(videoId);
         verify(videoRepository).checkUploadComplete(videoId);
@@ -89,26 +90,26 @@ class ArchiveServiceImplTest {
     }
 
     @Test
-    @DisplayName("confirmUpload: video가 존재하지 않으면 empty 반환")
-    void confirmUpload_returnsEmptyWhenVideoNotFound() {
+    @DisplayName("confirmUpload: video가 존재하지 않으면 예외 발생")
+    void confirmUpload_throwsExceptionWhenVideoNotFound() {
         // given
         UUID videoId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
 
         when(videoRepository.findById(videoId)).thenReturn(Optional.empty());
 
-        // when
-        Optional<String> result = archiveService.confirmUpload(videoId, memberId);
+        // when & then
+        assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))
+                .isInstanceOf(ArchiveException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ArchiveErrorCode.VIDEO_NOT_FOUND);
 
-        // then
-        assertThat(result).isEmpty();
         verify(videoRepository).findById(videoId);
         verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
-    @DisplayName("confirmUpload: 다른 사용자의 video면 empty 반환")
-    void confirmUpload_returnsEmptyWhenUnauthorized() {
+    @DisplayName("confirmUpload: 다른 사용자의 video면 예외 발생")
+    void confirmUpload_throwsExceptionWhenUnauthorized() {
         // given
         UUID videoId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
@@ -121,17 +122,17 @@ class ArchiveServiceImplTest {
 
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
 
-        // when
-        Optional<String> result = archiveService.confirmUpload(videoId, memberId);
+        // when & then
+        assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))
+                .isInstanceOf(ArchiveException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ArchiveErrorCode.VIDEO_ACCESS_DENIED);
 
-        // then
-        assertThat(result).isEmpty();
         verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
-    @DisplayName("confirmUpload: PENDING 상태가 아니면 empty 반환")
-    void confirmUpload_returnsEmptyWhenNotPending() {
+    @DisplayName("confirmUpload: PENDING 상태가 아니면 예외 발생")
+    void confirmUpload_throwsExceptionWhenNotPending() {
         // given
         UUID videoId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
@@ -143,17 +144,17 @@ class ArchiveServiceImplTest {
 
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
 
-        // when
-        Optional<String> result = archiveService.confirmUpload(videoId, memberId);
+        // when & then
+        assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))
+                .isInstanceOf(ArchiveException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ArchiveErrorCode.VIDEO_STATUS_NOT_PENDING);
 
-        // then
-        assertThat(result).isEmpty();
         verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
-    @DisplayName("confirmUpload: S3에 파일이 없으면 empty 반환")
-    void confirmUpload_returnsEmptyWhenFileNotInS3() {
+    @DisplayName("confirmUpload: S3에 파일이 없으면 예외 발생")
+    void confirmUpload_throwsExceptionWhenFileNotInS3() {
         // given
         UUID videoId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
@@ -166,11 +167,40 @@ class ArchiveServiceImplTest {
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
         when(videoRepository.checkUploadComplete(videoId)).thenReturn(false);
 
-        // when
-        Optional<String> result = archiveService.confirmUpload(videoId, memberId);
+        // when & then
+        assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))
+                .isInstanceOf(ArchiveException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ArchiveErrorCode.VIDEO_FILE_NOT_UPLOADED);
 
-        // then
-        assertThat(result).isEmpty();
         verify(videoRepository, never()).updateVideoUrlAndStatus(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("confirmUpload: DB 업데이트 실패 시 예외 발생")
+    void confirmUpload_throwsExceptionWhenStatusUpdateFails() {
+        // given
+        UUID videoId = UUID.randomUUID();
+        UUID memberId = UUID.randomUUID();
+        String cloudfrontDomain = "https://cdn.example.com";
+
+        Video video = new Video();
+        video.setId(videoId);
+        video.setMemberId(memberId);
+        video.setStatus(VideoStatus.PENDING.name());
+
+        ReflectionTestUtils.setField(archiveService, "cloudfrontDomain", cloudfrontDomain);
+
+        when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
+        when(videoRepository.checkUploadComplete(videoId)).thenReturn(true);
+        when(videoRepository.updateVideoUrlAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))
+                .isInstanceOf(ArchiveException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ArchiveErrorCode.VIDEO_STATUS_UPDATE_FAILED);
+
+        verify(videoRepository).findById(videoId);
+        verify(videoRepository).checkUploadComplete(videoId);
+        verify(videoRepository).updateVideoUrlAndStatus(eq(videoId), eq(cloudfrontDomain + "/archive/videos/" + videoId), eq(VideoStatus.UPLOADED.name()));
     }
 }
