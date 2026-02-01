@@ -1,18 +1,20 @@
 package com.orv.archive.repository;
 
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import com.orv.archive.domain.ImageMetadata;
+import com.orv.archive.domain.InputStreamWithMetadata;
 import com.orv.archive.domain.Video;
 import com.orv.archive.domain.VideoMetadata;
 
 public interface VideoRepository {
     Optional<String> save(InputStream inputStream, VideoMetadata videoMetadata);
+
+    Optional<String> save(InputStream inputStream, VideoMetadata videoMetadata, Optional<InputStreamWithMetadata> thumbnailImage);
 
     Optional<Video> findById(UUID videoId);
 

@@ -6,10 +6,7 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
-import com.orv.archive.domain.ImageMetadata;
-import com.orv.archive.domain.Video;
-import com.orv.archive.domain.VideoMetadata;
-import com.orv.archive.domain.VideoStatus;
+import com.orv.archive.domain.*;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +25,11 @@ import com.orv.archive.repository.VideoRepository;
 @Repository
 @Slf4j
 public class S3VideoRepository implements VideoRepository {
+    private static final String VIDEO_PATH_PREFIX = "archive/videos/";
+    private static final String IMAGE_PATH_PREFIX = "archive/images/";
+    private static final String DEFAULT_THUMBNAIL_URL =
+            "https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-archive-video-thumbnail.png";
+
     private final AmazonS3 amazonS3Client;
 
     @Value("${cloud.aws.s3.bucket}")
@@ -52,34 +54,63 @@ public class S3VideoRepository implements VideoRepository {
     }
 
     public Optional<String> save(InputStream inputStream, VideoMetadata videoMetadata) {
+        return save(inputStream, videoMetadata, Optional.empty());
+    }
+
+    public Optional<String> save(InputStream inputStream, VideoMetadata videoMetadata, Optional<InputStreamWithMetadata> thumbnailImage) {
+        String videoFileId = UUID.randomUUID().toString();
+
         try {
-            String fileId = UUID.randomUUID().toString();
-
-            // AWS S3에 영상 업로드
-            String fileUrl = "archive/videos/" + fileId;
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(videoMetadata.getContentType());
-            metadata.setContentLength(videoMetadata.getContentLength());
-            amazonS3Client.putObject(bucket, fileUrl, inputStream, metadata);
-            URI downloadUri = URI.create(cloudfrontDomain + "/" + fileUrl);
-
-            // DB에 영상 정보 저장
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("id", fileId);
-            parameters.put("storyboard_id", videoMetadata.getStoryboardId().toString());
-            parameters.put("member_id", videoMetadata.getOwnerId().toString());
-            parameters.put("video_url", downloadUri.toString());
-            parameters.put("thumbnail_url", "https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-archive-video-thumbnail.png");
-            parameters.put("running_time", videoMetadata.getRunningTime());
-            parameters.put("title", videoMetadata.getTitle());
-            parameters.put("status", VideoStatus.UPLOADED.name());
-            simpleJdbcInsertVideo.execute(new MapSqlParameterSource(parameters));
-
-            return Optional.of(fileId.toString());
+            URI videoDownloadUri = uploadVideoToS3(inputStream, videoFileId, videoMetadata);
+            URI thumbnailDownloadUri = uploadThumbnailOrDefault(thumbnailImage, videoFileId);
+            return saveVideoRecord(videoFileId, videoMetadata, videoDownloadUri, thumbnailDownloadUri);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to save video: videoId={}, storyboardId={}", videoFileId, videoMetadata.getStoryboardId(), e);
             return Optional.empty();
         }
+    }
+
+    private URI uploadToS3(InputStream inputStream, String s3Key, String contentType, long contentLength) {
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(contentType);
+        metadata.setContentLength(contentLength);
+        amazonS3Client.putObject(bucket, s3Key, inputStream, metadata);
+        return URI.create(cloudfrontDomain + "/" + s3Key);
+    }
+
+    private URI uploadVideoToS3(InputStream inputStream, String videoFileId, VideoMetadata videoMetadata) {
+        String s3Key = VIDEO_PATH_PREFIX + videoFileId;
+        return uploadToS3(inputStream, s3Key, videoMetadata.getContentType(), videoMetadata.getContentLength());
+    }
+
+    private URI uploadThumbnailOrDefault(Optional<InputStreamWithMetadata> thumbnailImage, String videoFileId) {
+        if (thumbnailImage.isEmpty()) {
+            return URI.create(DEFAULT_THUMBNAIL_URL);
+        }
+
+        InputStreamWithMetadata thumbnail = thumbnailImage.get();
+        String thumbnailFileId = UUID.randomUUID().toString();
+        String s3Key = IMAGE_PATH_PREFIX + thumbnailFileId;
+        return uploadToS3(
+                thumbnail.getThumbnailImage(),
+                s3Key,
+                thumbnail.getMetadata().getContentType(),
+                thumbnail.getMetadata().getContentLength()
+        );
+    }
+
+    private Optional<String> saveVideoRecord(String videoFileId, VideoMetadata videoMetadata, URI videoUri, URI thumbnailUri) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("id", videoFileId);
+        parameters.put("storyboard_id", videoMetadata.getStoryboardId().toString());
+        parameters.put("member_id", videoMetadata.getOwnerId().toString());
+        parameters.put("video_url", videoUri.toString());
+        parameters.put("thumbnail_url", thumbnailUri.toString());
+        parameters.put("running_time", videoMetadata.getRunningTime());
+        parameters.put("title", videoMetadata.getTitle());
+        parameters.put("status", VideoStatus.UPLOADED.name());
+        simpleJdbcInsertVideo.execute(new MapSqlParameterSource(parameters));
+        return Optional.of(videoFileId);
     }
 
     @Override
@@ -114,7 +145,7 @@ public class S3VideoRepository implements VideoRepository {
             jdbcTemplate.update("UPDATE video SET title = ? WHERE id = ?", title, videoId);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to update video title: videoId={}", videoId, e);
             return false;
         }
     }
@@ -123,21 +154,13 @@ public class S3VideoRepository implements VideoRepository {
     public boolean updateThumbnail(UUID videoId, InputStream thumbnail, ImageMetadata imageMetadata) {
         try {
             String fileId = UUID.randomUUID().toString();
+            String s3Key = IMAGE_PATH_PREFIX + fileId;
+            URI downloadUri = uploadToS3(thumbnail, s3Key, imageMetadata.getContentType(), imageMetadata.getContentLength());
 
-            // AWS S3에 영상 업로드
-            String fileUrl = "archive/images/" + fileId;
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(imageMetadata.getContentType());
-            metadata.setContentLength(imageMetadata.getContentLength());
-            amazonS3Client.putObject(bucket, fileUrl, thumbnail, metadata);
-            URI downloadUri = URI.create(cloudfrontDomain + "/" + fileUrl);
-
-            // DB에 썸네일 url 업데이트
             jdbcTemplate.update("UPDATE video SET thumbnail_url = ? WHERE id = ?", downloadUri.toString(), videoId);
-
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to update thumbnail: videoId={}", videoId, e);
             return false;
         }
     }
@@ -167,7 +190,7 @@ public class S3VideoRepository implements VideoRepository {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to get video stream: videoId={}", videoId, e);
             return Optional.empty();
         }
     }
@@ -191,7 +214,7 @@ public class S3VideoRepository implements VideoRepository {
 
     @Override
     public URL generateUploadUrl(UUID videoId, long expirationMinutes) {
-        String s3Key = "archive/videos/" + videoId;
+        String s3Key = VIDEO_PATH_PREFIX + videoId;
         Date expiration = calcDateAfterMinutes(expirationMinutes);
 
         GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, s3Key)
@@ -203,7 +226,7 @@ public class S3VideoRepository implements VideoRepository {
 
     @Override
     public boolean checkUploadComplete(UUID videoId) {
-        String s3Key = "archive/videos/" + videoId;
+        String s3Key = VIDEO_PATH_PREFIX + videoId;
         try {
             ObjectMetadata metadata = amazonS3Client.getObjectMetadata(bucket, s3Key);
             return metadata != null && metadata.getContentLength() > 0;
@@ -218,10 +241,9 @@ public class S3VideoRepository implements VideoRepository {
     @Override
     public boolean updateVideoUrlAndStatus(UUID videoId, String videoUrl, String status) {
         try {
-            String defaultThumbnail = "https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-archive-video-thumbnail.png";
             int updated = jdbcTemplate.update(
                     "UPDATE video SET video_url = ?, thumbnail_url = ?, status = ? WHERE id = ?",
-                    videoUrl, defaultThumbnail, status, videoId
+                    videoUrl, DEFAULT_THUMBNAIL_URL, status, videoId
             );
             return updated > 0;
         } catch (Exception e) {
@@ -241,7 +263,7 @@ public class S3VideoRepository implements VideoRepository {
     public boolean deleteVideo(UUID videoId) {
         try {
             // 1. S3에서 영상 파일 삭제 (파일이 없어도 S3 deleteObject는 예외 없이 성공 반환)
-            String s3Key = "archive/videos/" + videoId;
+            String s3Key = VIDEO_PATH_PREFIX + videoId;
             try {
                 amazonS3Client.deleteObject(bucket, s3Key);
                 log.info("Deleted video file from S3: {}", s3Key);

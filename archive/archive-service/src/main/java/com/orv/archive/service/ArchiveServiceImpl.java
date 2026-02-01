@@ -1,33 +1,30 @@
 package com.orv.archive.service;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.orv.archive.domain.*;
+import com.orv.archive.repository.VideoRepository;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
-import org.bytedeco.javacv.Frame;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.orv.archive.repository.VideoRepository;
-import com.orv.archive.domain.ImageMetadata;
-import com.orv.archive.domain.PresignedUrlInfo;
-import com.orv.archive.domain.Video;
-import com.orv.archive.domain.VideoMetadata;
-import com.orv.archive.domain.VideoStatus;
-
-import org.springframework.beans.factory.annotation.Value;
-
-import lombok.extern.slf4j.Slf4j;
-
-import java.net.URL;
-import java.time.Instant;
-
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ArchiveServiceImpl implements ArchiveService {
     private static final long PRESIGNED_URL_EXPIRATION_MINUTES = 60;
 
@@ -36,51 +33,19 @@ public class ArchiveServiceImpl implements ArchiveService {
     @Value("${cloud.aws.cloudfront.domain}")
     private String cloudfrontDomain;
 
-    public ArchiveServiceImpl(VideoRepository videoRepository) {
-        this.videoRepository = videoRepository;
-    }
-
+    // TODO: 영상 처리 작업을 별도 서버로 분리한 후 아래의 영상 처리 작업 코드를 제거해야 함.
     @Override
     public Optional<String> uploadRecordedVideo(InputStream videoStream, String contentType, long size, UUID storyboardId, UUID memberId) {
+        File tempFile = null;
         try {
-            // TODO: 영상 처리 작업을 별도 서버로 분리한 후 아래의 영상 처리 작업 코드를 제거해야 함.
-            // Create a temporary file to calculate running time
-            File tempFile = File.createTempFile("upload-" + System.currentTimeMillis(), ".tmp");
-            try {
-                // Copy stream to temp file
-                java.nio.file.Files.copy(videoStream, tempFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                
-                // Calculate running time
-                double runningTime = calculateRunningTime(tempFile);
-                
-                // Read the file back as InputStream for repository
-                try (InputStream fileInputStream = java.nio.file.Files.newInputStream(tempFile.toPath())) {
-                    Optional<String> videoId = videoRepository.save(
-                            fileInputStream,
-                            new VideoMetadata(
-                                    storyboardId,
-                                    memberId,
-                                    null,
-                                    contentType,
-                                    (int) runningTime,
-                                    size
-                            )
-                    );
-                    
-                    if (videoId.isEmpty()) {
-                        log.warn("Failed to save video");
-                    }
-                    
-                    return videoId;
-                }
-            } finally {
-                if (tempFile.exists()) {
-                    tempFile.delete();
-                }
-            }
+            tempFile = createTempVideoFile(videoStream);
+            VideoProcessingResult processingResult = processVideo(tempFile);
+            return saveProcessedVideo(tempFile, contentType, size, storyboardId, memberId, processingResult);
         } catch (IOException e) {
             log.error("Failed to upload recorded video", e);
             return Optional.empty();
+        } finally {
+            deleteTempFile(tempFile);
         }
     }
 
@@ -110,47 +75,7 @@ public class ArchiveServiceImpl implements ArchiveService {
         return videoRepository.updateThumbnail(videoId, thumbnailStream, metadata);
     }
 
-    private double calculateRunningTime(File videoFile) {
-        // TODO: Running Time 계산 로직을 별도 서버로 분리해야 함.
-        try {
-            double durationInSeconds = 0.0;
-            try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(videoFile)) {
-                // mp4 파일임을 명시적으로 설정
-                grabber.setFormat("mp4");
-                grabber.start();
-
-                long lengthInTime = grabber.getLengthInTime();
-                if (lengthInTime > 0) {
-                    // 메타데이터에 duration 정보가 있을 경우 사용
-                    durationInSeconds = lengthInTime / 1_000_000.0;
-                } else {
-                    // 메타데이터가 없을 경우, 첫 프레임과 마지막 프레임의 timestamp를 이용해 계산
-                    Frame frame;
-                    long firstTimestamp = -1;
-                    long lastTimestamp = -1;
-                    while ((frame = grabber.grabFrame()) != null) {
-                        if (frame.timestamp > 0) {
-                            if (firstTimestamp == -1) {
-                                firstTimestamp = frame.timestamp;
-                            }
-                            lastTimestamp = frame.timestamp;
-                        }
-                    }
-                    if (firstTimestamp != -1 && lastTimestamp != -1) {
-                        durationInSeconds = (lastTimestamp - firstTimestamp) / 1_000_000.0;
-                    }
-                }
-                grabber.stop();
-            }
-            return durationInSeconds;
-        } catch (Exception e) {
-            log.error("Failed to calculate running time", e);
-            return 0.0;
-        }
-    }
-
     // v1 API methods
-
     @Override
     public PresignedUrlInfo requestUploadUrl(UUID storyboardId, UUID memberId) {
         // 1. PENDING 상태로 video 레코드 생성
@@ -218,4 +143,67 @@ public class ArchiveServiceImpl implements ArchiveService {
     public boolean deleteVideo(UUID videoId) {
         return videoRepository.deleteVideo(videoId);
     }
+
+    private File createTempVideoFile(InputStream videoStream) throws IOException {
+        File tempFile = File.createTempFile("upload-" + System.currentTimeMillis(), ".tmp");
+        Files.copy(videoStream, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        return tempFile;
+    }
+
+    private VideoProcessingResult processVideo(File tempFile) throws IOException {
+        try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(tempFile)) {
+            grabber.setFormat("mp4");
+            grabber.start();
+
+            Optional<BufferedImage> keyFrame = VideoProcessingUtils.extractKeyFrame(grabber);
+            double runningTime = VideoProcessingUtils.calculateRunningTime(grabber);
+
+            grabber.stop();
+            return new VideoProcessingResult(keyFrame, runningTime);
+        }
+    }
+
+    private Optional<String> saveProcessedVideo(File tempFile, String contentType, long size,
+                                                 UUID storyboardId, UUID memberId,
+                                                 VideoProcessingResult result) throws IOException {
+        try (InputStream fileInputStream = Files.newInputStream(tempFile.toPath())) {
+            Optional<InputStreamWithMetadata> thumbnailImage = result.getKeyFrame()
+                    .map(frame -> {
+                        try {
+                            return VideoProcessingUtils.bufferedImageToInputStream(frame, "jpg");
+                        } catch (IOException e) {
+                            log.warn("Failed to convert key frame to input stream", e);
+                            return null;
+                        }
+                    });
+
+            Optional<String> videoId = videoRepository.save(
+                    fileInputStream,
+                    new VideoMetadata(storyboardId, memberId, null, contentType, (int) result.getRunningTime(), size),
+                    thumbnailImage
+            );
+
+            if (videoId.isEmpty()) {
+                log.warn("Failed to save video");
+            }
+
+            return videoId;
+        }
+    }
+
+    private void deleteTempFile(File tempFile) {
+        if (tempFile != null && tempFile.exists()) {
+            if (!tempFile.delete()) {
+                log.warn("Failed to delete temp file: {}", tempFile.getAbsolutePath());
+            }
+        }
+    }
+
+    @RequiredArgsConstructor
+    @Getter
+    private static class VideoProcessingResult {
+        private final Optional<BufferedImage> keyFrame;
+        private final double runningTime;
+    }
+
 }
