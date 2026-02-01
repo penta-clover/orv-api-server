@@ -9,98 +9,69 @@ import com.orv.archive.domain.VideoDurationCalculationJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PreDestroy;
 import java.io.File;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @ConditionalOnProperty(name = "worker.duration-calculation.enabled", havingValue = "true")
+@EnableScheduling
 @Slf4j
-public class VideoDurationCalculationWorker implements CommandLineRunner {
+public class VideoDurationCalculationWorker {
 
     private final VideoDurationCalculationJobRepository jobRepository;
     private final VideoRepository videoRepository;
     private final VideoDurationCalculator calculator;
     private final VideoDownloader downloader;
     private final ThreadPoolTaskExecutor executor;
-
-    @Value("${worker.duration-calculation.poll-interval-ms:3000}")
-    private long pollIntervalMs;
-
-    @Value("${worker.duration-calculation.max-backoff-ms:30000}")
-    private long maxBackoffMs;
-
-    @Value("${worker.duration-calculation.stuck-threshold-minutes:10}")
-    private int stuckThresholdMinutes;
-
-    private final AtomicBoolean running = new AtomicBoolean(true);
+    private final Duration stuckThreshold;
 
     public VideoDurationCalculationWorker(
             VideoDurationCalculationJobRepository jobRepository,
             VideoRepository videoRepository,
             VideoDurationCalculator calculator,
             VideoDownloader downloader,
-            @Qualifier("durationCalculationExecutor") ThreadPoolTaskExecutor executor) {
+            @Qualifier("durationCalculationExecutor") ThreadPoolTaskExecutor executor,
+            @Value("${worker.duration-calculation.stuck-threshold-minutes:10}") int stuckThresholdMinutes) {
         this.jobRepository = jobRepository;
         this.videoRepository = videoRepository;
         this.calculator = calculator;
         this.downloader = downloader;
         this.executor = executor;
+        this.stuckThreshold = Duration.ofMinutes(stuckThresholdMinutes);
     }
 
-    @Override
-    public void run(String... args) {
-        int threads = executor.getCorePoolSize();
-        log.info("Starting VideoDurationCalculationWorker with {} threads", threads);
+    @Scheduled(fixedDelayString = "${worker.duration-calculation.poll-interval-ms:1000}")
+    public void poll() {
+        while (hasAvailableThread()) {
+            Optional<VideoDurationCalculationJob> jobOpt = jobRepository.claimNext(stuckThreshold);
 
-        Duration stuckThreshold = Duration.ofMinutes(stuckThresholdMinutes);
+            if (jobOpt.isEmpty()) {
+                return;
+            }
 
-        for (int i = 0; i < threads; i++) {
-            int workerId = i;
-            executor.execute(() -> workerLoop(workerId, stuckThreshold));
-        }
+            VideoDurationCalculationJob job = jobOpt.get();
+            log.info("Dispatching job #{} for video {}", job.getId(), job.getVideoId());
 
-        log.info("All {} worker threads started", threads);
-    }
-
-    private void workerLoop(int workerId, Duration stuckThreshold) {
-        log.info("Worker-{} started", workerId);
-        long backoff = pollIntervalMs;
-
-        while (running.get() && !Thread.currentThread().isInterrupted()) {
             try {
-                Optional<VideoDurationCalculationJob> jobOpt = jobRepository.claimNext(stuckThreshold);
-
-                if (jobOpt.isEmpty()) {
-                    Thread.sleep(backoff);
-                    backoff = Math.min(backoff * 2, maxBackoffMs);
-                    continue;
-                }
-
-                backoff = pollIntervalMs;
-                processJob(jobOpt.get(), workerId);
-
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            } catch (Exception e) {
-                log.error("Worker-{} unexpected error", workerId, e);
+                executor.execute(() -> processJob(job));
+            } catch (org.springframework.core.task.TaskRejectedException e) {
+                log.warn("Thread pool full, will retry job #{} next poll cycle", job.getId());
+                return;
             }
         }
-
-        log.info("Worker-{} stopped", workerId);
     }
 
-    private void processJob(VideoDurationCalculationJob job, int workerId) {
+    private void processJob(VideoDurationCalculationJob job) {
         long startTime = System.currentTimeMillis();
-        log.info("Worker-{} processing job #{} for video {}", workerId, job.getId(), job.getVideoId());
+        String threadName = Thread.currentThread().getName();
+        log.info("[{}] Processing job #{} for video {}", threadName, job.getId(), job.getVideoId());
 
         File tempFile = null;
         try {
@@ -123,20 +94,18 @@ public class VideoDurationCalculationWorker implements CommandLineRunner {
             jobRepository.markCompleted(job.getId());
 
             long elapsed = System.currentTimeMillis() - startTime;
-            log.info("Worker-{} completed job #{} in {}ms - duration: {}s",
-                    workerId, job.getId(), elapsed, result.durationSeconds());
+            log.info("[{}] Completed job #{} in {}ms - duration: {}s",
+                    threadName, job.getId(), elapsed, result.durationSeconds());
 
         } catch (Exception e) {
-            log.error("Worker-{} failed to process job #{}", workerId, job.getId(), e);
+            log.error("[{}] Failed to process job #{}", threadName, job.getId(), e);
             jobRepository.markFailed(job.getId());
         } finally {
             downloader.deleteSafely(tempFile);
         }
     }
 
-    @PreDestroy
-    public void shutdown() {
-        log.info("Shutting down VideoDurationCalculationWorker");
-        running.set(false);
+    private boolean hasAvailableThread() {
+        return executor.getActiveCount() < executor.getMaxPoolSize();
     }
 }
