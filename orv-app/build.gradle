@@ -148,6 +148,7 @@ bootJar {
 
 bootRun {
     dependsOn copyDocs
+    workingDir = rootProject.projectDir
 }
 
 processResources {
