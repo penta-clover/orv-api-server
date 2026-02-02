@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.orv.archive.repository.VideoDurationCalculationJobRepository;
+import com.orv.archive.repository.VideoThumbnailExtractionJobRepository;
 import com.orv.archive.repository.VideoRepository;
 import com.orv.archive.domain.PresignedUrlInfo;
 import com.orv.archive.domain.Video;
@@ -39,6 +40,9 @@ class ArchiveServiceImplTest {
 
     @Mock
     private VideoDurationCalculationJobRepository videoDurationCalculationJobRepository;
+
+    @Mock
+    private VideoThumbnailExtractionJobRepository videoThumbnailExtractionJobRepository;
 
     @Test
     @DisplayName("requestUploadUrl: PENDING 상태의 video 생성 후 Presigned URL 반환")

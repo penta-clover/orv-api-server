@@ -1,25 +1,23 @@
-package com.orv.worker.durationcalculation.config;
+package com.orv.worker.thumbnailextraction.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
-@ConditionalOnProperty(name = "worker.duration-calculation.enabled", havingValue = "true")
-public class WorkerThreadPoolConfig {
+public class ThumbnailExtractionWorkerConfig {
 
-    @Value("${worker.duration-calculation.threads:2}")
+    @Value("${worker.thumbnail-extraction.threads:2}")
     private int threadCount;
 
-    @Bean(name = "durationCalculationExecutor")
-    public ThreadPoolTaskExecutor durationCalculationExecutor() {
+    @Bean(name = "thumbnailExtractionExecutor")
+    public ThreadPoolTaskExecutor thumbnailExtractionExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(threadCount);
         executor.setMaxPoolSize(threadCount);
         executor.setQueueCapacity(0);
-        executor.setThreadNamePrefix("duration-worker-");
+        executor.setThreadNamePrefix("thumbnail-worker-");
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
         executor.initialize();

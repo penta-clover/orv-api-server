@@ -82,6 +82,7 @@ include 'term:term-repository-using-jdbc'
 
 // Worker
 include 'duration-calculation-worker'
+include 'thumbnail-extraction-worker'
 
 // Admin 도메인
 include 'admin:admin-controller'

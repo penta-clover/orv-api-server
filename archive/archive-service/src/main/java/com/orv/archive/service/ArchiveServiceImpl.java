@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.orv.archive.common.ArchiveErrorCode;
 import com.orv.archive.common.ArchiveException;
 import com.orv.archive.repository.VideoDurationCalculationJobRepository;
+import com.orv.archive.repository.VideoThumbnailExtractionJobRepository;
 import com.orv.archive.repository.VideoRepository;
 import com.orv.archive.domain.ImageMetadata;
 import com.orv.archive.domain.PresignedUrlInfo;
@@ -45,6 +46,7 @@ public class ArchiveServiceImpl implements ArchiveService {
 
     private final VideoRepository videoRepository;
     private final VideoDurationCalculationJobRepository videoDurationCalculationJobRepository;
+    private final VideoThumbnailExtractionJobRepository videoThumbnailExtractionJobRepository;
 
     @Value("${cloud.aws.cloudfront.domain}")
     private String cloudfrontDomain;
@@ -143,6 +145,9 @@ public class ArchiveServiceImpl implements ArchiveService {
 
         videoDurationCalculationJobRepository.create(videoId);
         log.info("Created duration extraction job for video: {}", videoId);
+
+        videoThumbnailExtractionJobRepository.create(videoId);
+        log.info("Created thumbnail extraction job for video: {}", videoId);
 
         return videoId.toString();
     }

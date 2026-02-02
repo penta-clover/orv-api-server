@@ -9,7 +9,6 @@ import com.orv.archive.domain.VideoDurationCalculationJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -20,7 +19,6 @@ import java.time.Duration;
 import java.util.Optional;
 
 @Component
-@ConditionalOnProperty(name = "worker.duration-calculation.enabled", havingValue = "true")
 @EnableScheduling
 @Slf4j
 public class VideoDurationCalculationWorker {
