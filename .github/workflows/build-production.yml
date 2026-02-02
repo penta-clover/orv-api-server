@@ -36,4 +36,8 @@ jobs:
 
       - name: Build and push Duration Calculation Worker Docker image
         run: |
-          docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.worker -t chj7239/orv-duration-calculation-worker:latest --push .
+          docker buildx build --platform linux/amd64,linux/arm64 -t chj7239/orv-duration-calculation-worker:latest --push duration-calculation-worker
+
+      - name: Build and push Thumbnail Extraction Worker Docker image
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 -t chj7239/orv-thumbnail-extraction-worker:latest --push thumbnail-extraction-worker

@@ -6,9 +6,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ADD duration-calculation-worker/build/libs/duration-calculation-worker-0.0.1-SNAPSHOT.jar worker-app.jar
+ADD build/libs/duration-calculation-worker-0.0.1-SNAPSHOT.jar worker-app.jar
 ENTRYPOINT ["java", \
     "-XX:+HeapDumpOnOutOfMemoryError", \
     "-XX:HeapDumpPath=/var/log/app/heapdump.hprof", \
-    "--spring.profiles.active=worker", \
     "-jar", "worker-app.jar"]

@@ -37,5 +37,4 @@ dependencies {
 
 bootRun {
     workingDir = rootProject.projectDir
-    args = ['--spring.profiles.active=worker']
 }
