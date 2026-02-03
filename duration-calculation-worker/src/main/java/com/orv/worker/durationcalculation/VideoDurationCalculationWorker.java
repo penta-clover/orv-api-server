@@ -73,9 +73,14 @@ public class VideoDurationCalculationWorker {
 
         File tempFile = null;
         try {
+            long downloadStartTime = System.currentTimeMillis();
             tempFile = downloader.download(job.getVideoId());
+            long downloadTime = System.currentTimeMillis() - downloadStartTime;
 
+            long processStartTime = System.currentTimeMillis();
             DurationCalculationResult result = calculator.calculate(tempFile);
+            long processTime = System.currentTimeMillis() - processStartTime;
+
             if (!result.success()) {
                 log.warn("Job #{} failed: {}", job.getId(), result.errorMessage());
                 jobRepository.markFailed(job.getId());
@@ -91,9 +96,9 @@ public class VideoDurationCalculationWorker {
 
             jobRepository.markCompleted(job.getId());
 
-            long elapsed = System.currentTimeMillis() - startTime;
-            log.info("[{}] Completed job #{} in {}ms - duration: {}s",
-                    threadName, job.getId(), elapsed, result.durationSeconds());
+            long totalElapsed = System.currentTimeMillis() - startTime;
+            log.info("[{}] Completed job #{} in {}ms (download: {}ms, process: {}ms) - duration: {}s",
+                    threadName, job.getId(), totalElapsed, downloadTime, processTime, result.durationSeconds());
 
         } catch (Exception e) {
             log.error("[{}] Failed to process job #{}", threadName, job.getId(), e);

@@ -75,9 +75,14 @@ public class VideoThumbnailExtractionWorker {
 
         File tempFile = null;
         try {
+            long downloadStartTime = System.currentTimeMillis();
             tempFile = downloader.download(job.getVideoId());
+            long downloadTime = System.currentTimeMillis() - downloadStartTime;
 
+            long processStartTime = System.currentTimeMillis();
             ThumbnailExtractionResult result = extractor.extract(tempFile);
+            long processTime = System.currentTimeMillis() - processStartTime;
+
             if (!result.success()) {
                 log.warn("Thumbnail job #{} failed: {}", job.getId(), result.errorMessage());
                 jobRepository.markFailed(job.getId());
@@ -101,8 +106,9 @@ public class VideoThumbnailExtractionWorker {
 
             jobRepository.markCompleted(job.getId());
 
-            long elapsed = System.currentTimeMillis() - startTime;
-            log.info("[{}] Completed thumbnail job #{} in {}ms", threadName, job.getId(), elapsed);
+            long totalElapsed = System.currentTimeMillis() - startTime;
+            log.info("[{}] Completed thumbnail job #{} in {}ms (download: {}ms, process: {}ms)", 
+                    threadName, job.getId(), totalElapsed, downloadTime, processTime);
 
         } catch (Exception e) {
             log.error("[{}] Failed to process thumbnail job #{}", threadName, job.getId(), e);
