@@ -10,4 +10,5 @@ ADD build/libs/duration-calculation-worker-0.0.1-SNAPSHOT.jar worker-app.jar
 ENTRYPOINT ["java", \
     "-XX:+HeapDumpOnOutOfMemoryError", \
     "-XX:HeapDumpPath=/var/log/app/heapdump.hprof", \
+    "-Djava.net.preferIPv6Addresses=true", \
     "-jar", "worker-app.jar"]
