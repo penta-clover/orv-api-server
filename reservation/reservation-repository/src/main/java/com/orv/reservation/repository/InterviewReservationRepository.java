@@ -14,6 +14,6 @@ public interface InterviewReservationRepository {
     Optional<UUID> reserveInterview(UUID memberId, UUID storyboardId, LocalDateTime scheduledAt, ReservationStatus status);
     Optional<List<InterviewReservation>> getReservedInterviews(UUID member, OffsetDateTime from);
     boolean changeInterviewReservationStatus(UUID reservationId, ReservationStatus status);
-
     Optional<InterviewReservation> findInterviewReservationById(UUID reservationId);
+    int countActiveReservations(UUID memberId, LocalDateTime startAt, LocalDateTime endAt);
 }

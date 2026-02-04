@@ -91,4 +91,15 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
             return Optional.empty();
         }
     }
+    @Override
+    public int countActiveReservations(UUID memberId, LocalDateTime startAt, LocalDateTime endAt) {
+        String sql = "SELECT COUNT(*) FROM interview_reservation " +
+                "WHERE member_id = ? " +
+                "  AND scheduled_at >= ? " +
+                "  AND scheduled_at < ? " +
+                "  AND reservation_status IN ('pending', 'done')";
+
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, memberId, startAt, endAt);
+        return count != null ? count : 0;
+    }
 }

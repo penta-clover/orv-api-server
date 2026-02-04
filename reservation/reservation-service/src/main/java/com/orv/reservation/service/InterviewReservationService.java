@@ -19,4 +19,5 @@ public interface InterviewReservationService {
     Optional<UUID> reserveInstantInterview(UUID memberId, UUID storyboardId) throws Exception;
     Optional<List<InterviewReservation>> getForwardInterviews(UUID memberId, OffsetDateTime from);
     boolean markInterviewAsDone(UUID interviewId);
+    int countActiveReservations(UUID memberId, java.time.LocalDateTime startAt, java.time.LocalDateTime endAt);
 }
