@@ -18,7 +18,9 @@ import com.orv.archive.common.ArchiveException;
 import com.orv.archive.domain.PresignedUrlInfo;
 import com.orv.archive.domain.Video;
 import com.orv.archive.domain.VideoStatus;
+import com.orv.archive.repository.VideoDurationCalculationJobRepository;
 import com.orv.archive.repository.VideoRepository;
+import com.orv.archive.repository.VideoThumbnailExtractionJobRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,6 +37,12 @@ class ArchiveServiceImplTest {
     @Mock
     private VideoRepository videoRepository;
 
+    @Mock
+    private VideoDurationCalculationJobRepository videoDurationCalculationJobRepository;
+
+    @Mock
+    private VideoThumbnailExtractionJobRepository videoThumbnailExtractionJobRepository;
+
     @Test
     @DisplayName("requestUploadUrl: PENDING 상태의 video 생성 후 Presigned URL 반환")
     void requestUploadUrl_createsPendingVideoAndReturnsPresignedUrl() throws MalformedURLException {
@@ -48,12 +56,12 @@ class ArchiveServiceImplTest {
         when(videoRepository.generateUploadUrl(eq(UUID.fromString(videoId)), eq(60L))).thenReturn(presignedUrl);
 
         // when
-        PresignedUrlInfo presignedUrlInfo = archiveService.requestUploadUrl(storyboardId, memberId);
+        PresignedUrlInfo response = archiveService.requestUploadUrl(storyboardId, memberId);
 
         // then
-        assertThat(presignedUrlInfo.getVideoId()).isEqualTo(videoId);
-        assertThat(presignedUrlInfo.getUploadUrl()).isEqualTo(presignedUrl.toString());
-        assertThat(presignedUrlInfo.getExpiresAt()).isNotNull();
+        assertThat(response.getVideoId()).isEqualTo(videoId);
+        assertThat(response.getUploadUrl()).isEqualTo(presignedUrl.toString());
+        assertThat(response.getExpiresAt()).isNotNull();
 
         verify(videoRepository).createPendingVideo(storyboardId, memberId);
         verify(videoRepository).generateUploadUrl(eq(UUID.fromString(videoId)), eq(60L));
