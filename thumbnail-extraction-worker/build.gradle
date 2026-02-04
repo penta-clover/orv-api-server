@@ -1,0 +1,45 @@
+plugins {
+    id 'org.springframework.boot' version '3.4.2'
+}
+
+dependencies {
+    // Common
+    implementation project(':orv-common')
+
+    // Archive
+    implementation project(':archive:archive-domain')
+    implementation project(':archive:archive-service')
+    implementation project(':archive:archive-repository')
+    implementation project(':archive:archive-repository-using-s3')
+    implementation project(':archive:archive-repository-using-jdbc')
+
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Metrics
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // Database
+    runtimeOnly 'org.postgresql:postgresql:42.6.0'
+
+    // Flyway
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+
+    // .env loader
+    implementation 'me.paulschwarz:spring-dotenv:3.0.0'
+
+    // AWS
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+    // FFmpeg
+    implementation 'org.bytedeco:javacv:1.5.11'
+    implementation 'org.bytedeco:javacv-platform:1.5.11'
+}
+
+bootRun {
+    workingDir = rootProject.projectDir
+}

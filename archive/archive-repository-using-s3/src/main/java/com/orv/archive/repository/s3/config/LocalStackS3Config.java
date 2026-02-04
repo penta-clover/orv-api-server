@@ -1,5 +1,6 @@
-package com.orv.app.config;
+package com.orv.archive.repository.s3.config;
 
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
@@ -10,12 +11,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile({"prod", "dev", "default"}) // production, dev 환경에서만 로드됩니다.
-public class S3Config {
+@Profile("staging")
+public class LocalStackS3Config {
+
     @Value("${cloud.aws.credentials.accessKey}")
     private String accessKey;
+
     @Value("${cloud.aws.credentials.secretKey}")
     private String secretKey;
+
     @Value("${cloud.aws.region.static}")
     private String region;
 
@@ -23,9 +27,10 @@ public class S3Config {
     public AmazonS3 amazonS3Client() {
         BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
         return AmazonS3ClientBuilder.standard()
-                .withRegion(region)
+                .withEndpointConfiguration(
+                        new AwsClientBuilder.EndpointConfiguration("http://localstack:4566", region))
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                .enableDualstack()
+                .withPathStyleAccessEnabled(true)
                 .build();
     }
 }

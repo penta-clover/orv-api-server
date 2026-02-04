@@ -7,7 +7,7 @@ import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
 import com.orv.archive.domain.*;
-
+import com.orv.archive.repository.VideoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -21,7 +21,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.*;
-import com.orv.archive.repository.VideoRepository;
+
 @Repository
 @Slf4j
 public class S3VideoRepository implements VideoRepository {
@@ -287,5 +287,19 @@ public class S3VideoRepository implements VideoRepository {
     public List<Video> findAllByMemberId(UUID memberId) {
         String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title, status FROM video WHERE member_id = ?";
         return jdbcTemplate.query(sql, new Object[]{memberId}, new BeanPropertyRowMapper<>(Video.class));
+    }
+
+    @Override
+    public boolean updateRunningTime(UUID videoId, int runningTimeSeconds) {
+        try {
+            int updated = jdbcTemplate.update(
+                    "UPDATE video SET running_time = ? WHERE id = ?",
+                    runningTimeSeconds, videoId
+            );
+            return updated > 0;
+        } catch (Exception e) {
+            log.error("Failed to update running time: {}", videoId, e);
+            return false;
+        }
     }
 }

@@ -25,7 +25,9 @@ import com.orv.archive.domain.PresignedUrlInfo;
 import com.orv.archive.domain.Video;
 import com.orv.archive.domain.VideoMetadata;
 import com.orv.archive.domain.VideoStatus;
+import com.orv.archive.repository.VideoDurationCalculationJobRepository;
 import com.orv.archive.repository.VideoRepository;
+import com.orv.archive.repository.VideoThumbnailExtractionJobRepository;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -36,14 +38,17 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ArchiveServiceImpl implements ArchiveService {
     private static final long PRESIGNED_URL_EXPIRATION_MINUTES = 60;
+    private static final String VIDEO_PATH_PREFIX = "/archive/videos/";
 
     private final VideoRepository videoRepository;
+    private final VideoDurationCalculationJobRepository videoDurationCalculationJobRepository;
+    private final VideoThumbnailExtractionJobRepository videoThumbnailExtractionJobRepository;
 
     @Value("${cloud.aws.cloudfront.domain}")
     private String cloudfrontDomain;
 
-    // TODO: 영상 처리 작업을 별도 서버로 분리한 후 아래의 영상 처리 작업 코드를 제거해야 함.
     @Override
+    @Deprecated
     public Optional<String> uploadRecordedVideo(InputStream videoStream, String contentType, long size, UUID storyboardId, UUID memberId) {
         File tempFile = null;
         try {
@@ -84,16 +89,13 @@ public class ArchiveServiceImpl implements ArchiveService {
         return videoRepository.updateThumbnail(videoId, thumbnailStream, metadata);
     }
 
-    // v1 API methods
+    // v1 API methods below
     @Override
     public PresignedUrlInfo requestUploadUrl(UUID storyboardId, UUID memberId) {
-        // 1. PENDING 상태로 video 레코드 생성
         String videoId = videoRepository.createPendingVideo(storyboardId, memberId);
 
-        // 2. Presigned PUT URL 생성
         URL presignedUrl = videoRepository.generateUploadUrl(UUID.fromString(videoId), PRESIGNED_URL_EXPIRATION_MINUTES);
 
-        // 3. 만료 시간 계산
         Instant expiresAt = Instant.now().plusSeconds(PRESIGNED_URL_EXPIRATION_MINUTES * 60);
 
         return new PresignedUrlInfo(videoId, presignedUrl.toString(), expiresAt);
@@ -108,22 +110,11 @@ public class ArchiveServiceImpl implements ArchiveService {
                     return new ArchiveException(ArchiveErrorCode.VIDEO_NOT_FOUND);
                 });
 
-        if (!video.getMemberId().equals(memberId)) {
-            log.warn("Unauthorized access to video: {} by member: {}", videoId, memberId);
-            throw new ArchiveException(ArchiveErrorCode.VIDEO_ACCESS_DENIED);
-        }
+        validateVideoOwnership(video, memberId);
+        validateVideoStatus(video, videoId);
+        validateUploadComplete(videoId);
 
-        if (!VideoStatus.PENDING.name().equals(video.getStatus())) {
-            log.warn("Video is not in PENDING status: {} (current: {})", videoId, video.getStatus());
-            throw new ArchiveException(ArchiveErrorCode.VIDEO_STATUS_NOT_PENDING);
-        }
-
-        if (!videoRepository.checkUploadComplete(videoId)) {
-            log.warn("Video file not uploaded: {}", videoId);
-            throw new ArchiveException(ArchiveErrorCode.VIDEO_FILE_NOT_UPLOADED);
-        }
-
-        String videoUrl = cloudfrontDomain + "/archive/videos/" + videoId;
+        String videoUrl = cloudfrontDomain + VIDEO_PATH_PREFIX + videoId;
         boolean updated = videoRepository.updateVideoUrlAndStatus(
                 videoId, videoUrl, VideoStatus.UPLOADED.name());
 
@@ -132,8 +123,7 @@ public class ArchiveServiceImpl implements ArchiveService {
             throw new ArchiveException(ArchiveErrorCode.VIDEO_STATUS_UPDATE_FAILED);
         }
 
-        // TODO: 큐에 영상 길이 측정 태스크 추가
-        // messageQueue.send(new VideoProcessingTask(videoId));
+        createProcessingJobs(videoId);
 
         return videoId.toString();
     }
@@ -188,6 +178,35 @@ public class ArchiveServiceImpl implements ArchiveService {
 
             return videoId;
         }
+    }
+
+    private void validateVideoOwnership(Video video, UUID memberId) {
+        if (!video.getMemberId().equals(memberId)) {
+            log.warn("Unauthorized access to video: {} by member: {}", video.getId(), memberId);
+            throw new ArchiveException(ArchiveErrorCode.VIDEO_ACCESS_DENIED);
+        }
+    }
+
+    private void validateVideoStatus(Video video, UUID videoId) {
+        if (!VideoStatus.PENDING.name().equals(video.getStatus())) {
+            log.warn("Video is not in PENDING status: {} (current: {})", videoId, video.getStatus());
+            throw new ArchiveException(ArchiveErrorCode.VIDEO_STATUS_NOT_PENDING);
+        }
+    }
+
+    private void validateUploadComplete(UUID videoId) {
+        if (!videoRepository.checkUploadComplete(videoId)) {
+            log.warn("Video file not uploaded: {}", videoId);
+            throw new ArchiveException(ArchiveErrorCode.VIDEO_FILE_NOT_UPLOADED);
+        }
+    }
+
+    private void createProcessingJobs(UUID videoId) {
+        videoDurationCalculationJobRepository.create(videoId);
+        log.info("Created duration calculation job for video: {}", videoId);
+
+        videoThumbnailExtractionJobRepository.create(videoId);
+        log.info("Created thumbnail extraction job for video: {}", videoId);
     }
 
     private void deleteTempFile(File tempFile) {
