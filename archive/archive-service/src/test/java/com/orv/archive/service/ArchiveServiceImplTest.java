@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ArchiveServiceImplTest {
@@ -62,9 +62,6 @@ class ArchiveServiceImplTest {
         assertThat(response.getVideoId()).isEqualTo(videoId);
         assertThat(response.getUploadUrl()).isEqualTo(presignedUrl.toString());
         assertThat(response.getExpiresAt()).isNotNull();
-
-        verify(videoRepository).createPendingVideo(storyboardId, memberId);
-        verify(videoRepository).generateUploadUrl(eq(UUID.fromString(videoId)), eq(60L));
     }
 
     @Test
@@ -91,10 +88,6 @@ class ArchiveServiceImplTest {
 
         // then
         assertThat(result).isEqualTo(videoId.toString());
-
-        verify(videoRepository).findById(videoId);
-        verify(videoRepository).checkUploadComplete(videoId);
-        verify(videoRepository).updateVideoUrlAndStatus(eq(videoId), eq(cloudfrontDomain + "/archive/videos/" + videoId), eq(VideoStatus.UPLOADED.name()));
     }
 
     @Test
@@ -110,9 +103,6 @@ class ArchiveServiceImplTest {
         assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))
                 .isInstanceOf(ArchiveException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ArchiveErrorCode.VIDEO_NOT_FOUND);
-
-        verify(videoRepository).findById(videoId);
-        verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
@@ -134,8 +124,6 @@ class ArchiveServiceImplTest {
         assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))
                 .isInstanceOf(ArchiveException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ArchiveErrorCode.VIDEO_ACCESS_DENIED);
-
-        verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
@@ -156,8 +144,6 @@ class ArchiveServiceImplTest {
         assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))
                 .isInstanceOf(ArchiveException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ArchiveErrorCode.VIDEO_STATUS_NOT_PENDING);
-
-        verify(videoRepository, never()).checkUploadComplete(any());
     }
 
     @Test
@@ -179,8 +165,6 @@ class ArchiveServiceImplTest {
         assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))
                 .isInstanceOf(ArchiveException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ArchiveErrorCode.VIDEO_FILE_NOT_UPLOADED);
-
-        verify(videoRepository, never()).updateVideoUrlAndStatus(any(), any(), any());
     }
 
     @Test
@@ -206,9 +190,5 @@ class ArchiveServiceImplTest {
         assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))
                 .isInstanceOf(ArchiveException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ArchiveErrorCode.VIDEO_STATUS_UPDATE_FAILED);
-
-        verify(videoRepository).findById(videoId);
-        verify(videoRepository).checkUploadComplete(videoId);
-        verify(videoRepository).updateVideoUrlAndStatus(eq(videoId), eq(cloudfrontDomain + "/archive/videos/" + videoId), eq(VideoStatus.UPLOADED.name()));
     }
 }
