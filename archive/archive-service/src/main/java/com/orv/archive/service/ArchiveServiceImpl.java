@@ -12,15 +12,24 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.orv.archive.domain.*;
-import com.orv.archive.repository.VideoRepository;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.orv.archive.common.ArchiveErrorCode;
+import com.orv.archive.common.ArchiveException;
+import com.orv.archive.domain.ImageMetadata;
+import com.orv.archive.domain.InputStreamWithMetadata;
+import com.orv.archive.domain.PresignedUrlInfo;
+import com.orv.archive.domain.Video;
+import com.orv.archive.domain.VideoMetadata;
+import com.orv.archive.domain.VideoStatus;
+import com.orv.archive.repository.VideoRepository;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -92,51 +101,41 @@ public class ArchiveServiceImpl implements ArchiveService {
 
     @Override
     @Transactional
-    public Optional<String> confirmUpload(UUID videoId, UUID memberId) {
-        // 1. video 레코드 조회
-        Optional<Video> videoOpt = videoRepository.findById(videoId);
-        if (videoOpt.isEmpty()) {
-            log.warn("Video not found: {}", videoId);
-            return Optional.empty();
-        }
+    public String confirmUpload(UUID videoId, UUID memberId) {
+        Video video = videoRepository.findById(videoId)
+                .orElseThrow(() -> {
+                    log.warn("Video not found: {}", videoId);
+                    return new ArchiveException(ArchiveErrorCode.VIDEO_NOT_FOUND);
+                });
 
-        Video video = videoOpt.get();
-
-        // 2. 소유권 확인
         if (!video.getMemberId().equals(memberId)) {
             log.warn("Unauthorized access to video: {} by member: {}", videoId, memberId);
-            return Optional.empty();
+            throw new ArchiveException(ArchiveErrorCode.VIDEO_ACCESS_DENIED);
         }
 
-        // 3. PENDING 상태 확인
         if (!VideoStatus.PENDING.name().equals(video.getStatus())) {
             log.warn("Video is not in PENDING status: {} (current: {})", videoId, video.getStatus());
-            return Optional.empty();
+            throw new ArchiveException(ArchiveErrorCode.VIDEO_STATUS_NOT_PENDING);
         }
 
-        // 4. 파일 업로드 완료 확인
         if (!videoRepository.checkUploadComplete(videoId)) {
             log.warn("Video file not uploaded: {}", videoId);
-            return Optional.empty();
+            throw new ArchiveException(ArchiveErrorCode.VIDEO_FILE_NOT_UPLOADED);
         }
 
-        // 5. video_url 및 status 업데이트
         String videoUrl = cloudfrontDomain + "/archive/videos/" + videoId;
         boolean updated = videoRepository.updateVideoUrlAndStatus(
-                videoId,
-                videoUrl,
-                VideoStatus.UPLOADED.name()
-        );
+                videoId, videoUrl, VideoStatus.UPLOADED.name());
 
         if (!updated) {
             log.warn("Failed to update video status: {}", videoId);
-            return Optional.empty();
+            throw new ArchiveException(ArchiveErrorCode.VIDEO_STATUS_UPDATE_FAILED);
         }
 
         // TODO: 큐에 영상 길이 측정 태스크 추가
         // messageQueue.send(new VideoProcessingTask(videoId));
 
-        return Optional.of(videoId.toString());
+        return videoId.toString();
     }
 
     @Override
