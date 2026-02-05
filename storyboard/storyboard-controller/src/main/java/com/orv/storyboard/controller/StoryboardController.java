@@ -7,6 +7,7 @@ import com.orv.common.dto.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,6 +31,13 @@ public class StoryboardController {
         }
 
         return ApiResponse.success(foundStoryboard.get(), 200);
+    }
+
+    @PostMapping("/{storyboardId}/use")
+    public ApiResponse useStoryboard(@PathVariable String storyboardId) {
+        String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
+        storyboardOrchestrator.useStoryboard(UUID.fromString(storyboardId), UUID.fromString(memberId));
+        return ApiResponse.success(null, 200);
     }
 
     @GetMapping("/{storyboardId}/scene/all")

@@ -13,4 +13,5 @@ public class StoryboardResponse {
     private UUID id;
     private String title;
     private UUID startSceneId;
+    private Long participationCount;
 }

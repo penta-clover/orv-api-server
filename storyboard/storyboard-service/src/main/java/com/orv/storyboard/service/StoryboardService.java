@@ -28,6 +28,20 @@ public class StoryboardService {
     }
 
     @Transactional
+    public void useStoryboard(UUID storyboardId, UUID memberId) {
+        storyboardRepository.saveUsageHistory(storyboardId, memberId, "STARTED");
+
+        // Intentional latency to trigger deadlock (Simulate heavy processing or network latency)
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        storyboardRepository.incrementParticipationCount(storyboardId);
+    }
+
+    @Transactional
     public Optional<Scene> getSceneAndUpdateUsageHistory(UUID sceneId, UUID memberId) {
         Optional<Scene> foundScene = storyboardRepository.findSceneById(sceneId);
 

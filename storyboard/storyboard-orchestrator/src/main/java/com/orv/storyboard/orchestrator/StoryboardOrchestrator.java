@@ -28,6 +28,10 @@ public class StoryboardOrchestrator {
                         .collect(Collectors.toList()));
     }
 
+    public void useStoryboard(UUID storyboardId, UUID memberId) {
+        storyboardService.useStoryboard(storyboardId, memberId);
+    }
+
     public Optional<SceneResponse> getSceneAndUpdateUsageHistory(UUID sceneId, UUID memberId) {
         return storyboardService.getSceneAndUpdateUsageHistory(sceneId, memberId)
                 .map(this::toSceneResponse);
@@ -49,7 +53,8 @@ public class StoryboardOrchestrator {
         return new StoryboardResponse(
                 storyboard.getId(),
                 storyboard.getTitle(),
-                storyboard.getStartSceneId()
+                storyboard.getStartSceneId(),
+                storyboard.getParticipationCount()
         );
     }
 

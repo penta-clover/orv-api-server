@@ -21,6 +21,10 @@ public interface StoryboardRepository {
 
     Optional<String[]> getStoryboardPreview(UUID storyboardId);
 
+    void saveUsageHistory(UUID storyboardId, UUID memberId, String status);
+
+    void incrementParticipationCount(UUID storyboardId);
+
     boolean updateUsageHistory(UUID storyboardId, UUID memberId, String status);
 
     Optional<List<Topic>> findTopicsOfStoryboard(UUID storyboardId);

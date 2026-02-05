@@ -128,47 +128,50 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
     }
 
     @Override
+    public void saveUsageHistory(UUID storyboardId, UUID memberId, String status) {
+        String sql = """
+                INSERT INTO storyboard_usage_history (storyboard_id, member_id, status)
+                VALUES (?, ?, ?)
+                """;
+        jdbcTemplate.update(sql, storyboardId, memberId, status);
+    }
+
+    @Override
+    public void incrementParticipationCount(UUID storyboardId) {
+        String sql = """
+                UPDATE storyboard
+                SET participation_count = participation_count + 1
+                WHERE id = ?
+                """;
+        jdbcTemplate.update(sql, storyboardId);
+    }
+
+    @Override
     public boolean updateUsageHistory(UUID storyboardId, UUID memberId, String status) {
-        // 단일 쿼리로 UPDATE 또는 INSERT 수행 (race condition 방지)
-        // CTE를 사용하여 먼저 UPDATE를 시도하고, UPDATE된 행이 없으면 INSERT
-        String sql = "WITH updated AS ( " +
-                "    UPDATE storyboard_usage_history " +
-                "    SET updated_at = CURRENT_TIMESTAMP, status = ? " +
-                "    WHERE storyboard_id = ? AND member_id = ? " +
-                "      AND status <> 'COMPLETED' " +
-                "      AND created_at >= (CURRENT_TIMESTAMP - INTERVAL '1 hour') " +
-                "    RETURNING id " +
-                "), inserted AS ( " +
-                "    INSERT INTO storyboard_usage_history (storyboard_id, member_id, status) " +
-                "    SELECT ?, ?, ? " +
-                "    WHERE NOT EXISTS (SELECT 1 FROM updated) " +
-                "    RETURNING id " +
-                ") " +
-                "SELECT COUNT(*) as affected FROM ( " +
-                "    SELECT id FROM updated " +
-                "    UNION ALL " +
-                "    SELECT id FROM inserted " +
-                ") as result";
-
-        Integer affectedRows = jdbcTemplate.queryForObject(sql, Integer.class,
-                status, storyboardId, memberId,  // UPDATE parameters
-                storyboardId, memberId, status   // INSERT parameters
-        );
-
-        return affectedRows != null && affectedRows > 0;
+        String sql = """
+                UPDATE storyboard_usage_history
+                SET updated_at = CURRENT_TIMESTAMP, status = ?
+                WHERE storyboard_id = ? AND member_id = ?
+                AND status <> 'COMPLETED'
+                """;
+        
+        int updated = jdbcTemplate.update(sql, status, storyboardId, memberId);
+        return updated > 0;
     }
 
     @Override
     public Optional<List<Topic>> findTopicsOfStoryboard(UUID storyboardId) {
-        String sql = "SELECT t.id, t.name, t.description, t.thumbnail_url, " +
-                "COALESCE(json_agg(json_build_object('name', h.name, 'color', h.color)) " +
-                "FILTER (WHERE h.id IS NOT NULL), '[]') AS hashtags " +
-                "FROM topic t " +
-                "JOIN storyboard_topic st ON t.id = st.topic_id " +
-                "LEFT JOIN hashtag_topic ht ON t.id = ht.topic_id " +
-                "LEFT JOIN hashtag h ON h.id = ht.hashtag_id " +
-                "WHERE st.storyboard_id = ? " +
-                "GROUP BY t.id, t.name, t.description, t.thumbnail_url";
+        String sql = """
+                SELECT t.id, t.name, t.description, t.thumbnail_url,
+                COALESCE(json_agg(json_build_object('name', h.name, 'color', h.color))
+                FILTER (WHERE h.id IS NOT NULL), '[]') AS hashtags
+                FROM topic t
+                JOIN storyboard_topic st ON t.id = st.topic_id
+                LEFT JOIN hashtag_topic ht ON t.id = ht.topic_id
+                LEFT JOIN hashtag h ON h.id = ht.hashtag_id
+                WHERE st.storyboard_id = ?
+                GROUP BY t.id, t.name, t.description, t.thumbnail_url
+                """;
 
         try {
             List<Topic> topics = jdbcTemplate.query(sql, new Object[]{storyboardId}, new TopicRowMapper());
