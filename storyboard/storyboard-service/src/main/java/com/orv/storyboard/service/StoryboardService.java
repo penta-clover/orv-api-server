@@ -6,8 +6,11 @@ import com.orv.storyboard.domain.Storyboard;
 import com.orv.storyboard.domain.StoryboardPreviewInfo;
 import com.orv.storyboard.domain.StoryboardUsageStatus;
 import com.orv.storyboard.domain.Topic;
+import com.orv.storyboard.common.StoryboardErrorCode;
+import com.orv.storyboard.common.StoryboardException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -67,5 +70,25 @@ public class StoryboardService {
 
     public void saveUsageHistory(UUID storyboardId, UUID memberId, StoryboardUsageStatus status) {
         storyboardRepository.saveUsageHistory(storyboardId, memberId, status);
+    }
+
+    @Transactional
+    public void participateStoryboard(UUID storyboardId, UUID memberId) {
+        storyboardRepository.saveUsageHistory(storyboardId, memberId, StoryboardUsageStatus.STARTED);
+
+        Storyboard storyboard = storyboardRepository.findByIdForShare(storyboardId)
+                .orElseThrow(() -> new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_FOUND));
+
+        validateParticipationLimit(storyboard);
+        storyboardRepository.incrementParticipationCount(storyboardId);
+    }
+
+    private void validateParticipationLimit(Storyboard storyboard) {
+        boolean hasLimit = storyboard.getMaxParticipationLimit() != null;
+        boolean isLimitExceeded = hasLimit && storyboard.getMaxParticipationLimit() <= storyboard.getParticipationCount();
+
+        if (isLimitExceeded) {
+            throw new StoryboardException(StoryboardErrorCode.PARTICIPATION_LIMIT_EXCEEDED);
+        }
     }
 }

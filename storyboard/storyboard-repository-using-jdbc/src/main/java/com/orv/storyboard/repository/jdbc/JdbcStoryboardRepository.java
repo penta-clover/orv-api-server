@@ -42,13 +42,15 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
 
     @Override
     public Optional<Storyboard> findById(UUID id) {
-        String sql = "SELECT id, title, start_scene_id FROM storyboard WHERE id = ?";
+        String sql = """
+                SELECT id, title, start_scene_id, participation_count, max_participation_limit
+                FROM storyboard WHERE id = ?
+                """;
 
         try {
             Storyboard storyboard = jdbcTemplate.queryForObject(sql, new Object[]{id}, new BeanPropertyRowMapper<>(Storyboard.class));
             return Optional.of(storyboard);
         } catch (EmptyResultDataAccessException e) {
-            e.printStackTrace();
             return Optional.empty();
         }
     }
@@ -184,5 +186,26 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
     public void saveUsageHistory(UUID storyboardId, UUID memberId, StoryboardUsageStatus status) {
         String sql = "INSERT INTO storyboard_usage_history (storyboard_id, member_id, status) VALUES (?, ?, ?)";
         jdbcTemplate.update(sql, storyboardId, memberId, status.getValue());
+    }
+
+    @Override
+    public Optional<Storyboard> findByIdForShare(UUID id) {
+        String sql = """
+                SELECT id, title, start_scene_id, participation_count, max_participation_limit
+                FROM storyboard WHERE id = ? FOR SHARE
+                """;
+
+        try {
+            Storyboard storyboard = jdbcTemplate.queryForObject(sql, new Object[]{id}, new BeanPropertyRowMapper<>(Storyboard.class));
+            return Optional.of(storyboard);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void incrementParticipationCount(UUID id) {
+        String sql = "UPDATE storyboard SET participation_count = participation_count + 1 WHERE id = ?";
+        jdbcTemplate.update(sql, id);
     }
 }
