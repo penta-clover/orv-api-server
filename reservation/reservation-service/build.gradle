@@ -1,4 +1,5 @@
 dependencies {
+    implementation project(':reservation:reservation-common')
     implementation project(':reservation:reservation-domain')
     implementation project(':reservation:reservation-repository')
     implementation project(':notification:notification-service')

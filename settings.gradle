@@ -49,6 +49,7 @@ include 'media:media-infrastructure'
 include 'media:media-infrastructure-using-ffmpeg'
 
 // Reservation 도메인
+include 'reservation:reservation-common'
 include 'reservation:reservation-domain'
 include 'reservation:reservation-controller'
 include 'reservation:reservation-orchestrator'

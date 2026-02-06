@@ -80,9 +80,11 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
 
     @Override
     public Optional<InterviewReservation> findInterviewReservationById(UUID reservationId) {
-        String sql = "SELECT id, storyboard_id, member_id, scheduled_at, created_at, reservation_status " +
-                "FROM interview_reservation " +
-                "WHERE id = ?";
+        String sql = """
+                SELECT id, storyboard_id, member_id, scheduled_at, created_at, reservation_status, is_used
+                FROM interview_reservation
+                WHERE id = ?
+                """;
 
         try {
             InterviewReservation reservation = jdbcTemplate.queryForObject(sql, new Object[]{reservationId}, new BeanPropertyRowMapper<>(InterviewReservation.class));
@@ -91,6 +93,23 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
             return Optional.empty();
         }
     }
+
+    @Override
+    public Optional<InterviewReservation> findInterviewReservationByIdForUpdate(UUID reservationId) {
+        String sql = """
+                SELECT id, storyboard_id, member_id, scheduled_at, created_at, reservation_status, is_used
+                FROM interview_reservation
+                WHERE id = ? FOR UPDATE
+                """;
+
+        try {
+            InterviewReservation reservation = jdbcTemplate.queryForObject(sql, new Object[]{reservationId}, new BeanPropertyRowMapper<>(InterviewReservation.class));
+            return Optional.of(reservation);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
     @Override
     public int countActiveReservations(UUID memberId, LocalDateTime startAt, LocalDateTime endAt) {
         String sql = "SELECT COUNT(*) FROM interview_reservation " +
@@ -101,5 +120,11 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
 
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, memberId, startAt, endAt);
         return count != null ? count : 0;
+    }
+
+    @Override
+    public boolean markAsUsed(UUID reservationId) {
+        String sql = "UPDATE interview_reservation SET is_used = TRUE WHERE id = ? AND is_used = FALSE";
+        return jdbcTemplate.update(sql, reservationId) > 0;
     }
 }

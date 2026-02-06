@@ -1,11 +1,14 @@
 package com.orv.reservation.service;
 
+import com.orv.reservation.common.ReservationErrorCode;
+import com.orv.reservation.common.ReservationException;
 import com.orv.reservation.domain.ReservationStatus;
 import com.orv.reservation.repository.InterviewReservationRepository;
 import com.orv.reservation.domain.InterviewReservation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -90,5 +93,20 @@ public class InterviewReservationServiceImpl implements InterviewReservationServ
     @Override
     public int countActiveReservations(UUID memberId, LocalDateTime startAt, LocalDateTime endAt) {
         return reservationRepository.countActiveReservations(memberId, startAt, endAt);
+    }
+
+    @Override
+    @Transactional
+    public InterviewReservation markAsUsed(UUID reservationId) {
+        InterviewReservation reservation = reservationRepository.findInterviewReservationByIdForUpdate(reservationId)
+                .orElseThrow(() -> new ReservationException(ReservationErrorCode.RESERVATION_NOT_FOUND));
+
+        if (reservation.isUsed()) {
+            throw new ReservationException(ReservationErrorCode.RESERVATION_ALREADY_USED);
+        }
+
+        reservationRepository.markAsUsed(reservationId);
+
+        return reservation;
     }
 }

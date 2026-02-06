@@ -4,6 +4,7 @@ import com.orv.storyboard.repository.StoryboardRepository;
 import com.orv.storyboard.domain.Scene;
 import com.orv.storyboard.domain.Storyboard;
 import com.orv.storyboard.domain.StoryboardPreviewInfo;
+import com.orv.storyboard.domain.StoryboardUsageStatus;
 import com.orv.storyboard.domain.Topic;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -78,5 +79,9 @@ public class StoryboardService {
 
     public Optional<List<Topic>> getTopicsOfStoryboard(UUID storyboardId) {
         return storyboardRepository.findTopicsOfStoryboard(storyboardId);
+    }
+
+    public void saveUsageHistory(UUID storyboardId, UUID memberId, StoryboardUsageStatus status) {
+        storyboardRepository.saveUsageHistory(storyboardId, memberId, status);
     }
 }
