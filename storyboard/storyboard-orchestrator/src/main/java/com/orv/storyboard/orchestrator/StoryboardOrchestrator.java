@@ -28,8 +28,8 @@ public class StoryboardOrchestrator {
                         .collect(Collectors.toList()));
     }
 
-    public Optional<SceneResponse> getSceneAndUpdateUsageHistory(UUID sceneId, UUID memberId) {
-        return storyboardService.getSceneAndUpdateUsageHistory(sceneId, memberId)
+    public Optional<SceneResponse> getScene(UUID sceneId) {
+        return storyboardService.getScene(sceneId)
                 .map(this::toSceneResponse);
     }
 
