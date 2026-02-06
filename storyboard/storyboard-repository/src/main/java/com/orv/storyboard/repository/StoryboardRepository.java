@@ -12,6 +12,8 @@ import com.orv.storyboard.domain.Topic;
 public interface StoryboardRepository {
     Optional<Storyboard> findById(UUID id);
 
+    Optional<Storyboard> findByIdForShare(UUID id);
+
     Optional<Scene> findSceneById(UUID id);
 
     Optional<List<Scene>> findScenesByStoryboardId(UUID id);
@@ -27,4 +29,6 @@ public interface StoryboardRepository {
     void saveUsageHistory(UUID storyboardId, UUID memberId, StoryboardUsageStatus status);
 
     Optional<List<Topic>> findTopicsOfStoryboard(UUID storyboardId);
+
+    void incrementParticipationCount(UUID id);
 }

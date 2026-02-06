@@ -16,6 +16,8 @@ public class StoryboardRowMapper implements RowMapper<Storyboard> {
         storyboard.setTitle(rs.getString("title"));
         storyboard.setStartSceneId((UUID) rs.getObject("start_scene_id"));
         storyboard.setStatus(StoryboardStatus.fromValue(rs.getString("status")));
+        storyboard.setParticipationCount(rs.getInt("participation_count"));
+        storyboard.setMaxParticipationLimit(rs.getObject("max_participation_limit") != null ? rs.getInt("max_participation_limit") : null);
         return storyboard;
     }
 }
