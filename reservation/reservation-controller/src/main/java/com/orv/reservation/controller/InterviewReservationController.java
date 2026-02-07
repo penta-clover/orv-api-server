@@ -98,4 +98,11 @@ public class InterviewReservationController {
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
     }
+
+    @PostMapping("/{reservationId}/start")
+    public ApiResponse startReservation(@PathVariable UUID reservationId) {
+        UUID memberId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
+        reservationOrchestrator.startReservation(reservationId, memberId);
+        return ApiResponse.success(null, 200);
+    }
 }

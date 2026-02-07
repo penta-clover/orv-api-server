@@ -16,4 +16,5 @@ public class InterviewReservation {
     private UUID storyboardId;
     private LocalDateTime scheduledAt;
     private LocalDateTime createdAt;
+    private boolean isUsed;
 }

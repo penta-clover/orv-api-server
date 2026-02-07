@@ -4,9 +4,12 @@ import com.orv.reservation.orchestrator.dto.*;
 import com.orv.reservation.service.ReservationNotificationService;
 import com.orv.reservation.service.InterviewReservationService;
 import com.orv.reservation.domain.InterviewReservation;
+import com.orv.storyboard.domain.StoryboardUsageStatus;
+import com.orv.storyboard.service.StoryboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -21,6 +24,7 @@ import java.util.stream.Collectors;
 public class InterviewReservationOrchestrator {
     private final InterviewReservationService reservationService;
     private final ReservationNotificationService reservationNotificationService;
+    private final StoryboardService storyboardService;
 
     public Optional<InterviewReservationResponse> reserveInterview(UUID memberId, UUID storyboardId, OffsetDateTime scheduledAt) throws Exception {
         // 1. Create Reservation
@@ -74,6 +78,12 @@ public class InterviewReservationOrchestrator {
 
     public boolean markInterviewAsDone(UUID interviewId) {
         return reservationService.markInterviewAsDone(interviewId);
+    }
+
+    @Transactional
+    public void startReservation(UUID reservationId, UUID memberId) {
+        InterviewReservation reservation = reservationService.markAsUsed(reservationId);
+        storyboardService.saveUsageHistory(reservation.getStoryboardId(), memberId, StoryboardUsageStatus.STARTED);
     }
 
     private InterviewReservationResponse toInterviewReservationResponse(InterviewReservation reservation) {

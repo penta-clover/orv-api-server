@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.orv.storyboard.domain.Scene;
 import com.orv.storyboard.domain.Storyboard;
+import com.orv.storyboard.domain.StoryboardUsageStatus;
 import com.orv.storyboard.domain.Topic;
 
 public interface StoryboardRepository {
@@ -22,6 +23,8 @@ public interface StoryboardRepository {
     Optional<String[]> getStoryboardPreview(UUID storyboardId);
 
     boolean updateUsageHistory(UUID storyboardId, UUID memberId, String status);
+
+    void saveUsageHistory(UUID storyboardId, UUID memberId, StoryboardUsageStatus status);
 
     Optional<List<Topic>> findTopicsOfStoryboard(UUID storyboardId);
 }

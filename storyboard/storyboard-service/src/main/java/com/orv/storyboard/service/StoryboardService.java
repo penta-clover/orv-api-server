@@ -4,10 +4,10 @@ import com.orv.storyboard.repository.StoryboardRepository;
 import com.orv.storyboard.domain.Scene;
 import com.orv.storyboard.domain.Storyboard;
 import com.orv.storyboard.domain.StoryboardPreviewInfo;
+import com.orv.storyboard.domain.StoryboardUsageStatus;
 import com.orv.storyboard.domain.Topic;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,23 +27,8 @@ public class StoryboardService {
         return storyboardRepository.findScenesByStoryboardId(storyboardId);
     }
 
-    @Transactional
-    public Optional<Scene> getSceneAndUpdateUsageHistory(UUID sceneId, UUID memberId) {
-        Optional<Scene> foundScene = storyboardRepository.findSceneById(sceneId);
-
-        if (foundScene.isEmpty()) {
-            return Optional.empty();
-        }
-
-        Scene scene = foundScene.get();
-
-        // Determine status based on scene type
-        String status = scene.getSceneType().equals("END") ? "COMPLETED" : "STARTED";
-
-        // Update usage history
-        storyboardRepository.updateUsageHistory(scene.getStoryboardId(), memberId, status);
-
-        return foundScene;
+    public Optional<Scene> getScene(UUID sceneId) {
+        return storyboardRepository.findSceneById(sceneId);
     }
 
     public Optional<StoryboardPreviewInfo> getStoryboardPreview(UUID storyboardId) {
@@ -78,5 +63,9 @@ public class StoryboardService {
 
     public Optional<List<Topic>> getTopicsOfStoryboard(UUID storyboardId) {
         return storyboardRepository.findTopicsOfStoryboard(storyboardId);
+    }
+
+    public void saveUsageHistory(UUID storyboardId, UUID memberId, StoryboardUsageStatus status) {
+        storyboardRepository.saveUsageHistory(storyboardId, memberId, status);
     }
 }

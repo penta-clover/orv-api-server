@@ -2,5 +2,8 @@ dependencies {
     implementation project(':orv-common')
     implementation project(':reservation:reservation-domain')
     implementation project(':reservation:reservation-service')
+    implementation project(':storyboard:storyboard-domain')
+    implementation project(':storyboard:storyboard-service')
     implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-tx'
 }

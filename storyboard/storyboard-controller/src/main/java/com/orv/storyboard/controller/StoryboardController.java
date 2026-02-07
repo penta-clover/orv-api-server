@@ -5,7 +5,6 @@ import com.orv.storyboard.orchestrator.StoryboardOrchestrator;
 import com.orv.common.dto.ApiResponse;
 import com.orv.common.dto.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,11 +49,7 @@ public class StoryboardController {
 
     @GetMapping("/scene/{sceneId}")
     public ApiResponse getScene(@PathVariable String sceneId) {
-        String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
-        Optional<SceneResponse> foundScene = storyboardOrchestrator.getSceneAndUpdateUsageHistory(
-                UUID.fromString(sceneId),
-                UUID.fromString(memberId)
-        );
+        Optional<SceneResponse> foundScene = storyboardOrchestrator.getScene(UUID.fromString(sceneId));
 
         if (foundScene.isEmpty()) {
             return ApiResponse.fail(ErrorCode.NOT_FOUND, 404);

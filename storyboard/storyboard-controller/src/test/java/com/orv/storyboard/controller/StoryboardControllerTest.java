@@ -13,8 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -45,10 +43,6 @@ public class StoryboardControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(storyboardController)
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
                 .build();
-
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken("054c3e8a-3387-4eb3-ac8a-31a48221f192", null, Collections.emptyList());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     @Test
@@ -92,7 +86,7 @@ public class StoryboardControllerTest {
         String content = "{ \"question\": \"당신에게 가장 소중한 것은 무엇인가요?\", \"nextSceneId\": \"" + UUID.randomUUID() + "\" }";
         SceneResponse scene = new SceneResponse(sceneId, "테스트 3", "QUESTION", content, storyboardId);
 
-        when(storyboardOrchestrator.getSceneAndUpdateUsageHistory(eq(sceneId), any(UUID.class))).thenReturn(Optional.of(scene));
+        when(storyboardOrchestrator.getScene(sceneId)).thenReturn(Optional.of(scene));
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/storyboard/scene/{sceneId}", sceneId));
@@ -110,7 +104,7 @@ public class StoryboardControllerTest {
     public void testGetScene_whenSceneNotExists() throws Exception {
         // given
         UUID uuid = UUID.randomUUID();
-        when(storyboardOrchestrator.getSceneAndUpdateUsageHistory(eq(uuid), any(UUID.class))).thenReturn(Optional.empty());
+        when(storyboardOrchestrator.getScene(uuid)).thenReturn(Optional.empty());
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/storyboard/scene/{sceneId}", uuid.toString()));

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.orv.storyboard.domain.Scene;
 import com.orv.storyboard.domain.Storyboard;
 import com.orv.storyboard.domain.StoryboardPreview;
+import com.orv.storyboard.domain.StoryboardUsageStatus;
 import com.orv.storyboard.domain.Topic;
 
 import java.sql.SQLException;
@@ -177,5 +178,11 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
             e.printStackTrace();
             return Optional.empty();
         }
+    }
+
+    @Override
+    public void saveUsageHistory(UUID storyboardId, UUID memberId, StoryboardUsageStatus status) {
+        String sql = "INSERT INTO storyboard_usage_history (storyboard_id, member_id, status) VALUES (?, ?, ?)";
+        jdbcTemplate.update(sql, storyboardId, memberId, status.getValue());
     }
 }

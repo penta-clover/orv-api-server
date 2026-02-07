@@ -1,5 +1,6 @@
 dependencies {
     implementation project(':orv-common')
+    implementation project(':reservation:reservation-common')
     implementation project(':reservation:reservation-domain')
     implementation project(':reservation:reservation-orchestrator')
     implementation 'org.springframework:spring-web'

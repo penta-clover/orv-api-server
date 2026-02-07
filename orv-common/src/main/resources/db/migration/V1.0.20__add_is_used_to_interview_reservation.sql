@@ -1,0 +1,1 @@
+ALTER TABLE interview_reservation ADD COLUMN is_used BOOLEAN NOT NULL DEFAULT FALSE;
