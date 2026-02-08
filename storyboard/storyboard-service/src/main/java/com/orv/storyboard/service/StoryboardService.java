@@ -76,7 +76,7 @@ public class StoryboardService {
     public void participateStoryboard(UUID storyboardId, UUID memberId) {
         storyboardRepository.saveUsageHistory(storyboardId, memberId, StoryboardUsageStatus.STARTED);
 
-        Storyboard storyboard = storyboardRepository.findByIdForShare(storyboardId)
+        Storyboard storyboard = storyboardRepository.findByIdForNoKeyUpdate(storyboardId)
                 .orElseThrow(() -> new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_FOUND));
 
         validateParticipationLimit(storyboard);

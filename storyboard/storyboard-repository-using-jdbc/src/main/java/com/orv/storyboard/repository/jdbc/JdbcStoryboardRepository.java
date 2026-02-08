@@ -189,10 +189,10 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
     }
 
     @Override
-    public Optional<Storyboard> findByIdForShare(UUID id) {
+    public Optional<Storyboard> findByIdForNoKeyUpdate(UUID id) {
         String sql = """
                 SELECT id, title, start_scene_id, participation_count, max_participation_limit
-                FROM storyboard WHERE id = ? FOR SHARE
+                FROM storyboard WHERE id = ? FOR NO KEY UPDATE
                 """;
 
         try {

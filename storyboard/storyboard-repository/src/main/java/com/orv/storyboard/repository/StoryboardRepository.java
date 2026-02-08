@@ -12,7 +12,7 @@ import com.orv.storyboard.domain.Topic;
 public interface StoryboardRepository {
     Optional<Storyboard> findById(UUID id);
 
-    Optional<Storyboard> findByIdForShare(UUID id);
+    Optional<Storyboard> findByIdForNoKeyUpdate(UUID id);
 
     Optional<Scene> findSceneById(UUID id);
 
