@@ -206,23 +206,14 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
     }
 
     @Override
-    public Optional<Storyboard> findByIdForNoKeyUpdate(UUID id) {
+    public int incrementParticipationCountSafely(UUID id) {
         String sql = """
-                SELECT id, title, start_scene_id, status, participation_count, max_participation_limit
-                FROM storyboard WHERE id = ? AND status != 'DELETED' FOR NO KEY UPDATE
-                """;
-
-        try {
-            Storyboard storyboard = jdbcTemplate.queryForObject(sql, new Object[]{id}, new StoryboardRowMapper());
-            return Optional.of(storyboard);
-        } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
-        }
-    }
-
-    @Override
-    public void incrementParticipationCount(UUID id) {
-        String sql = "UPDATE storyboard SET participation_count = participation_count + 1 WHERE id = ?";
-        jdbcTemplate.update(sql, id);
+            UPDATE storyboard SET participation_count = participation_count + 1
+            WHERE id = ?
+                AND (max_participation_limit IS NULL OR participation_count < max_participation_limit)
+                AND status = 'ACTIVE';
+            """;
+        int affectedRows = jdbcTemplate.update(sql, id);
+        return affectedRows;
     }
 }

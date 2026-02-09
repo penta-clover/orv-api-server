@@ -84,11 +84,20 @@ public class StoryboardService {
     public void participateStoryboard(UUID storyboardId, UUID memberId) {
         storyboardRepository.saveUsageHistory(storyboardId, memberId, StoryboardUsageStatus.STARTED);
 
-        Storyboard storyboard = storyboardRepository.findByIdForNoKeyUpdate(storyboardId)
+        Storyboard storyboard = storyboardRepository.findById(storyboardId)
                 .orElseThrow(() -> new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_FOUND));
 
+        validateStoryboardActive(storyboard);
         validateParticipationLimit(storyboard);
-        storyboardRepository.incrementParticipationCount(storyboardId);
+        
+        int updateCount = storyboardRepository.incrementParticipationCountSafely(storyboardId);
+        
+        if (updateCount > 0) {
+            // Storyboard is updated successfully
+            return;
+        }
+
+        throwExceptionWithFailureReason(storyboardId);
     }
 
     private void validateParticipationLimit(Storyboard storyboard) {
@@ -98,5 +107,23 @@ public class StoryboardService {
         if (isLimitExceeded) {
             throw new StoryboardException(StoryboardErrorCode.PARTICIPATION_LIMIT_EXCEEDED);
         }
+    }
+
+    private void validateStoryboardActive(Storyboard storyboard) {
+        boolean isStoryboardActive = storyboard.getStatus() == StoryboardStatus.ACTIVE;
+
+        if (!isStoryboardActive) {
+            throw new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_ACTIVE);
+        }
+    }
+
+    private void throwExceptionWithFailureReason(UUID storyboardId) {
+        Storyboard storyboard = storyboardRepository.findById(storyboardId)
+            .orElseThrow(() -> new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_FOUND));
+
+        validateStoryboardActive(storyboard);
+        validateParticipationLimit(storyboard);
+
+        throw new RuntimeException("Unexpected Error while update storyboard participation count");
     }
 }
