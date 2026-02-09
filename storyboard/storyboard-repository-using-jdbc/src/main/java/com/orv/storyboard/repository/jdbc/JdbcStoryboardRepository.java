@@ -54,7 +54,12 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
 
     @Override
     public Optional<Scene> findSceneById(UUID id) {
-        String sql = "SELECT id, name, scene_type, content, storyboard_id FROM scene WHERE id = ?";
+        String sql = """
+                SELECT s.id, s.name, s.scene_type, s.content, s.storyboard_id
+                FROM scene s
+                JOIN storyboard sb ON s.storyboard_id = sb.id
+                WHERE s.id = ? AND sb.status != 'DELETED'
+                """;
 
         try {
             Scene scene = jdbcTemplate.queryForObject(sql, new Object[]{id}, new BeanPropertyRowMapper<>(Scene.class));
@@ -67,7 +72,12 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
 
     @Override
     public Optional<List<Scene>> findScenesByStoryboardId(UUID id) {
-        String sql = "SELECT id, name, scene_type, content, storyboard_id FROM scene WHERE storyboard_id = ?";
+        String sql = """
+                SELECT s.id, s.name, s.scene_type, s.content, s.storyboard_id
+                FROM scene s
+                JOIN storyboard sb ON s.storyboard_id = sb.id
+                WHERE s.storyboard_id = ? AND sb.status != 'DELETED'
+                """;
 
         try {
             List<Scene> scenes = jdbcTemplate.query(sql, new Object[]{id}, new BeanPropertyRowMapper<>(Scene.class));
@@ -116,7 +126,12 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
 
     @Override
     public Optional<String[]> getStoryboardPreview(UUID storyboardId) {
-        String sql = "SELECT storyboard_id, examples FROM storyboard_preview WHERE storyboard_id = ?";
+        String sql = """
+                SELECT sp.storyboard_id, sp.examples
+                FROM storyboard_preview sp
+                JOIN storyboard sb ON sp.storyboard_id = sb.id
+                WHERE sp.storyboard_id = ? AND sb.status != 'DELETED'
+                """;
 
         try {
             StoryboardPreview storyboardPreview = jdbcTemplate.queryForObject(sql, new Object[]{storyboardId}, new BeanPropertyRowMapper<>(StoryboardPreview.class));
@@ -160,15 +175,18 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
 
     @Override
     public Optional<List<Topic>> findTopicsOfStoryboard(UUID storyboardId) {
-        String sql = "SELECT t.id, t.name, t.description, t.thumbnail_url, " +
-                "COALESCE(json_agg(json_build_object('name', h.name, 'color', h.color)) " +
-                "FILTER (WHERE h.id IS NOT NULL), '[]') AS hashtags " +
-                "FROM topic t " +
-                "JOIN storyboard_topic st ON t.id = st.topic_id " +
-                "LEFT JOIN hashtag_topic ht ON t.id = ht.topic_id " +
-                "LEFT JOIN hashtag h ON h.id = ht.hashtag_id " +
-                "WHERE st.storyboard_id = ? " +
-                "GROUP BY t.id, t.name, t.description, t.thumbnail_url";
+        String sql = """
+                SELECT t.id, t.name, t.description, t.thumbnail_url,
+                COALESCE(json_agg(json_build_object('name', h.name, 'color', h.color))
+                FILTER (WHERE h.id IS NOT NULL), '[]') AS hashtags
+                FROM topic t
+                JOIN storyboard_topic st ON t.id = st.topic_id
+                JOIN storyboard sb ON st.storyboard_id = sb.id
+                LEFT JOIN hashtag_topic ht ON t.id = ht.topic_id
+                LEFT JOIN hashtag h ON h.id = ht.hashtag_id
+                WHERE st.storyboard_id = ? AND sb.status != 'DELETED'
+                GROUP BY t.id, t.name, t.description, t.thumbnail_url
+                """;
 
         try {
             List<Topic> topics = jdbcTemplate.query(sql, new Object[]{storyboardId}, new TopicRowMapper());

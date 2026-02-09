@@ -1,5 +1,6 @@
 dependencies {
     implementation project(':orv-common')
+    implementation project(':reservation:reservation-common')
     implementation project(':reservation:reservation-domain')
     implementation project(':reservation:reservation-service')
     implementation project(':storyboard:storyboard-domain')

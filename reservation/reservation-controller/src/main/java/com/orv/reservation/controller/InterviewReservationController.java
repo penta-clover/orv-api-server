@@ -23,80 +23,60 @@ public class InterviewReservationController {
     private final InterviewReservationOrchestrator reservationOrchestrator;
 
     @PostMapping
-    public ApiResponse reserveInterview(@RequestBody InterviewReservationRequest request, @RequestParam(value="startNow", required = false, defaultValue = "false") Boolean startNow) {
-        try {
-            UUID memberId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
-            UUID storyboardId = UUID.fromString(request.getStoryboardId());
-            OffsetDateTime scheduledAt = request.getReservedAt() != null ? request.getReservedAt().toOffsetDateTime() : OffsetDateTime.now();
+    public ApiResponse reserveInterview(@RequestBody InterviewReservationRequest request, @RequestParam(value="startNow", required = false, defaultValue = "false") Boolean startNow) throws Exception {
+        UUID memberId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
+        UUID storyboardId = UUID.fromString(request.getStoryboardId());
+        OffsetDateTime scheduledAt = request.getReservedAt() != null ? request.getReservedAt().toOffsetDateTime() : OffsetDateTime.now();
 
-            Optional<InterviewReservationResponse> response;
-            if (startNow) {
-                response = reservationOrchestrator.reserveInstantInterview(memberId, storyboardId);
-            } else {
-                response = reservationOrchestrator.reserveInterview(memberId, storyboardId, scheduledAt);
-            }
+        Optional<InterviewReservationResponse> response;
+        if (startNow) {
+            response = reservationOrchestrator.reserveInstantInterview(memberId, storyboardId);
+        } else {
+            response = reservationOrchestrator.reserveInterview(memberId, storyboardId, scheduledAt);
+        }
 
-            if (response.isEmpty()) {
-                return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
-            }
-
-            return ApiResponse.success(response.get(), 201);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (response.isEmpty()) {
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
+
+        return ApiResponse.success(response.get(), 201);
     }
 
     @GetMapping("/{reservationId}")
     public ApiResponse getReservationId(@PathVariable UUID reservationId) {
-        try {
-            log.info("reservationId: {}", reservationId);
-            Optional<InterviewReservationResponse> interviewReservation = reservationOrchestrator.getInterviewReservationById(reservationId);
+        log.info("reservationId: {}", reservationId);
+        Optional<InterviewReservationResponse> interviewReservation = reservationOrchestrator.getInterviewReservationById(reservationId);
 
-            if (interviewReservation.isEmpty()) {
-                return ApiResponse.success(null, 404);
-            }
-
-            return ApiResponse.success(interviewReservation.get(), 200);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
+        if (interviewReservation.isEmpty()) {
+            return ApiResponse.success(null, 404);
         }
+
+        return ApiResponse.success(interviewReservation.get(), 200);
     }
 
 
     @GetMapping("/forward")
     public ApiResponse getForwardInterviews(@RequestParam(value = "from", required = false) OffsetDateTime from) {
-        try {
-            UUID memberId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
-            OffsetDateTime fromTime = (from != null) ? from : OffsetDateTime.now();
-            Optional<List<InterviewReservationResponse>> interviewsOrEmpty = reservationOrchestrator.getForwardInterviews(memberId, fromTime);
+        UUID memberId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
+        OffsetDateTime fromTime = (from != null) ? from : OffsetDateTime.now();
+        Optional<List<InterviewReservationResponse>> interviewsOrEmpty = reservationOrchestrator.getForwardInterviews(memberId, fromTime);
 
-            if (interviewsOrEmpty.isEmpty()) {
-                return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
-            }
-
-            return ApiResponse.success(interviewsOrEmpty.get(), 200);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (interviewsOrEmpty.isEmpty()) {
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
+
+        return ApiResponse.success(interviewsOrEmpty.get(), 200);
     }
 
     @PatchMapping("/{interviewId}/done")
     public ApiResponse doneInterview(@PathVariable UUID interviewId) {
-        try {
-            boolean result = reservationOrchestrator.markInterviewAsDone(interviewId);
+        boolean result = reservationOrchestrator.markInterviewAsDone(interviewId);
 
-            if (!result) {
-                return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
-            }
-
-            return ApiResponse.success(null, 200);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (!result) {
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
+
+        return ApiResponse.success(null, 200);
     }
 
     @PostMapping("/{reservationId}/start")

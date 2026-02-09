@@ -56,7 +56,8 @@ public class TopicOrchestrator {
         return new StoryboardResponse(
                 storyboard.getId(),
                 storyboard.getTitle(),
-                storyboard.getStartSceneId()
+                storyboard.getStartSceneId(),
+                storyboard.getStatus().getValue()
         );
     }
 }

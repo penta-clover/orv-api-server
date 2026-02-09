@@ -54,14 +54,17 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
 
     @Override
     public Optional<List<InterviewReservation>> getReservedInterviews(UUID memberId, OffsetDateTime from) {
-        // 특정 시간 이후에 위치한 인터뷰
-        String sql = "SELECT r.id, r.member_id, r.storyboard_id, r.scheduled_at, r.created_at " +
-                "FROM interview_reservation r " +
-                "WHERE r.member_id = ? " +
-                "  AND r.scheduled_at >= ?" +
-                "  AND r.reservation_status = 'pending'" +
-                "ORDER BY r.scheduled_at ASC " +
-                "LIMIT 100";
+        String sql = """
+                SELECT r.id, r.member_id, r.storyboard_id, r.scheduled_at, r.created_at
+                FROM interview_reservation r
+                JOIN storyboard sb ON r.storyboard_id = sb.id
+                WHERE r.member_id = ?
+                  AND r.scheduled_at >= ?
+                  AND r.reservation_status = 'pending'
+                  AND sb.status != 'DELETED'
+                ORDER BY r.scheduled_at ASC
+                LIMIT 100
+                """;
 
         try {
             List<InterviewReservation> reservations = jdbcTemplate.query(sql, new Object[]{memberId, from}, new BeanPropertyRowMapper<>(InterviewReservation.class));
