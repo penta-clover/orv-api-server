@@ -32,6 +32,7 @@ include 'archive:archive-repository-using-s3'
 include 'archive:archive-repository-using-jdbc'
 
 // Storyboard 도메인
+include 'storyboard:storyboard-common'
 include 'storyboard:storyboard-domain'
 include 'storyboard:storyboard-controller'
 include 'storyboard:storyboard-orchestrator'

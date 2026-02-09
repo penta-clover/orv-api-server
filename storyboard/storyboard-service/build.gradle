@@ -1,4 +1,5 @@
 dependencies {
+    implementation project(':storyboard:storyboard-common')
     implementation project(':storyboard:storyboard-domain')
     implementation project(':storyboard:storyboard-repository')
     implementation project(':recap:recap-domain')

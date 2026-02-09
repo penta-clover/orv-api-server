@@ -9,4 +9,5 @@ public class Storyboard {
     private UUID id;
     private String title;
     private UUID startSceneId;
+    private StoryboardStatus status;
 }

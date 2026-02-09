@@ -1,9 +1,12 @@
 package com.orv.storyboard.service;
 
+import com.orv.storyboard.common.StoryboardErrorCode;
+import com.orv.storyboard.common.StoryboardException;
 import com.orv.storyboard.repository.StoryboardRepository;
 import com.orv.storyboard.domain.Scene;
 import com.orv.storyboard.domain.Storyboard;
 import com.orv.storyboard.domain.StoryboardPreviewInfo;
+import com.orv.storyboard.domain.StoryboardStatus;
 import com.orv.storyboard.domain.StoryboardUsageStatus;
 import com.orv.storyboard.domain.Topic;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +69,13 @@ public class StoryboardService {
     }
 
     public void saveUsageHistory(UUID storyboardId, UUID memberId, StoryboardUsageStatus status) {
+        Storyboard storyboard = storyboardRepository.findById(storyboardId)
+                .orElseThrow(() -> new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_FOUND));
+
+        if (storyboard.getStatus() != StoryboardStatus.ACTIVE) {
+            throw new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_ACTIVE);
+        }
+
         storyboardRepository.saveUsageHistory(storyboardId, memberId, status);
     }
 }

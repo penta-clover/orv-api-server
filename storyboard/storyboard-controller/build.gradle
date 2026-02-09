@@ -1,5 +1,6 @@
 dependencies {
     implementation project(':orv-common')
+    implementation project(':storyboard:storyboard-common')
     implementation project(':storyboard:storyboard-domain')
     implementation project(':storyboard:storyboard-orchestrator')
     implementation 'org.springframework:spring-web'

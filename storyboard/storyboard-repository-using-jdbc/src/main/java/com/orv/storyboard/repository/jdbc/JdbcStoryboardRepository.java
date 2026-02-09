@@ -17,7 +17,6 @@ import com.orv.storyboard.domain.StoryboardPreview;
 import com.orv.storyboard.domain.StoryboardUsageStatus;
 import com.orv.storyboard.domain.Topic;
 
-import java.sql.SQLException;
 import java.util.*;
 import com.orv.storyboard.repository.StoryboardRepository;
 @Repository
@@ -42,10 +41,10 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
 
     @Override
     public Optional<Storyboard> findById(UUID id) {
-        String sql = "SELECT id, title, start_scene_id FROM storyboard WHERE id = ?";
+        String sql = "SELECT id, title, start_scene_id, status FROM storyboard WHERE id = ? AND status != 'DELETED'";
 
         try {
-            Storyboard storyboard = jdbcTemplate.queryForObject(sql, new Object[]{id}, new BeanPropertyRowMapper<>(Storyboard.class));
+            Storyboard storyboard = jdbcTemplate.queryForObject(sql, new Object[]{id}, new StoryboardRowMapper());
             return Optional.of(storyboard);
         } catch (EmptyResultDataAccessException e) {
             e.printStackTrace();
