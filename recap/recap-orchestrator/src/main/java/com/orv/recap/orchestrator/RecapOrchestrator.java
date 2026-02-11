@@ -85,7 +85,8 @@ public class RecapOrchestrator {
         recapService.linkAudioRecording(recapReservationId, audioRecording.getId());
 
         // 5. Call Recap Server
-        callRecapServer(recapReservationId, video, audioRecording.getAudioUrl());
+        String audioUrl = audioApi.resolveAudioUrl(audioRecording.getAudioFileKey());
+        callRecapServer(recapReservationId, video, audioUrl);
 
         return new RecapReservationResponse(
                 recapReservationId,
@@ -160,9 +161,16 @@ public class RecapOrchestrator {
     }
 
     public RecapAudioResponse getRecapAudio(UUID recapReservationId) {
-        return recapService.getRecapAudio(recapReservationId)
-                .map(this::toRecapAudioResponse)
+        RecapAudioInfo info = recapService.getRecapAudio(recapReservationId)
                 .orElseThrow(() -> new RecapException(RecapErrorCode.RECAP_AUDIO_NOT_FOUND));
+
+        String audioUrl = audioApi.resolveAudioUrl(info.getAudioFileKey());
+        return new RecapAudioResponse(
+                info.getAudioId(),
+                audioUrl,
+                info.getRunningTime(),
+                info.getCreatedAt()
+        );
     }
 
     private RecapResultResponse toRecapResultResponse(RecapResultInfo info) {
@@ -178,15 +186,6 @@ public class RecapOrchestrator {
                 info.getRecapResultId(),
                 info.getCreatedAt(),
                 summaries
-        );
-    }
-
-    private RecapAudioResponse toRecapAudioResponse(RecapAudioInfo info) {
-        return new RecapAudioResponse(
-                info.getAudioId(),
-                info.getAudioUrl(),
-                info.getRunningTime(),
-                info.getCreatedAt()
         );
     }
 }

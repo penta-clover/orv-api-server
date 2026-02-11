@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.io.InputStream;
 import java.util.UUID;
 import com.orv.media.repository.AudioStorage;
+
 @Repository
 @Slf4j
 public class S3AudioStorage implements AudioStorage {
@@ -17,47 +18,37 @@ public class S3AudioStorage implements AudioStorage {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    @Value("${cloud.aws.cloudfront.domain}")
-    private String cloudfrontDomain;
-
     public S3AudioStorage(AmazonS3 amazonS3Client) {
         this.amazonS3Client = amazonS3Client;
     }
 
     @Override
-    public UUID save(InputStream audioStream, String contentType, long contentLength) {
+    public String save(InputStream audioStream, String contentType, long contentLength) {
         UUID fileId = UUID.randomUUID();
-        String s3Path = "archive/audios/" + fileId;
+        String fileKey = "archive/audios/" + fileId;
 
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(contentType);
         metadata.setContentLength(contentLength);
 
         try {
-            amazonS3Client.putObject(bucket, s3Path, audioStream, metadata);
-            log.info("Uploaded audio file to S3: {}", s3Path);
-            return fileId;
+            amazonS3Client.putObject(bucket, fileKey, audioStream, metadata);
+            log.info("Uploaded audio file to S3: {}", fileKey);
+            return fileKey;
         } catch (Exception e) {
-            log.error("Failed to upload audio file to S3: {}", s3Path, e);
+            log.error("Failed to upload audio file to S3: {}", fileKey, e);
             throw new RuntimeException("Failed to upload audio to S3", e);
         }
     }
 
     @Override
-    public void delete(UUID fileId) {
-        String s3Path = "archive/audios/" + fileId;
-
+    public void delete(String fileKey) {
         try {
-            amazonS3Client.deleteObject(bucket, s3Path);
-            log.info("Deleted audio file from S3: {}", s3Path);
+            amazonS3Client.deleteObject(bucket, fileKey);
+            log.info("Deleted audio file from S3: {}", fileKey);
         } catch (Exception e) {
-            log.error("Failed to delete audio file from S3: {}. Manual cleanup may be required.", s3Path, e);
+            log.error("Failed to delete audio file from S3: {}. Manual cleanup may be required.", fileKey, e);
             throw new RuntimeException("Failed to delete audio from S3", e);
         }
-    }
-
-    @Override
-    public String getUrl(UUID fileId) {
-        return cloudfrontDomain + "/archive/audios/" + fileId;
     }
 }

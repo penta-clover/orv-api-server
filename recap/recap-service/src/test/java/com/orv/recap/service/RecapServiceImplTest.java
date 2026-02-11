@@ -60,7 +60,7 @@ class RecapServiceImplTest {
         UUID audioId = UUID.randomUUID();
         UUID storyboardId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
-        String audioUrl = "https://s3.amazonaws.com/test-audio.opus";
+        String audioFileKey = "archive/audios/test-audio-id";
         Integer runningTime = 324;
         OffsetDateTime createdAt = OffsetDateTime.now();
 
@@ -68,7 +68,7 @@ class RecapServiceImplTest {
                 .id(audioId)
                 .storyboardId(storyboardId)
                 .memberId(memberId)
-                .audioUrl(audioUrl)
+                .audioFileKey(audioFileKey)
                 .runningTime(runningTime)
                 .createdAt(createdAt)
                 .build();
@@ -83,7 +83,7 @@ class RecapServiceImplTest {
         assertThat(result).isPresent();
         RecapAudioInfo info = result.get();
         assertThat(info.getAudioId()).isEqualTo(audioId);
-        assertThat(info.getAudioUrl()).isEqualTo(audioUrl);
+        assertThat(info.getAudioFileKey()).isEqualTo(audioFileKey);
         assertThat(info.getRunningTime()).isEqualTo(runningTime);
         assertThat(info.getCreatedAt()).isEqualTo(createdAt);
 

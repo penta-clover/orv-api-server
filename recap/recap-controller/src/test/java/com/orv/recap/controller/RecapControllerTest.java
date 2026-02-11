@@ -27,7 +27,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -78,7 +77,7 @@ public class RecapControllerTest {
                 LocalDateTime.now()
         );
 
-        when(recapOrchestrator.reserveRecap(any(), any(), any())).thenReturn(Optional.of(response));
+        when(recapOrchestrator.reserveRecap(any(), any(), any())).thenReturn(response);
 
         // when
         ResultActions resultActions = mockMvc.perform(post("/api/v0/reservation/recap/video")
@@ -111,7 +110,7 @@ public class RecapControllerTest {
                 Arrays.asList(summary1, summary2)
         );
 
-        when(recapOrchestrator.getRecapResult(any(UUID.class))).thenReturn(Optional.of(mockResponse));
+        when(recapOrchestrator.getRecapResult(any(UUID.class))).thenReturn(mockResponse);
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/recap/{recapResultId}/result", recapResultId)
@@ -144,7 +143,7 @@ public class RecapControllerTest {
                 createdAt
         );
 
-        when(recapOrchestrator.getRecapAudio(any(UUID.class))).thenReturn(Optional.of(mockResponse));
+        when(recapOrchestrator.getRecapAudio(any(UUID.class))).thenReturn(mockResponse);
 
         // when
         ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/recap/{recapReservationId}/audio", recapReservationId)

@@ -18,18 +18,23 @@ public interface RecapAudioApi {
     ) throws IOException;
 
     /**
+     * Resolve audio file key to public URL
+     */
+    String resolveAudioUrl(String audioFileKey);
+
+    /**
      * Audio recording info DTO
      */
     class AudioRecordingInfo {
         private final UUID id;
-        private final String audioUrl;
+        private final String audioFileKey;
 
-        public AudioRecordingInfo(UUID id, String audioUrl) {
+        public AudioRecordingInfo(UUID id, String audioFileKey) {
             this.id = id;
-            this.audioUrl = audioUrl;
+            this.audioFileKey = audioFileKey;
         }
 
         public UUID getId() { return id; }
-        public String getAudioUrl() { return audioUrl; }
+        public String getAudioFileKey() { return audioFileKey; }
     }
 }

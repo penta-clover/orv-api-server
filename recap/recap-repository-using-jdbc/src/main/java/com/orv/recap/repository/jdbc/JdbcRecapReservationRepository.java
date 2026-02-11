@@ -61,7 +61,7 @@ public class JdbcRecapReservationRepository implements RecapReservationRepositor
     @Override
     public Optional<InterviewAudioRecording> findAudioByRecapReservationId(UUID recapReservationId) {
         String sql = """
-                SELECT iar.id, iar.storyboard_id, iar.member_id, iar.audio_url, iar.created_at, iar.running_time
+                SELECT iar.id, iar.storyboard_id, iar.member_id, iar.audio_file_key, iar.created_at, iar.running_time
                 FROM interview_audio_recording iar
                 JOIN recap_reservation rr ON rr.interview_audio_recording_id = iar.id
                 WHERE rr.id = ?
@@ -73,7 +73,7 @@ public class JdbcRecapReservationRepository implements RecapReservationRepositor
                         .id((UUID) rs.getObject("id"))
                         .storyboardId((UUID) rs.getObject("storyboard_id"))
                         .memberId((UUID) rs.getObject("member_id"))
-                        .audioUrl(rs.getString("audio_url"))
+                        .audioFileKey(rs.getString("audio_file_key"))
                         .createdAt(rs.getObject("created_at", OffsetDateTime.class))
                         .runningTime(rs.getInt("running_time"))
                         .build());
