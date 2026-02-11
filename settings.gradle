@@ -65,6 +65,7 @@ include 'notification:notification-external-api'
 include 'notification:notification-external-api-using-bizgo'
 
 // Recap 도메인
+include 'recap:recap-common'
 include 'recap:recap-domain'
 include 'recap:recap-controller'
 include 'recap:recap-orchestrator'
@@ -85,6 +86,7 @@ include 'term:term-repository-using-jdbc'
 // Worker
 include 'duration-calculation-worker'
 include 'thumbnail-extraction-worker'
+include 'audio-extraction-worker'
 
 // Admin 도메인
 include 'admin:admin-controller'

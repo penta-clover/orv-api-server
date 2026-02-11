@@ -5,8 +5,8 @@ import com.orv.media.domain.InterviewAudioRecording;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.UUID;
 
 @Component
@@ -16,14 +16,12 @@ public class RecapAudioApiImpl implements RecapAudioApi {
 
     @Override
     public AudioRecordingInfo extractAndSaveAudioFromVideo(
-        InputStream videoStream,
+        File videoFile,
         UUID storyboardId,
-        UUID memberId,
-        String title,
-        Integer runningTime
+        UUID memberId
     ) throws IOException {
         InterviewAudioRecording recording = audioService.extractAndSaveAudioFromVideo(
-            videoStream, storyboardId, memberId, title, runningTime
+            videoFile, storyboardId, memberId
         );
 
         return new AudioRecordingInfo(recording.getId(), recording.getAudioUrl());

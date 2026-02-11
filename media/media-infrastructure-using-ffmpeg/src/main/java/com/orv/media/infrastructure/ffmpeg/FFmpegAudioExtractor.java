@@ -13,7 +13,7 @@ import com.orv.media.infrastructure.AudioExtractor;
 @Component
 public class FFmpegAudioExtractor implements AudioExtractor {
     @Override
-    public void extractAudio(File inputVideoFile, File outputAudioFile, String format) throws IOException {
+    public int extractAudio(File inputVideoFile, File outputAudioFile, String format) throws IOException {
         FFmpegFrameGrabber grabber = null;
         FFmpegFrameRecorder recorder = null;
         
@@ -67,8 +67,10 @@ public class FFmpegAudioExtractor implements AudioExtractor {
                 recorder.recordSamples(frame.samples);
             }
             
-            log.info("오디오 추출 완료: {}", outputAudioFile.getAbsolutePath());
-            
+            int durationSeconds = (int) (grabber.getLengthInTime() / 1_000_000);
+            log.info("오디오 추출 완료: {}, duration={}s", outputAudioFile.getAbsolutePath(), durationSeconds);
+            return durationSeconds;
+
         } catch (Exception e) {
             log.error("오디오 추출 중 오류 발생: {}", e.getMessage(), e);
             throw new IOException("오디오 추출 실패: " + e.getMessage(), e);

@@ -1,9 +1,12 @@
 dependencies {
     implementation project(':orv-common')
+    implementation project(':recap:recap-common')
     implementation project(':recap:recap-domain')
     implementation project(':recap:recap-service')
     implementation project(':recap:recap-external-api')
     implementation project(':storyboard:storyboard-service')
+    implementation project(':media:media-repository')
     implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-tx'
     implementation 'com.fasterxml.jackson.core:jackson-annotations'
 }

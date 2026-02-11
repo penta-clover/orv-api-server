@@ -1,7 +1,7 @@
 package com.orv.recap.external.media;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.UUID;
 
 /**
@@ -9,14 +9,12 @@ import java.util.UUID;
  */
 public interface RecapAudioApi {
     /**
-     * Extract audio from video and save to storage
+     * Extract audio from video file and save to storage
      */
     AudioRecordingInfo extractAndSaveAudioFromVideo(
-        InputStream videoStream,
+        File videoFile,
         UUID storyboardId,
-        UUID memberId,
-        String title,
-        Integer runningTime
+        UUID memberId
     ) throws IOException;
 
     /**

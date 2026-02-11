@@ -11,9 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -37,17 +35,14 @@ public class AudioService {
     }
 
     public InterviewAudioRecording extractAndSaveAudioFromVideo(
-            InputStream videoStream, UUID storyboardId, UUID memberId, String title, Integer runningTime) throws IOException {
-        
-        File tempVideoFile = null;
+            File videoFile, UUID storyboardId, UUID memberId) throws IOException {
+
         File tempAudioExtractedFile = null;
         File tempAudioCompressedFile = null;
 
         try {
-            tempVideoFile = convertStreamToFile(videoStream);
-
             tempAudioExtractedFile = createTempFile("extracted_audio_", ".wav");
-            audioExtractor.extractAudio(tempVideoFile, tempAudioExtractedFile, "wav");
+            int durationSeconds = audioExtractor.extractAudio(videoFile, tempAudioExtractedFile, "wav");
 
             tempAudioCompressedFile = createTempFile("compressed_audio_", ".opus");
             audioCompressor.compress(tempAudioExtractedFile, tempAudioCompressedFile);
@@ -66,7 +61,7 @@ public class AudioService {
                         .memberId(memberId)
                         .audioUrl(audioUrl)
                         .createdAt(OffsetDateTime.now())
-                        .runningTime(runningTime != null ? runningTime : 0)
+                        .runningTime(durationSeconds)
                         .build();
 
                 InterviewAudioRecording saved = audioRecordingRepository.save(audioRecording);
@@ -84,7 +79,6 @@ public class AudioService {
             }
 
         } finally {
-            cleanupTempFile(tempVideoFile);
             cleanupTempFile(tempAudioExtractedFile);
             cleanupTempFile(tempAudioCompressedFile);
         }
@@ -116,19 +110,6 @@ public class AudioService {
             log.error("Failed to extract file ID from URL: {}", audioUrl, e);
             throw new IllegalArgumentException("Invalid audio URL format: " + audioUrl, e);
         }
-    }
-
-    private File convertStreamToFile(InputStream in) throws IOException {
-        File tempFile = File.createTempFile("video_stream_", ".tmp");
-        tempFile.deleteOnExit();
-        try (FileOutputStream out = new FileOutputStream(tempFile)) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1) {
-                out.write(buffer, 0, bytesRead);
-            }
-        }
-        return tempFile;
     }
 
     private File createTempFile(String prefix, String suffix) throws IOException {

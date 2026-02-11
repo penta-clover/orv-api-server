@@ -1,5 +1,6 @@
 dependencies {
     implementation project(':orv-common')
+    implementation project(':recap:recap-common')
     implementation project(':recap:recap-domain')
     implementation project(':recap:recap-orchestrator')
     implementation 'org.springframework:spring-web'

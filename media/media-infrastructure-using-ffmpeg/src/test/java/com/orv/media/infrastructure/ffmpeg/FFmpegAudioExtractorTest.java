@@ -44,9 +44,10 @@ public class FFmpegAudioExtractorTest {
 
     @Test
     void testExtractAudio() throws Exception {
-        audioExtractor.extractAudio(inputVideoFile, outputAudioFile, "mp3");
+        int durationSeconds = audioExtractor.extractAudio(inputVideoFile, outputAudioFile, "mp3");
 
         assertThat(outputAudioFile.exists()).isTrue();
         assertThat(Files.size(outputAudioFile.toPath())).isGreaterThan(0);
+        assertThat(durationSeconds).isGreaterThanOrEqualTo(0);
     }
 }
