@@ -10,4 +10,6 @@ public class Storyboard {
     private String title;
     private UUID startSceneId;
     private StoryboardStatus status;
+    private Integer participationCount;
+    private Integer maxParticipationLimit;
 }

@@ -27,4 +27,6 @@ public interface StoryboardRepository {
     void saveUsageHistory(UUID storyboardId, UUID memberId, StoryboardUsageStatus status);
 
     Optional<List<Topic>> findTopicsOfStoryboard(UUID storyboardId);
+
+    int incrementParticipationCountSafely(UUID id);
 }

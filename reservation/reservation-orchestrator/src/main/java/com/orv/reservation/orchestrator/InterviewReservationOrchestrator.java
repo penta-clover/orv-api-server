@@ -6,9 +6,10 @@ import com.orv.reservation.orchestrator.dto.*;
 import com.orv.reservation.service.ReservationNotificationService;
 import com.orv.reservation.service.InterviewReservationService;
 import com.orv.reservation.domain.InterviewReservation;
+import com.orv.storyboard.common.StoryboardErrorCode;
+import com.orv.storyboard.common.StoryboardException;
 import com.orv.storyboard.domain.Storyboard;
 import com.orv.storyboard.domain.StoryboardStatus;
-import com.orv.storyboard.domain.StoryboardUsageStatus;
 import com.orv.storyboard.service.StoryboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -96,7 +97,20 @@ public class InterviewReservationOrchestrator {
                 .orElseThrow(() -> new ReservationException(ReservationErrorCode.RESERVATION_NOT_FOUND));
         validateStoryboardActive(reservation.getStoryboardId());
         reservationService.markAsUsed(reservationId);
-        storyboardService.saveUsageHistory(reservation.getStoryboardId(), memberId, StoryboardUsageStatus.STARTED);
+        participateStoryboard(reservation.getStoryboardId(), memberId);
+    }
+
+    private void participateStoryboard(UUID storyboardId, UUID memberId) {
+        try {
+            storyboardService.participateStoryboard(storyboardId, memberId);
+        } catch (StoryboardException e) {
+            ReservationErrorCode errorCode = switch (e.getErrorCode()) {
+                case PARTICIPATION_LIMIT_EXCEEDED -> ReservationErrorCode.PARTICIPATION_LIMIT_EXCEEDED;
+                case STORYBOARD_NOT_FOUND, STORYBOARD_NOT_ACTIVE -> ReservationErrorCode.STORYBOARD_NOT_AVAILABLE;
+            };
+
+            throw new ReservationException(errorCode);
+        }
     }
 
     private void validateStoryboardActive(UUID storyboardId) {

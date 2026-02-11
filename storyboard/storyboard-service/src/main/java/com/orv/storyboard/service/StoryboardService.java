@@ -11,6 +11,7 @@ import com.orv.storyboard.domain.StoryboardUsageStatus;
 import com.orv.storyboard.domain.Topic;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -77,5 +78,52 @@ public class StoryboardService {
         }
 
         storyboardRepository.saveUsageHistory(storyboardId, memberId, status);
+    }
+
+    @Transactional
+    public void participateStoryboard(UUID storyboardId, UUID memberId) {
+        storyboardRepository.saveUsageHistory(storyboardId, memberId, StoryboardUsageStatus.STARTED);
+
+        Storyboard storyboard = storyboardRepository.findById(storyboardId)
+                .orElseThrow(() -> new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_FOUND));
+
+        validateStoryboardActive(storyboard);
+        validateParticipationLimit(storyboard);
+        
+        int updateCount = storyboardRepository.incrementParticipationCountSafely(storyboardId);
+        
+        if (updateCount > 0) {
+            // Storyboard is updated successfully
+            return;
+        }
+
+        throwExceptionWithFailureReason(storyboardId);
+    }
+
+    private void validateParticipationLimit(Storyboard storyboard) {
+        boolean hasLimit = storyboard.getMaxParticipationLimit() != null;
+        boolean isLimitExceeded = hasLimit && storyboard.getMaxParticipationLimit() <= storyboard.getParticipationCount();
+
+        if (isLimitExceeded) {
+            throw new StoryboardException(StoryboardErrorCode.PARTICIPATION_LIMIT_EXCEEDED);
+        }
+    }
+
+    private void validateStoryboardActive(Storyboard storyboard) {
+        boolean isStoryboardActive = storyboard.getStatus() == StoryboardStatus.ACTIVE;
+
+        if (!isStoryboardActive) {
+            throw new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_ACTIVE);
+        }
+    }
+
+    private void throwExceptionWithFailureReason(UUID storyboardId) {
+        Storyboard storyboard = storyboardRepository.findById(storyboardId)
+            .orElseThrow(() -> new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_FOUND));
+
+        validateStoryboardActive(storyboard);
+        validateParticipationLimit(storyboard);
+
+        throw new RuntimeException("Unexpected Error while update storyboard participation count");
     }
 }
