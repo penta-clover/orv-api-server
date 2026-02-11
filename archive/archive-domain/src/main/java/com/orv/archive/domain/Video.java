@@ -16,8 +16,10 @@ public class Video {
     private UUID storyboardId;
     private UUID memberId;
     private String videoUrl;
+    private String videoFileKey;
     private LocalDateTime createdAt;
     private String thumbnailUrl;
+    private String thumbnailFileKey;
     private Integer runningTime;
     private String title;
     private String status;

@@ -3,6 +3,7 @@ package com.orv.archive.orchestrator;
 import com.orv.archive.orchestrator.dto.PresignedUrlResponse;
 import com.orv.archive.orchestrator.dto.VideoResponse;
 import com.orv.archive.service.ArchiveService;
+import com.orv.archive.service.PublicVideoUrlGenerator;
 import com.orv.archive.domain.ImageMetadata;
 import com.orv.archive.domain.PresignedUrlInfo;
 import com.orv.archive.domain.Video;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ArchiveOrchestrator {
     private final ArchiveService archiveService;
+    private final PublicVideoUrlGenerator publicVideoUrlGenerator;
 
     public Optional<String> uploadRecordedVideo(InputStream inputStream, String contentType, long size, UUID storyboardId, UUID memberId) throws IOException {
         return archiveService.uploadRecordedVideo(inputStream, contentType, size, storyboardId, memberId);
@@ -59,13 +61,27 @@ public class ArchiveOrchestrator {
                 video.getId(),
                 video.getStoryboardId(),
                 video.getMemberId(),
-                video.getVideoUrl(),
+                resolveVideoUrl(video),
                 video.getCreatedAt(),
-                video.getThumbnailUrl(),
+                resolveThumbnailUrl(video),
                 video.getRunningTime(),
                 video.getTitle(),
                 video.getStatus()
         );
+    }
+
+    private String resolveVideoUrl(Video video) {
+        if (video.getVideoFileKey() != null) {
+            return publicVideoUrlGenerator.generateUrl(video.getVideoFileKey());
+        }
+        return video.getVideoUrl();
+    }
+
+    private String resolveThumbnailUrl(Video video) {
+        if (video.getThumbnailFileKey() != null) {
+            return publicVideoUrlGenerator.generateUrl(video.getThumbnailFileKey());
+        }
+        return video.getThumbnailUrl();
     }
 
     private PresignedUrlResponse toPresignedUrlResponse(PresignedUrlInfo info) {

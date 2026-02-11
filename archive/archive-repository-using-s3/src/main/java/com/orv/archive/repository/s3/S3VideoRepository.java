@@ -18,7 +18,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
 import java.util.*;
 
@@ -27,16 +26,12 @@ import java.util.*;
 public class S3VideoRepository implements VideoRepository {
     private static final String VIDEO_PATH_PREFIX = "archive/videos/";
     private static final String IMAGE_PATH_PREFIX = "archive/images/";
-    private static final String DEFAULT_THUMBNAIL_URL =
-            "https://d3bdjeyz3ry3pi.cloudfront.net/static/images/default-archive-video-thumbnail.png";
+    private static final String DEFAULT_THUMBNAIL_KEY = "static/images/default-archive-video-thumbnail.png";
 
     private final AmazonS3 amazonS3Client;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
-
-    @Value("${cloud.aws.cloudfront.domain}")
-    private String cloudfrontDomain;
 
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsertVideo;
@@ -47,7 +42,7 @@ public class S3VideoRepository implements VideoRepository {
         this.jdbcTemplate = jdbcTemplate;
         this.simpleJdbcInsertVideo = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("video")
-                .usingColumns("id", "storyboard_id", "member_id", "video_url", "thumbnail_url", "running_time", "title", "status");
+                .usingColumns("id", "storyboard_id", "member_id", "video_file_key", "thumbnail_file_key", "running_time", "title", "status");
         this.simpleJdbcInsertPendingVideo = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("video")
                 .usingColumns("id", "storyboard_id", "member_id", "status");
@@ -61,31 +56,31 @@ public class S3VideoRepository implements VideoRepository {
         String videoFileId = UUID.randomUUID().toString();
 
         try {
-            URI videoDownloadUri = uploadVideoToS3(inputStream, videoFileId, videoMetadata);
-            URI thumbnailDownloadUri = uploadThumbnailOrDefault(thumbnailImage, videoFileId);
-            return saveVideoRecord(videoFileId, videoMetadata, videoDownloadUri, thumbnailDownloadUri);
+            String videoKey = uploadVideoToS3(inputStream, videoFileId, videoMetadata);
+            String thumbnailKey = uploadThumbnailOrDefault(thumbnailImage);
+            return saveVideoRecord(videoFileId, videoMetadata, videoKey, thumbnailKey);
         } catch (Exception e) {
             log.error("Failed to save video: videoId={}, storyboardId={}", videoFileId, videoMetadata.getStoryboardId(), e);
             return Optional.empty();
         }
     }
 
-    private URI uploadToS3(InputStream inputStream, String s3Key, String contentType, long contentLength) {
+    private String uploadToS3(InputStream inputStream, String s3Key, String contentType, long contentLength) {
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(contentType);
         metadata.setContentLength(contentLength);
         amazonS3Client.putObject(bucket, s3Key, inputStream, metadata);
-        return URI.create(cloudfrontDomain + "/" + s3Key);
+        return s3Key;
     }
 
-    private URI uploadVideoToS3(InputStream inputStream, String videoFileId, VideoMetadata videoMetadata) {
+    private String uploadVideoToS3(InputStream inputStream, String videoFileId, VideoMetadata videoMetadata) {
         String s3Key = VIDEO_PATH_PREFIX + videoFileId;
         return uploadToS3(inputStream, s3Key, videoMetadata.getContentType(), videoMetadata.getContentLength());
     }
 
-    private URI uploadThumbnailOrDefault(Optional<InputStreamWithMetadata> thumbnailImage, String videoFileId) {
+    private String uploadThumbnailOrDefault(Optional<InputStreamWithMetadata> thumbnailImage) {
         if (thumbnailImage.isEmpty()) {
-            return URI.create(DEFAULT_THUMBNAIL_URL);
+            return DEFAULT_THUMBNAIL_KEY;
         }
 
         InputStreamWithMetadata thumbnail = thumbnailImage.get();
@@ -99,13 +94,13 @@ public class S3VideoRepository implements VideoRepository {
         );
     }
 
-    private Optional<String> saveVideoRecord(String videoFileId, VideoMetadata videoMetadata, URI videoUri, URI thumbnailUri) {
+    private Optional<String> saveVideoRecord(String videoFileId, VideoMetadata videoMetadata, String videoKey, String thumbnailKey) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("id", videoFileId);
         parameters.put("storyboard_id", videoMetadata.getStoryboardId().toString());
         parameters.put("member_id", videoMetadata.getOwnerId().toString());
-        parameters.put("video_url", videoUri.toString());
-        parameters.put("thumbnail_url", thumbnailUri.toString());
+        parameters.put("video_file_key", videoKey);
+        parameters.put("thumbnail_file_key", thumbnailKey);
         parameters.put("running_time", videoMetadata.getRunningTime());
         parameters.put("title", videoMetadata.getTitle());
         parameters.put("status", VideoStatus.UPLOADED.name());
@@ -115,7 +110,7 @@ public class S3VideoRepository implements VideoRepository {
 
     @Override
     public Optional<Video> findById(UUID videoId) {
-        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title, status FROM video WHERE id = ?";
+        String sql = "SELECT id, storyboard_id, member_id, video_url, video_file_key, created_at, thumbnail_url, thumbnail_file_key, running_time, title, status FROM video WHERE id = ?";
 
         try {
             Video video = jdbcTemplate.queryForObject(sql, new Object[]{videoId}, new BeanPropertyRowMapper<>(Video.class));
@@ -128,7 +123,7 @@ public class S3VideoRepository implements VideoRepository {
 
     @Override
     public List<Video> findByMemberId(UUID memberId, int offset, int limit) {
-        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title, status FROM video WHERE member_id = ? AND status = 'UPLOADED' ORDER BY created_at DESC LIMIT ? OFFSET ?";
+        String sql = "SELECT id, storyboard_id, member_id, video_url, video_file_key, created_at, thumbnail_url, thumbnail_file_key, running_time, title, status FROM video WHERE member_id = ? AND status = 'UPLOADED' ORDER BY created_at DESC LIMIT ? OFFSET ?";
 
         try {
             List<Video> videos = jdbcTemplate.query(sql, new Object[]{memberId, limit, offset}, new BeanPropertyRowMapper<>(Video.class));
@@ -151,13 +146,27 @@ public class S3VideoRepository implements VideoRepository {
     }
 
     @Override
+    public boolean updateThumbnail(UUID videoId, String thumbnailFileKey) {
+        try {
+            int updated = jdbcTemplate.update(
+                    "UPDATE video SET thumbnail_file_key = ? WHERE id = ?",
+                    thumbnailFileKey, videoId
+            );
+            return updated > 0;
+        } catch (Exception e) {
+            log.error("Failed to update thumbnail: videoId={}", videoId, e);
+            return false;
+        }
+    }
+
+    @Override
     public boolean updateThumbnail(UUID videoId, InputStream thumbnail, ImageMetadata imageMetadata) {
         try {
             String fileId = UUID.randomUUID().toString();
             String s3Key = IMAGE_PATH_PREFIX + fileId;
-            URI downloadUri = uploadToS3(thumbnail, s3Key, imageMetadata.getContentType(), imageMetadata.getContentLength());
+            uploadToS3(thumbnail, s3Key, imageMetadata.getContentType(), imageMetadata.getContentLength());
 
-            jdbcTemplate.update("UPDATE video SET thumbnail_url = ? WHERE id = ?", downloadUri.toString(), videoId);
+            jdbcTemplate.update("UPDATE video SET thumbnail_file_key = ? WHERE id = ?", s3Key, videoId);
             return true;
         } catch (Exception e) {
             log.error("Failed to update thumbnail: videoId={}", videoId, e);
@@ -167,26 +176,18 @@ public class S3VideoRepository implements VideoRepository {
 
     @Override
     public Optional<InputStream> getVideoStream(UUID videoId) {
-        String sql = "SELECT video_url FROM video WHERE id = ?";
         try {
-            String videoUrl = jdbcTemplate.queryForObject(sql, String.class, videoId);
-            if (videoUrl == null) {
+            String fileKey = jdbcTemplate.queryForObject(
+                    "SELECT video_file_key FROM video WHERE id = ?",
+                    new Object[]{videoId}, String.class
+            );
+
+            if (fileKey == null) {
                 return Optional.empty();
             }
 
-            URI uri = new URI(videoUrl);
-            String scheme = uri.getScheme();
-
-            if ("s3".equalsIgnoreCase(scheme)) {
-                String bucketName = uri.getHost();
-                String key = uri.getPath().substring(1);
-                S3Object s3Object = amazonS3Client.getObject(bucketName, key);
-                return Optional.of(s3Object.getObjectContent());
-            } else if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
-                return Optional.of(uri.toURL().openStream());
-            } else {
-                return Optional.empty();
-            }
+            S3Object s3Object = amazonS3Client.getObject(bucket, fileKey);
+            return Optional.of(s3Object.getObjectContent());
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         } catch (Exception e) {
@@ -239,15 +240,15 @@ public class S3VideoRepository implements VideoRepository {
     }
 
     @Override
-    public boolean updateVideoUrlAndStatus(UUID videoId, String videoUrl, String status) {
+    public boolean updateVideoFileKeyAndStatus(UUID videoId, String videoFileKey, String status) {
         try {
             int updated = jdbcTemplate.update(
-                    "UPDATE video SET video_url = ?, thumbnail_url = ?, status = ? WHERE id = ?",
-                    videoUrl, DEFAULT_THUMBNAIL_URL, status, videoId
+                    "UPDATE video SET video_file_key = ?, status = ? WHERE id = ?",
+                    videoFileKey, status, videoId
             );
             return updated > 0;
         } catch (Exception e) {
-            log.error("Failed to update video url and status: {}", videoId, e);
+            log.error("Failed to update video file key and status: {}", videoId, e);
             return false;
         }
     }
@@ -262,21 +263,31 @@ public class S3VideoRepository implements VideoRepository {
     @Override
     public boolean deleteVideo(UUID videoId) {
         try {
-            // 1. S3에서 영상 파일 삭제 (파일이 없어도 S3 deleteObject는 예외 없이 성공 반환)
-            String s3Key = VIDEO_PATH_PREFIX + videoId;
-            try {
-                amazonS3Client.deleteObject(bucket, s3Key);
-                log.info("Deleted video file from S3: {}", s3Key);
-            } catch (AmazonS3Exception e) {
-                log.warn("Failed to delete video file from S3 (continuing anyway): {}", s3Key, e);
+            // 1. DB에서 video_file_key 조회
+            String fileKey = jdbcTemplate.queryForObject(
+                    "SELECT video_file_key FROM video WHERE id = ?",
+                    new Object[]{videoId}, String.class
+            );
+
+            // 2. S3에서 영상 파일 삭제 (파일이 없어도 S3 deleteObject는 예외 없이 성공 반환)
+            if (fileKey != null) {
+                try {
+                    amazonS3Client.deleteObject(bucket, fileKey);
+                    log.info("Deleted video file from S3: {}", fileKey);
+                } catch (AmazonS3Exception e) {
+                    log.warn("Failed to delete video file from S3 (continuing anyway): {}", fileKey, e);
+                }
             }
 
-            // 2. DB에서 status를 DELETED로 변경
+            // 3. DB에서 status를 DELETED로 변경
             int updated = jdbcTemplate.update(
                     "UPDATE video SET status = ? WHERE id = ?",
                     VideoStatus.DELETED.name(), videoId
             );
             return updated > 0;
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("Video not found for deletion: {}", videoId);
+            return false;
         } catch (Exception e) {
             log.error("Failed to delete video: {}", videoId, e);
             return false;
@@ -285,7 +296,7 @@ public class S3VideoRepository implements VideoRepository {
 
     @Override
     public List<Video> findAllByMemberId(UUID memberId) {
-        String sql = "SELECT id, storyboard_id, member_id, video_url, created_at, thumbnail_url, running_time, title, status FROM video WHERE member_id = ?";
+        String sql = "SELECT id, storyboard_id, member_id, video_url, video_file_key, created_at, thumbnail_url, thumbnail_file_key, running_time, title, status FROM video WHERE member_id = ?";
         return jdbcTemplate.query(sql, new Object[]{memberId}, new BeanPropertyRowMapper<>(Video.class));
     }
 

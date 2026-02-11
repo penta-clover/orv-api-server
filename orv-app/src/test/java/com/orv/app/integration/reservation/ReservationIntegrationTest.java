@@ -120,8 +120,8 @@ public class ReservationIntegrationTest {
                 UUID.fromString(testStoryboardId), UUID.fromString(testTopicId));
 
         // video 테이블에 테스트 비디오 데이터 삽입
-        jdbcTemplate.update("INSERT INTO video (id, storyboard_id, member_id, video_url, title, running_time, thumbnail_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())",
-                UUID.fromString(testVideoId), UUID.fromString(testStoryboardId), UUID.fromString(testMemberId), "https://d3bdjeyz3ry3pi.cloudfront.net/archive/videos/1fae8eed-3e88-4a9c-9e1e-96bed6414f9f", "Test Video", 324, "http://example.com/thumbnail.jpg");
+        jdbcTemplate.update("INSERT INTO video (id, storyboard_id, member_id, video_url, video_file_key, title, running_time, thumbnail_url, thumbnail_file_key, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+                UUID.fromString(testVideoId), UUID.fromString(testStoryboardId), UUID.fromString(testMemberId), "https://d3bdjeyz3ry3pi.cloudfront.net/archive/videos/1fae8eed-3e88-4a9c-9e1e-96bed6414f9f", "archive/videos/1fae8eed-3e88-4a9c-9e1e-96bed6414f9f", "Test Video", 324, "http://example.com/thumbnail.jpg", "archive/images/test-thumbnail");
     }
 
     /**

@@ -24,6 +24,8 @@ public interface VideoRepository {
 
     boolean updateThumbnail(UUID videoId, InputStream thumbnail, ImageMetadata imageMetadata);
 
+    boolean updateThumbnail(UUID videoId, String thumbnailFileKey);
+
     Optional<InputStream> getVideoStream(UUID videoId);
 
     List<Video> findAllByMemberId(UUID memberId);
@@ -35,7 +37,7 @@ public interface VideoRepository {
 
     boolean checkUploadComplete(UUID videoId);
 
-    boolean updateVideoUrlAndStatus(UUID videoId, String videoUrl, String status);
+    boolean updateVideoFileKeyAndStatus(UUID videoId, String videoFileKey, String status);
 
     boolean deleteVideo(UUID videoId);
 

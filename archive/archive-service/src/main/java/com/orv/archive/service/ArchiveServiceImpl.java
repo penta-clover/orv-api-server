@@ -13,7 +13,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.bytedeco.javacv.FFmpegFrameGrabber;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,14 +37,12 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ArchiveServiceImpl implements ArchiveService {
     private static final long PRESIGNED_URL_EXPIRATION_MINUTES = 60;
-    private static final String VIDEO_PATH_PREFIX = "/archive/videos/";
+    private static final String VIDEO_PATH_PREFIX = "archive/videos/";
+    private static final String DEFAULT_THUMBNAIL_KEY = "static/images/default-archive-video-thumbnail.png";
 
     private final VideoRepository videoRepository;
     private final VideoDurationCalculationJobRepository videoDurationCalculationJobRepository;
     private final VideoThumbnailExtractionJobRepository videoThumbnailExtractionJobRepository;
-
-    @Value("${cloud.aws.cloudfront.domain}")
-    private String cloudfrontDomain;
 
     @Override
     @Deprecated
@@ -114,14 +111,16 @@ public class ArchiveServiceImpl implements ArchiveService {
         validateVideoStatus(video, videoId);
         validateUploadComplete(videoId);
 
-        String videoUrl = cloudfrontDomain + VIDEO_PATH_PREFIX + videoId;
-        boolean updated = videoRepository.updateVideoUrlAndStatus(
-                videoId, videoUrl, VideoStatus.UPLOADED.name());
+        String videoFileKey = VIDEO_PATH_PREFIX + videoId;
+        boolean updated = videoRepository.updateVideoFileKeyAndStatus(
+                videoId, videoFileKey, VideoStatus.UPLOADED.name());
 
         if (!updated) {
             log.warn("Failed to update video status: {}", videoId);
             throw new ArchiveException(ArchiveErrorCode.VIDEO_STATUS_UPDATE_FAILED);
         }
+
+        videoRepository.updateThumbnail(videoId, DEFAULT_THUMBNAIL_KEY);
 
         createProcessingJobs(videoId);
 
