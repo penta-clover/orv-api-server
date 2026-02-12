@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -33,6 +34,12 @@ public class JdbcThumbnailCandidateRepository implements ThumbnailCandidateRepos
             ORDER BY id
             """;
 
+    private static final String SELECT_BY_ID_SQL = """
+            SELECT id, job_id, video_id, timestamp_ms, file_key, created_at
+            FROM video_thumbnail_candidate
+            WHERE id = ?
+            """;
+
     private static final String DELETE_BY_JOB_ID_SQL = """
             DELETE FROM video_thumbnail_candidate
             WHERE job_id = ?
@@ -52,6 +59,12 @@ public class JdbcThumbnailCandidateRepository implements ThumbnailCandidateRepos
                 candidate.getTimestampMs(),
                 candidate.getFileKey()
         );
+    }
+
+    @Override
+    public Optional<ThumbnailCandidate> findById(Long id) {
+        List<ThumbnailCandidate> results = jdbcTemplate.query(SELECT_BY_ID_SQL, new ThumbnailCandidateRowMapper(), id);
+        return results.stream().findFirst();
     }
 
     @Override

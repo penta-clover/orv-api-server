@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import com.orv.archive.domain.ImageMetadata;
 import com.orv.archive.domain.PresignedUrlInfo;
+import com.orv.archive.domain.ThumbnailCandidate;
 import com.orv.archive.domain.Video;
 
 public interface ArchiveService {
@@ -28,4 +29,8 @@ public interface ArchiveService {
     PresignedUrlInfo requestUploadUrl(UUID storyboardId, UUID memberId);
 
     String confirmUpload(UUID videoId, UUID memberId);
+
+    List<ThumbnailCandidate> getThumbnailCandidates(UUID videoId);
+
+    void selectThumbnailCandidate(UUID videoId, Long candidateId);
 }
