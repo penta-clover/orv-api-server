@@ -70,7 +70,7 @@ public class RecapServiceImpl implements RecapService {
         return recapRepository.findAudioByRecapReservationId(recapReservationId)
                 .map(audioRecording -> new RecapAudioInfo(
                         audioRecording.getId(),
-                        audioRecording.getAudioUrl(),
+                        audioRecording.getAudioFileKey(),
                         audioRecording.getRunningTime(),
                         audioRecording.getCreatedAt()
                 ));

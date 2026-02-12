@@ -39,7 +39,7 @@ class JdbcRecapRepositoryImplTest {
                 .id(audioRecordingId)
                 .storyboardId(storyboardId)
                 .memberId(memberId)
-                .audioUrl("https://s3.amazonaws.com/test-audio.opus")
+                .audioFileKey("archive/audios/test-audio-id")
                 .createdAt(createdAt)
                 .runningTime(324)
                 .build();
@@ -59,7 +59,7 @@ class JdbcRecapRepositoryImplTest {
         assertThat(audioRecording.getId()).isEqualTo(audioRecordingId);
         assertThat(audioRecording.getStoryboardId()).isEqualTo(storyboardId);
         assertThat(audioRecording.getMemberId()).isEqualTo(memberId);
-        assertThat(audioRecording.getAudioUrl()).isEqualTo("https://s3.amazonaws.com/test-audio.opus");
+        assertThat(audioRecording.getAudioFileKey()).isEqualTo("archive/audios/test-audio-id");
         assertThat(audioRecording.getRunningTime()).isEqualTo(324);
         assertThat(audioRecording.getCreatedAt()).isEqualTo(createdAt);
     }

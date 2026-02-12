@@ -11,9 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -37,36 +35,32 @@ public class AudioService {
     }
 
     public InterviewAudioRecording extractAndSaveAudioFromVideo(
-            InputStream videoStream, UUID storyboardId, UUID memberId, String title, Integer runningTime) throws IOException {
-        
-        File tempVideoFile = null;
+            File videoFile, UUID storyboardId, UUID memberId) throws IOException {
+
         File tempAudioExtractedFile = null;
         File tempAudioCompressedFile = null;
 
         try {
-            tempVideoFile = convertStreamToFile(videoStream);
-
             tempAudioExtractedFile = createTempFile("extracted_audio_", ".wav");
-            audioExtractor.extractAudio(tempVideoFile, tempAudioExtractedFile, "wav");
+            int durationSeconds = audioExtractor.extractAudio(videoFile, tempAudioExtractedFile, "wav");
 
             tempAudioCompressedFile = createTempFile("compressed_audio_", ".opus");
             audioCompressor.compress(tempAudioExtractedFile, tempAudioCompressedFile);
 
-            UUID fileId;
+            String fileKey;
             try (FileInputStream fis = new FileInputStream(tempAudioCompressedFile)) {
-                fileId = audioStorage.save(fis, "audio/ogg; codecs=opus", tempAudioCompressedFile.length());
+                fileKey = audioStorage.save(fis, "audio/ogg; codecs=opus", tempAudioCompressedFile.length());
             }
-            String audioUrl = audioStorage.getUrl(fileId);
-            log.info("Uploaded audio to S3: {}", audioUrl);
+            log.info("Uploaded audio to S3: {}", fileKey);
 
             try {
                 InterviewAudioRecording audioRecording = InterviewAudioRecording.builder()
                         .id(UUID.randomUUID())
                         .storyboardId(storyboardId)
                         .memberId(memberId)
-                        .audioUrl(audioUrl)
+                        .audioFileKey(fileKey)
                         .createdAt(OffsetDateTime.now())
-                        .runningTime(runningTime != null ? runningTime : 0)
+                        .runningTime(durationSeconds)
                         .build();
 
                 InterviewAudioRecording saved = audioRecordingRepository.save(audioRecording);
@@ -75,60 +69,32 @@ public class AudioService {
             } catch (Exception dbException) {
                 // DB 저장 실패 시 S3 파일 삭제 (보상 트랜잭션)
                 try {
-                    audioStorage.delete(fileId);
-                    log.info("Compensated S3 audio upload by deleting file: {}", fileId);
+                    audioStorage.delete(fileKey);
+                    log.info("Compensated S3 audio upload by deleting file: {}", fileKey);
                 } catch (Exception deleteException) {
-                    log.error("Failed to compensate S3 upload. Manual cleanup required for file: {}", fileId, deleteException);
+                    log.error("Failed to compensate S3 upload. Manual cleanup required for file: {}", fileKey, deleteException);
                 }
                 throw dbException;
             }
 
         } finally {
-            cleanupTempFile(tempVideoFile);
             cleanupTempFile(tempAudioExtractedFile);
             cleanupTempFile(tempAudioCompressedFile);
         }
     }
 
-    public void deleteAudio(UUID audioRecordingId, String audioUrl) {
+    public void deleteAudio(UUID audioRecordingId, String audioFileKey) {
         try {
             audioRecordingRepository.delete(audioRecordingId);
             log.info("Deleted audio recording from DB: {}", audioRecordingId);
 
-            UUID fileId = extractFileIdFromUrl(audioUrl);
-            audioStorage.delete(fileId);
-            log.info("Deleted audio file from S3: {}", fileId);
+            audioStorage.delete(audioFileKey);
+            log.info("Deleted audio file from S3: {}", audioFileKey);
 
-            log.info("Successfully deleted audio recording {} and S3 file {}", audioRecordingId, audioUrl);
+            log.info("Successfully deleted audio recording {} and S3 file {}", audioRecordingId, audioFileKey);
         } catch (Exception e) {
             log.error("Failed to delete audio recording: {}. Manual cleanup may be required.", audioRecordingId, e);
         }
-    }
-
-    private UUID extractFileIdFromUrl(String audioUrl) {
-        try {
-            String path = audioUrl.split("\\?")[0];
-            String[] parts = path.split("/");
-            String fileIdString = parts[parts.length - 1];
-
-            return UUID.fromString(fileIdString);
-        } catch (Exception e) {
-            log.error("Failed to extract file ID from URL: {}", audioUrl, e);
-            throw new IllegalArgumentException("Invalid audio URL format: " + audioUrl, e);
-        }
-    }
-
-    private File convertStreamToFile(InputStream in) throws IOException {
-        File tempFile = File.createTempFile("video_stream_", ".tmp");
-        tempFile.deleteOnExit();
-        try (FileOutputStream out = new FileOutputStream(tempFile)) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1) {
-                out.write(buffer, 0, bytesRead);
-            }
-        }
-        return tempFile;
     }
 
     private File createTempFile(String prefix, String suffix) throws IOException {

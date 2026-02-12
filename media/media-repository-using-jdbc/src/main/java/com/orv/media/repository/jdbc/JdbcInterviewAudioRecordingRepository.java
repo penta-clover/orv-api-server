@@ -31,12 +31,12 @@ public class JdbcInterviewAudioRecordingRepository implements InterviewAudioReco
             audioRecording.setCreatedAt(OffsetDateTime.now(ZoneOffset.UTC));
         }
 
-        String sql = "INSERT INTO interview_audio_recording (id, storyboard_id, member_id, audio_url, created_at, running_time) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO interview_audio_recording (id, storyboard_id, member_id, audio_file_key, created_at, running_time) VALUES (?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
                 audioRecording.getId(),
                 audioRecording.getStoryboardId(),
                 audioRecording.getMemberId(),
-                audioRecording.getAudioUrl(),
+                audioRecording.getAudioFileKey(),
                 audioRecording.getCreatedAt(),
                 audioRecording.getRunningTime());
         return audioRecording;
@@ -44,7 +44,7 @@ public class JdbcInterviewAudioRecordingRepository implements InterviewAudioReco
 
     @Override
     public Optional<InterviewAudioRecording> findById(UUID id) {
-        String sql = "SELECT id, storyboard_id, member_id, audio_url, created_at, running_time FROM interview_audio_recording WHERE id = ?";
+        String sql = "SELECT id, storyboard_id, member_id, audio_file_key, created_at, running_time FROM interview_audio_recording WHERE id = ?";
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(sql, new InterviewAudioRecordingRowMapper(), id));
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
@@ -65,7 +65,7 @@ public class JdbcInterviewAudioRecordingRepository implements InterviewAudioReco
                     .id(UUID.fromString(rs.getString("id")))
                     .storyboardId(UUID.fromString(rs.getString("storyboard_id")))
                     .memberId(UUID.fromString(rs.getString("member_id")))
-                    .audioUrl(rs.getString("audio_url"))
+                    .audioFileKey(rs.getString("audio_file_key"))
                     .createdAt(rs.getObject("created_at", OffsetDateTime.class))
                     .runningTime(rs.getInt("running_time"))
                     .build();

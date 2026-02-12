@@ -3,6 +3,7 @@ dependencies {
     implementation project(':archive:archive-domain')
     implementation project(':archive:archive-service')
     implementation project(':media:media-domain')
+    implementation project(':media:media-repository')
     implementation project(':media:media-service')
     implementation project(':storyboard:storyboard-domain')
     implementation project(':storyboard:storyboard-repository')

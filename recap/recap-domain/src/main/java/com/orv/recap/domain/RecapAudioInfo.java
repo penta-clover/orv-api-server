@@ -12,7 +12,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class RecapAudioInfo {
     private UUID audioId;
-    private String audioUrl;
+    private String audioFileKey;
     private Integer runningTime;
     private OffsetDateTime createdAt;
 }
