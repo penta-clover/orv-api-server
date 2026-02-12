@@ -86,7 +86,8 @@ public class ArchiveServiceImpl implements ArchiveService {
 
     @Override
     public boolean updateVideoThumbnail(UUID videoId, InputStream thumbnailStream, ImageMetadata metadata) {
-        return videoRepository.updateThumbnail(videoId, thumbnailStream, metadata);
+        boolean isUpdated = videoRepository.updateThumbnail(videoId, thumbnailStream, metadata);
+        return isUpdated;
     }
 
     // v1 API methods below
@@ -149,7 +150,10 @@ public class ArchiveServiceImpl implements ArchiveService {
             throw new ArchiveException(ArchiveErrorCode.THUMBNAIL_CANDIDATE_NOT_FOUND);
         }
 
-        videoRepository.updateThumbnail(videoId, candidate.getFileKey());
+        boolean isUpdated = videoRepository.updateThumbnail(videoId, candidate.getFileKey());
+        if (!isUpdated) {
+            throw new ArchiveException(ArchiveErrorCode.VIDEO_NOT_FOUND);
+        }
     }
 
     private File createTempVideoFile(InputStream videoStream) throws IOException {
