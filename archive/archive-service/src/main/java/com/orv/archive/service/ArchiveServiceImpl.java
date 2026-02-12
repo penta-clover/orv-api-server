@@ -21,11 +21,9 @@ import com.orv.archive.common.ArchiveException;
 import com.orv.archive.domain.ImageMetadata;
 import com.orv.archive.domain.InputStreamWithMetadata;
 import com.orv.archive.domain.PresignedUrlInfo;
-import com.orv.archive.domain.ThumbnailCandidate;
 import com.orv.archive.domain.Video;
 import com.orv.archive.domain.VideoMetadata;
 import com.orv.archive.domain.VideoStatus;
-import com.orv.archive.repository.ThumbnailCandidateRepository;
 import com.orv.archive.repository.VideoDurationCalculationJobRepository;
 import com.orv.archive.repository.VideoRepository;
 import com.orv.archive.repository.VideoThumbnailExtractionJobRepository;
@@ -43,7 +41,6 @@ public class ArchiveServiceImpl implements ArchiveService {
     private static final String DEFAULT_THUMBNAIL_KEY = "static/images/default-archive-video-thumbnail.png";
 
     private final VideoRepository videoRepository;
-    private final ThumbnailCandidateRepository thumbnailCandidateRepository;
     private final VideoDurationCalculationJobRepository videoDurationCalculationJobRepository;
     private final VideoThumbnailExtractionJobRepository videoThumbnailExtractionJobRepository;
 
@@ -86,7 +83,7 @@ public class ArchiveServiceImpl implements ArchiveService {
 
     @Override
     public boolean updateVideoThumbnail(UUID videoId, InputStream thumbnailStream, ImageMetadata metadata) {
-        boolean isUpdated = videoRepository.updateThumbnail(videoId, thumbnailStream, metadata);
+        return videoRepository.updateThumbnail(videoId, thumbnailStream, metadata);
     }
 
     // v1 API methods below
@@ -133,26 +130,6 @@ public class ArchiveServiceImpl implements ArchiveService {
     @Override
     public boolean deleteVideo(UUID videoId) {
         return videoRepository.deleteVideo(videoId);
-    }
-
-    @Override
-    public List<ThumbnailCandidate> getThumbnailCandidates(UUID videoId) {
-        return thumbnailCandidateRepository.findByVideoId(videoId);
-    }
-
-    @Override
-    public void selectThumbnailCandidate(UUID videoId, Long candidateId) {
-        ThumbnailCandidate candidate = thumbnailCandidateRepository.findById(candidateId)
-                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.THUMBNAIL_CANDIDATE_NOT_FOUND));
-
-        if (!candidate.getVideoId().equals(videoId)) {
-            throw new ArchiveException(ArchiveErrorCode.THUMBNAIL_CANDIDATE_NOT_FOUND);
-        }
-
-        boolean isUpdated = videoRepository.updateThumbnail(videoId, candidate.getFileKey());
-        if (!isUpdated) {
-            throw new ArchiveException(ArchiveErrorCode.VIDEO_NOT_FOUND);
-        }
     }
 
     private File createTempVideoFile(InputStream videoStream) throws IOException {

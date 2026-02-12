@@ -1,13 +1,11 @@
 package com.orv.archive.orchestrator;
 
 import com.orv.archive.orchestrator.dto.PresignedUrlResponse;
-import com.orv.archive.orchestrator.dto.ThumbnailCandidateResponse;
 import com.orv.archive.orchestrator.dto.VideoResponse;
 import com.orv.archive.service.ArchiveService;
 import com.orv.archive.service.PublicVideoUrlGenerator;
 import com.orv.archive.domain.ImageMetadata;
 import com.orv.archive.domain.PresignedUrlInfo;
-import com.orv.archive.domain.ThumbnailCandidate;
 import com.orv.archive.domain.Video;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -58,16 +56,6 @@ public class ArchiveOrchestrator {
         return archiveService.confirmUpload(videoId, memberId);
     }
 
-    public List<ThumbnailCandidateResponse> getThumbnailCandidates(UUID videoId) {
-        return archiveService.getThumbnailCandidates(videoId).stream()
-                .map(this::toThumbnailCandidateResponse)
-                .collect(Collectors.toList());
-    }
-
-    public void selectThumbnailCandidate(UUID videoId, Long candidateId) {
-        archiveService.selectThumbnailCandidate(videoId, candidateId);
-    }
-
     private VideoResponse toVideoResponse(Video video) {
         return new VideoResponse(
                 video.getId(),
@@ -94,15 +82,6 @@ public class ArchiveOrchestrator {
             return publicVideoUrlGenerator.generateUrl(video.getThumbnailFileKey());
         }
         return video.getThumbnailUrl();
-    }
-
-    private ThumbnailCandidateResponse toThumbnailCandidateResponse(ThumbnailCandidate candidate) {
-        return new ThumbnailCandidateResponse(
-                candidate.getId(),
-                candidate.getTimestampMs(),
-                publicVideoUrlGenerator.generateUrl(candidate.getFileKey()),
-                candidate.getCreatedAt()
-        );
     }
 
     private PresignedUrlResponse toPresignedUrlResponse(PresignedUrlInfo info) {
