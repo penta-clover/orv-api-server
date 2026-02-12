@@ -26,6 +26,8 @@ public interface VideoRepository {
 
     boolean updateThumbnail(UUID videoId, String thumbnailFileKey);
 
+    String uploadThumbnailCandidate(InputStream image, ImageMetadata metadata);
+
     Optional<InputStream> getVideoStream(UUID videoId);
 
     List<Video> findAllByMemberId(UUID memberId);
