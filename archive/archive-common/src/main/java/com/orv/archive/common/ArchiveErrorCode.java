@@ -8,7 +8,8 @@ public enum ArchiveErrorCode {
     VIDEO_STATUS_UPDATE_FAILED(500, "V005", "Failed to update video status"),
     INVALID_VIDEO_ID_FORMAT(400, "V006", "Invalid video ID format"),
     INVALID_STORYBOARD_ID_FORMAT(400, "V007", "Invalid storyboard ID format"),
-    MISSING_REQUIRED_FIELD(400, "V008", "Required field is missing");
+    MISSING_REQUIRED_FIELD(400, "V008", "Required field is missing"),
+    THUMBNAIL_CANDIDATE_NOT_FOUND(404, "V009", "Thumbnail candidate not found");
 
     private final int statusCode;
     private final String code;

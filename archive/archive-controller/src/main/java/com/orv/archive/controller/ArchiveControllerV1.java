@@ -4,14 +4,19 @@ import com.orv.archive.common.ArchiveErrorCode;
 import com.orv.archive.common.ArchiveException;
 import com.orv.archive.orchestrator.ArchiveOrchestrator;
 import com.orv.archive.controller.dto.ConfirmUploadRequest;
+import com.orv.archive.controller.dto.SelectThumbnailRequest;
 import com.orv.archive.orchestrator.dto.PresignedUrlResponse;
+import com.orv.archive.orchestrator.dto.ThumbnailCandidateResponse;
 import com.orv.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -63,5 +68,39 @@ public class ArchiveControllerV1 {
         );
 
         return ApiResponse.success(videoId, 200);
+    }
+
+    @GetMapping("/video/{videoId}/thumbnail-candidates")
+    public ApiResponse<?> getThumbnailCandidates(@PathVariable String videoId) {
+        UUID videoUuid = parseVideoId(videoId);
+        List<ThumbnailCandidateResponse> candidates = archiveOrchestrator.getThumbnailCandidates(videoUuid);
+        return ApiResponse.success(candidates, 200);
+    }
+
+    @PutMapping("/video/{videoId}/thumbnail/select")
+    public ApiResponse<?> selectThumbnail(
+            @PathVariable String videoId,
+            @Valid @RequestBody SelectThumbnailRequest request) {
+        UUID videoUuid = parseVideoId(videoId);
+        archiveOrchestrator.selectThumbnailCandidate(videoUuid, request.getCandidateId());
+        return ApiResponse.success(null, 200);
+    }
+
+    @PutMapping("/video/{videoId}/thumbnail/upload")
+    public ApiResponse<?> uploadThumbnail(
+            @PathVariable String videoId,
+            @RequestPart("thumbnail") MultipartFile thumbnail) throws IOException {
+        UUID videoUuid = parseVideoId(videoId);
+        boolean result = archiveOrchestrator.updateVideoThumbnail(
+                videoUuid, thumbnail.getInputStream(), thumbnail.getContentType(), thumbnail.getSize());
+        return ApiResponse.success(result, 200);
+    }
+
+    private UUID parseVideoId(String videoId) {
+        try {
+            return UUID.fromString(videoId);
+        } catch (IllegalArgumentException e) {
+            throw new ArchiveException(ArchiveErrorCode.INVALID_VIDEO_ID_FORMAT);
+        }
     }
 }

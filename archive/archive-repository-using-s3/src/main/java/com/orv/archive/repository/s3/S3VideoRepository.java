@@ -160,6 +160,13 @@ public class S3VideoRepository implements VideoRepository {
     }
 
     @Override
+    public String uploadThumbnailCandidate(InputStream image, ImageMetadata metadata) {
+        String fileId = UUID.randomUUID().toString();
+        String s3Key = IMAGE_PATH_PREFIX + fileId;
+        return uploadToS3(image, s3Key, metadata.getContentType(), metadata.getContentLength());
+    }
+
+    @Override
     public boolean updateThumbnail(UUID videoId, InputStream thumbnail, ImageMetadata imageMetadata) {
         try {
             String fileId = UUID.randomUUID().toString();
