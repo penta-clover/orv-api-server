@@ -87,6 +87,7 @@ public class ArchiveServiceImpl implements ArchiveService {
     @Override
     public boolean updateVideoThumbnail(UUID videoId, InputStream thumbnailStream, ImageMetadata metadata) {
         boolean isUpdated = videoRepository.updateThumbnail(videoId, thumbnailStream, metadata);
+        return isUpdated;
     }
 
     // v1 API methods below
