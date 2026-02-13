@@ -41,3 +41,7 @@ jobs:
       - name: Build and push Thumbnail Extraction Worker Docker image
         run: |
           docker buildx build --platform linux/amd64,linux/arm64 -t chj7239/orv-thumbnail-extraction-worker:latest --push thumbnail-extraction-worker
+
+      - name: Build and push Audio Extraction Worker Docker image
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 -t chj7239/orv-audio-extraction-worker:latest --push audio-extraction-worker
