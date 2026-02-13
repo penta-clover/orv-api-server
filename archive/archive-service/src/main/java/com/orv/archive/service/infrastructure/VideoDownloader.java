@@ -1,6 +1,7 @@
 package com.orv.archive.service.infrastructure;
 
 import com.orv.archive.repository.VideoRepository;
+import com.orv.common.aop.MeasurePerformance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class VideoDownloader {
 
     private final VideoRepository videoRepository;
 
+    @MeasurePerformance("download")
     public File download(UUID videoId) throws IOException {
         Optional<InputStream> streamOpt = videoRepository.getVideoStream(videoId);
         if (streamOpt.isEmpty()) {

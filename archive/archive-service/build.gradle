@@ -1,4 +1,5 @@
 dependencies {
+    implementation project(':orv-common')
     implementation project(':archive:archive-common')
     implementation project(':archive:archive-domain')
     implementation project(':archive:archive-repository')

@@ -51,7 +51,11 @@ public class ThumbnailExtractionJobService {
                 return;
             }
 
+            long uploadStart = System.nanoTime();
             uploadAndSaveCandidates(job, result.candidates());
+            long uploadMs = (System.nanoTime() - uploadStart) / 1_000_000;
+            log.info("perf operation=upload-and-save job_id={} duration_ms={} candidates={}",
+                    job.getId(), uploadMs, result.candidates().size());
 
             jobRepository.markCompleted(job.getId());
             log.info("[{}] Completed thumbnail job #{} ({} candidates saved)",

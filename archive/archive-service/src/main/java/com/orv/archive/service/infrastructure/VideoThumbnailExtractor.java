@@ -2,6 +2,7 @@ package com.orv.archive.service.infrastructure;
 
 import com.orv.archive.domain.CandidateThumbnailExtractionResult;
 import com.orv.archive.domain.CandidateThumbnailExtractionResult.CandidateFrame;
+import com.orv.common.aop.MeasurePerformance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
@@ -29,19 +30,29 @@ public class VideoThumbnailExtractor {
 
     private record TimeRange(long startMs, long endMs) {}
 
+    @MeasurePerformance("extract-candidates")
     public CandidateThumbnailExtractionResult extractCandidates(File videoFile) {
         FFmpegFrameGrabber grabber = null;
         try {
+            long t0 = System.nanoTime();
             grabber = new FFmpegFrameGrabber(videoFile);
             grabber.setFormat(VIDEO_FORMAT);
             grabber.start();
+            long grabberStartNs = System.nanoTime() - t0;
 
             long durationMs = grabber.getLengthInTime() / 1_000;
             if (durationMs <= 0) {
                 return CandidateThumbnailExtractionResult.failure("Cannot determine video duration");
             }
 
-            List<CandidateFrame> candidates = extractBestPerSegment(grabber, computeSegments(durationMs));
+            FrameExtractionMetrics metrics = new FrameExtractionMetrics();
+            List<CandidateFrame> candidates = extractBestPerSegment(grabber, computeSegments(durationMs), metrics);
+
+            log.info("perf operation=extract-detail grabber_start_ms={} frame_scan_ms={} " +
+                            "conversion_ms={} deep_copy_ms={} sharpness_ms={} total_frames={} keyframes={}",
+                    nsToMs(grabberStartNs), nsToMs(metrics.frameScanNs),
+                    nsToMs(metrics.conversionNs), nsToMs(metrics.deepCopyNs),
+                    nsToMs(metrics.sharpnessNs), metrics.totalFrames, metrics.keyFrames);
 
             if (candidates.isEmpty()) {
                 return CandidateThumbnailExtractionResult.failure("No frames could be extracted");
@@ -56,13 +67,26 @@ public class VideoThumbnailExtractor {
         }
     }
 
+    private static long nsToMs(long ns) {
+        return ns / 1_000_000;
+    }
+
+    private static class FrameExtractionMetrics {
+        long frameScanNs = 0;
+        long conversionNs = 0;
+        long deepCopyNs = 0;
+        long sharpnessNs = 0;
+        int totalFrames = 0;
+        int keyFrames = 0;
+    }
+
     private List<CandidateFrame> extractBestPerSegment(
-            FFmpegFrameGrabber grabber, List<TimeRange> segments) throws Exception {
+            FFmpegFrameGrabber grabber, List<TimeRange> segments, FrameExtractionMetrics metrics) throws Exception {
         List<CandidateFrame> candidates = new ArrayList<>();
         Java2DFrameConverter converter = new Java2DFrameConverter();
         try {
             for (TimeRange segment : segments) {
-                extractBestKeyFrame(grabber, converter, segment)
+                extractBestKeyFrame(grabber, converter, segment, metrics)
                         .ifPresent(candidates::add);
             }
         } finally {
@@ -72,34 +96,56 @@ public class VideoThumbnailExtractor {
     }
 
     private Optional<CandidateFrame> extractBestKeyFrame(
-            FFmpegFrameGrabber grabber, Java2DFrameConverter converter, TimeRange segment) throws Exception {
+            FFmpegFrameGrabber grabber, Java2DFrameConverter converter,
+            TimeRange segment, FrameExtractionMetrics metrics) throws Exception {
         grabber.setTimestamp(segment.startMs() * 1_000);
 
         CandidateFrame best = null;
         CandidateFrame fallback = null;
 
         while (true) {
+            long t0 = System.nanoTime();
             Frame frame = grabber.grabImage();
+            metrics.frameScanNs += System.nanoTime() - t0;
+
             if (frame == null) break;
 
             long frameMs = grabber.getTimestamp() / 1_000;
             if (frameMs > segment.endMs()) break;
             if (frameMs < segment.startMs() || frame.image == null) continue;
 
+            long tc = System.nanoTime();
             BufferedImage image = converter.convert(frame);
+            metrics.conversionNs += System.nanoTime() - tc;
+
             if (image == null) continue;
+
+            metrics.totalFrames++;
 
             if (!frame.keyFrame) {
                 if (fallback == null) {
+                    long t1 = System.nanoTime();
                     BufferedImage copy = deepCopy(image);
+                    metrics.deepCopyNs += System.nanoTime() - t1;
+
+                    long t2 = System.nanoTime();
                     double sharpness = sharpnessCalculator.calculate(copy);
+                    metrics.sharpnessNs += System.nanoTime() - t2;
+
                     fallback = new CandidateFrame(frameMs, copy, sharpness);
                 }
                 continue;
             }
 
+            metrics.keyFrames++;
+
+            long t1 = System.nanoTime();
             BufferedImage copy = deepCopy(image);
+            metrics.deepCopyNs += System.nanoTime() - t1;
+
+            long t2 = System.nanoTime();
             double sharpness = sharpnessCalculator.calculate(copy);
+            metrics.sharpnessNs += System.nanoTime() - t2;
 
             log.debug("Keyframe at {}ms in [{}-{}ms], sharpness={}",
                     frameMs, segment.startMs(), segment.endMs(), sharpness);
