@@ -1,0 +1,57 @@
+name: Build jemalloc profiling images
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build Spring project with Gradle
+        run: ./gradlew clean build -x test
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and push API server Docker image
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --build-arg JEMALLOC_PROFILING=true \
+            --build-arg MALLOC_CONF_VALUE="prof:true,prof_prefix:/var/log/app/jeprof,prof_final:true,lg_prof_interval:30" \
+            -t chj7239/orv-api-server:jemalloc-profile-latest --push .
+
+      - name: Build and push Duration Calculation Worker Docker image
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --build-arg JEMALLOC_PROFILING=true \
+            --build-arg MALLOC_CONF_VALUE="prof:true,prof_prefix:/var/log/app/jeprof,prof_final:true,lg_prof_interval:30" \
+            -t chj7239/orv-duration-calculation-worker:jemalloc-profile-latest --push duration-calculation-worker
+
+      - name: Build and push Thumbnail Extraction Worker Docker image
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --build-arg JEMALLOC_PROFILING=true \
+            --build-arg MALLOC_CONF_VALUE="prof:true,prof_prefix:/var/log/app/jeprof,prof_final:true,lg_prof_interval:30" \
+            -t chj7239/orv-thumbnail-extraction-worker:jemalloc-profile-latest --push thumbnail-extraction-worker
+
+      - name: Build and push Audio Extraction Worker Docker image
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --build-arg JEMALLOC_PROFILING=true \
+            --build-arg MALLOC_CONF_VALUE="prof:true,prof_prefix:/var/log/app/jeprof,prof_final:true,lg_prof_interval:30" \
+            -t chj7239/orv-audio-extraction-worker:jemalloc-profile-latest --push audio-extraction-worker
