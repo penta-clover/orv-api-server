@@ -9,6 +9,8 @@ RUN apt-get update && \
 
 ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so.2
 
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
+
 ADD build/libs/thumbnail-extraction-worker-0.0.1-SNAPSHOT.jar worker-app.jar
 ENTRYPOINT ["java", \
     "-XX:+HeapDumpOnOutOfMemoryError", \

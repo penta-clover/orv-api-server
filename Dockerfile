@@ -10,6 +10,8 @@ RUN apt-get update && \
 
 ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so.2
 
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
+
 ADD orv-app/build/libs/orv-app-0.0.1-SNAPSHOT.jar spring-app.jar
 ENTRYPOINT ["java", \
     "-XX:+HeapDumpOnOutOfMemoryError", \
