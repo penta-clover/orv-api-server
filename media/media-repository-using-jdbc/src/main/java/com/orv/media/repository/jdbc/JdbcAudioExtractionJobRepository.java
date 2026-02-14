@@ -46,6 +46,9 @@ public class JdbcAudioExtractionJobRepository implements AudioExtractionJobRepos
     private static final String UPDATE_TO_FAILED_SQL =
             "UPDATE audio_extraction_job SET status = 'FAILED' WHERE id = ?";
 
+    private static final String RESET_TO_PENDING_SQL =
+            "UPDATE audio_extraction_job SET status = 'PENDING', started_at = NULL WHERE id = ?";
+
     private final JdbcTemplate jdbcTemplate;
 
     public JdbcAudioExtractionJobRepository(JdbcTemplate jdbcTemplate) {
@@ -93,5 +96,10 @@ public class JdbcAudioExtractionJobRepository implements AudioExtractionJobRepos
     @Override
     public void markFailed(Long jobId) {
         jdbcTemplate.update(UPDATE_TO_FAILED_SQL, jobId);
+    }
+
+    @Override
+    public void resetToPending(Long jobId) {
+        jdbcTemplate.update(RESET_TO_PENDING_SQL, jobId);
     }
 }

@@ -14,4 +14,6 @@ public interface VideoThumbnailExtractionJobRepository {
     void markCompleted(Long jobId);
 
     void markFailed(Long jobId);
+
+    void resetToPending(Long jobId);
 }

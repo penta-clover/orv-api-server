@@ -14,4 +14,6 @@ public interface AudioExtractionJobRepository {
     void markCompleted(Long jobId, UUID resultAudioRecordingId);
 
     void markFailed(Long jobId);
+
+    void resetToPending(Long jobId);
 }

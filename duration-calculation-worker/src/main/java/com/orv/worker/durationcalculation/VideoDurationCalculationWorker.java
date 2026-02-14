@@ -52,7 +52,8 @@ public class VideoDurationCalculationWorker {
             try {
                 executor.execute(() -> jobService.processJob(job));
             } catch (org.springframework.core.task.TaskRejectedException e) {
-                log.warn("Thread pool full, will retry duration calculation job #{} next poll cycle", job.getId());
+                log.warn("Thread pool full, resetting duration calculation job #{} to PENDING", job.getId());
+                jobRepository.resetToPending(job.getId());
                 return;
             }
         }

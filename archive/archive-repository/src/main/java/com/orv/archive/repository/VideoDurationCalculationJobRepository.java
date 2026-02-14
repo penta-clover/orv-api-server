@@ -14,4 +14,6 @@ public interface VideoDurationCalculationJobRepository {
     void markCompleted(Long jobId);
 
     void markFailed(Long jobId);
+
+    void resetToPending(Long jobId);
 }

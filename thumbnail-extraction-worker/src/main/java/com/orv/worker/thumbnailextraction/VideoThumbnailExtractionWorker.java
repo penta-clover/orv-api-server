@@ -52,7 +52,8 @@ public class VideoThumbnailExtractionWorker {
             try {
                 executor.execute(() -> jobService.processJob(job));
             } catch (org.springframework.core.task.TaskRejectedException e) {
-                log.warn("Thread pool full, will retry thumbnail job #{} next poll cycle", job.getId());
+                log.warn("Thread pool full, resetting thumbnail job #{} to PENDING", job.getId());
+                jobRepository.resetToPending(job.getId());
                 return;
             }
         }
