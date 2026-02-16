@@ -4,9 +4,11 @@ import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
 import com.orv.archive.domain.*;
+import com.orv.archive.repository.VideoFileReader;
 import com.orv.archive.repository.VideoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +25,7 @@ import java.util.*;
 
 @Repository
 @Slf4j
-public class S3VideoRepository implements VideoRepository {
+public class S3VideoRepository implements VideoRepository, VideoFileReader {
     private static final String VIDEO_PATH_PREFIX = "archive/videos/";
     private static final String IMAGE_PATH_PREFIX = "archive/images/";
     private static final String DEFAULT_THUMBNAIL_KEY = "static/images/default-archive-video-thumbnail.png";
@@ -200,6 +202,25 @@ public class S3VideoRepository implements VideoRepository {
         } catch (Exception e) {
             log.error("Failed to get video stream: videoId={}", videoId, e);
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public long getFileSize(String fileKey) {
+        ObjectMetadata metadata = amazonS3Client.getObjectMetadata(bucket, fileKey);
+        return metadata.getContentLength();
+    }
+
+    @Override
+    public byte[] getRange(String fileKey, long offset, long length) {
+        GetObjectRequest request = new GetObjectRequest(bucket, fileKey)
+                .withRange(offset, offset + length - 1);
+        try (S3Object s3Object = amazonS3Client.getObject(request);
+             InputStream stream = s3Object.getObjectContent()) {
+            return stream.readAllBytes();
+        } catch (java.io.IOException e) {
+            throw new java.io.UncheckedIOException(
+                    "Failed to read range [%d, %d) from %s".formatted(offset, offset + length, fileKey), e);
         }
     }
 

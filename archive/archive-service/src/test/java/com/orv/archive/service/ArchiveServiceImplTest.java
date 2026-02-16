@@ -81,7 +81,7 @@ class ArchiveServiceImplTest {
 
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
         when(videoRepository.checkUploadComplete(videoId)).thenReturn(true);
-        when(videoRepository.updateVideoUrlAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(true);
+        when(videoRepository.updateVideoFileKeyAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(true);
 
         // when
         String result = archiveService.confirmUpload(videoId, memberId);
@@ -184,7 +184,7 @@ class ArchiveServiceImplTest {
 
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
         when(videoRepository.checkUploadComplete(videoId)).thenReturn(true);
-        when(videoRepository.updateVideoUrlAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(false);
+        when(videoRepository.updateVideoFileKeyAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(false);
 
         // when & then
         assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))

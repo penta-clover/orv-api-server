@@ -1,6 +1,5 @@
 package com.orv.worker.thumbnailextraction.service;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -15,8 +14,6 @@ import com.orv.archive.repository.ThumbnailCandidateRepository;
 import com.orv.archive.repository.VideoRepository;
 import com.orv.archive.repository.VideoThumbnailExtractionJobRepository;
 import com.orv.archive.service.VideoProcessingUtils;
-import com.orv.archive.service.infrastructure.VideoDownloader;
-import com.orv.archive.service.infrastructure.VideoThumbnailExtractor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,20 +28,16 @@ public class ThumbnailExtractionJobService {
     private final VideoThumbnailExtractionJobRepository jobRepository;
     private final VideoRepository videoRepository;
     private final ThumbnailCandidateRepository candidateRepository;
-    private final VideoThumbnailExtractor thumbnailExtractor;
-    private final VideoDownloader videoDownloader;
+    private final RangeBasedThumbnailExtractor thumbnailExtractor;
 
     public void processJob(VideoThumbnailExtractionJob job) {
         String threadName = Thread.currentThread().getName();
         log.info("[{}] Processing thumbnail job #{} for video {}", threadName, job.getId(), job.getVideoId());
 
-        File videoFile = null;
         try {
             candidateRepository.deleteByJobId(job.getId());
 
-            videoFile = videoDownloader.download(job.getVideoId());
-
-            CandidateThumbnailExtractionResult result = thumbnailExtractor.extractCandidates(videoFile);
+            CandidateThumbnailExtractionResult result = thumbnailExtractor.extractCandidates(job.getVideoId());
             if (!result.success()) {
                 log.warn("Thumbnail job #{} failed: {}", job.getId(), result.errorMessage());
                 jobRepository.markFailed(job.getId());
@@ -64,8 +57,6 @@ public class ThumbnailExtractionJobService {
         } catch (Exception e) {
             log.error("[{}] Failed to process thumbnail job #{}", threadName, job.getId(), e);
             jobRepository.markFailed(job.getId());
-        } finally {
-            videoDownloader.deleteSafely(videoFile);
         }
     }
 
