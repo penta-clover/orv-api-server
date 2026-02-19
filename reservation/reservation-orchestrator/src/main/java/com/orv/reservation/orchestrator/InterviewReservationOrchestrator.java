@@ -1,5 +1,6 @@
 package com.orv.reservation.orchestrator;
 
+import com.orv.common.dto.PaginatedResponse;
 import com.orv.reservation.common.ReservationErrorCode;
 import com.orv.reservation.common.ReservationException;
 import com.orv.reservation.orchestrator.dto.*;
@@ -49,7 +50,8 @@ public class InterviewReservationOrchestrator {
                 memberId,
                 storyboardId,
                 scheduledAt.toLocalDateTime(),
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                false
         ));
     }
 
@@ -71,7 +73,8 @@ public class InterviewReservationOrchestrator {
                 memberId,
                 storyboardId,
                 LocalDateTime.now(),
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                false
         ));
     }
 
@@ -89,6 +92,16 @@ public class InterviewReservationOrchestrator {
 
     public boolean markInterviewAsDone(UUID interviewId) {
         return reservationService.markInterviewAsDone(interviewId);
+    }
+
+    public PaginatedResponse<InterviewReservationResponse> getReservations(UUID memberId, OffsetDateTime from, OffsetDateTime to, String sort, int page, int size, Boolean isUsed) {
+        List<InterviewReservation> reservations = reservationService.getReservations(memberId, from, to, sort, size + 1, page * size, isUsed);
+        boolean hasNext = reservations.size() > size;
+        List<InterviewReservation> trimmed = hasNext ? reservations.subList(0, size) : reservations;
+        List<InterviewReservationResponse> content = trimmed.stream()
+                .map(this::toInterviewReservationResponse)
+                .collect(Collectors.toList());
+        return new PaginatedResponse<>(content, page, size, hasNext);
     }
 
     @Transactional
@@ -128,7 +141,8 @@ public class InterviewReservationOrchestrator {
                 reservation.getMemberId(),
                 reservation.getStoryboardId(),
                 reservation.getScheduledAt(),
-                reservation.getCreatedAt()
+                reservation.getCreatedAt(),
+                reservation.isUsed()
         );
     }
 }

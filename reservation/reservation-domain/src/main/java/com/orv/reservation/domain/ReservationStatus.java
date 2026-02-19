@@ -2,8 +2,7 @@ package com.orv.reservation.domain;
 
 public enum ReservationStatus {
     PENDING("pending"),
-    DONE("done"),
-    CANCELLED("cancelled");
+    DONE("done");
 
     private final String value;
 

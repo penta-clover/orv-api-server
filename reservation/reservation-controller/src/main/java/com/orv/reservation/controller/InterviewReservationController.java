@@ -68,6 +68,21 @@ public class InterviewReservationController {
         return ApiResponse.success(interviewsOrEmpty.get(), 200);
     }
 
+    @GetMapping("/list")
+    public ApiResponse getReservations(
+            @RequestParam(value = "from", required = false) OffsetDateTime from,
+            @RequestParam(value = "to", required = false) OffsetDateTime to,
+            @RequestParam(value = "sort", required = false, defaultValue = "desc") String sort,
+            @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "20") int size,
+            @RequestParam(value = "isUsed", required = false) Boolean isUsed
+    ) {
+        UUID memberId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.max(1, Math.min(size, 100));
+        return ApiResponse.success(reservationOrchestrator.getReservations(memberId, from, to, sort, safePage, safeSize, isUsed), 200);
+    }
+
     @PatchMapping("/{interviewId}/done")
     public ApiResponse doneInterview(@PathVariable UUID interviewId) {
         boolean result = reservationOrchestrator.markInterviewAsDone(interviewId);

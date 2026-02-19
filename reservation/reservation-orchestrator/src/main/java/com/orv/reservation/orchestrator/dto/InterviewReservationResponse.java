@@ -1,5 +1,6 @@
 package com.orv.reservation.orchestrator.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,4 +17,6 @@ public class InterviewReservationResponse {
     private UUID storyboardId;
     private LocalDateTime scheduledAt;
     private LocalDateTime createdAt;
+    @JsonProperty("isUsed")
+    private boolean isUsed;
 }

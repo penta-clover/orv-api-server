@@ -109,4 +109,9 @@ public class InterviewReservationServiceImpl implements InterviewReservationServ
 
         return reservation;
     }
+
+    @Override
+    public List<InterviewReservation> getReservations(UUID memberId, OffsetDateTime from, OffsetDateTime to, String sort, int limit, int offset, Boolean isUsed) {
+        return reservationRepository.getReservations(memberId, from, to, sort, limit, offset, isUsed);
+    }
 }

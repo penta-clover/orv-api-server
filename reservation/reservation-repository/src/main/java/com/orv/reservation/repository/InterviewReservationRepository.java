@@ -18,4 +18,5 @@ public interface InterviewReservationRepository {
     Optional<InterviewReservation> findInterviewReservationByIdForUpdate(UUID reservationId);
     int countActiveReservations(UUID memberId, LocalDateTime startAt, LocalDateTime endAt);
     boolean markAsUsed(UUID reservationId);
+    List<InterviewReservation> getReservations(UUID memberId, OffsetDateTime from, OffsetDateTime to, String sort, int limit, int offset, Boolean isUsed);
 }

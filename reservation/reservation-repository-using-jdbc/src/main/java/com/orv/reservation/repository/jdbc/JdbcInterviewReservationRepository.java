@@ -55,7 +55,7 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
     @Override
     public Optional<List<InterviewReservation>> getReservedInterviews(UUID memberId, OffsetDateTime from) {
         String sql = """
-                SELECT r.id, r.member_id, r.storyboard_id, r.scheduled_at, r.created_at
+                SELECT r.id, r.member_id, r.storyboard_id, r.scheduled_at, r.created_at, r.is_used
                 FROM interview_reservation r
                 JOIN storyboard sb ON r.storyboard_id = sb.id
                 WHERE r.member_id = ?
@@ -84,7 +84,7 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
     @Override
     public Optional<InterviewReservation> findInterviewReservationById(UUID reservationId) {
         String sql = """
-                SELECT id, storyboard_id, member_id, scheduled_at, created_at, reservation_status, is_used
+                SELECT id, storyboard_id, member_id, scheduled_at, created_at, is_used
                 FROM interview_reservation
                 WHERE id = ?
                 """;
@@ -100,7 +100,7 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
     @Override
     public Optional<InterviewReservation> findInterviewReservationByIdForUpdate(UUID reservationId) {
         String sql = """
-                SELECT id, storyboard_id, member_id, scheduled_at, created_at, reservation_status, is_used
+                SELECT id, storyboard_id, member_id, scheduled_at, created_at, is_used
                 FROM interview_reservation
                 WHERE id = ? FOR UPDATE
                 """;
@@ -129,5 +129,40 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
     public boolean markAsUsed(UUID reservationId) {
         String sql = "UPDATE interview_reservation SET is_used = TRUE WHERE id = ? AND is_used = FALSE";
         return jdbcTemplate.update(sql, reservationId) > 0;
+    }
+
+    @Override
+    public List<InterviewReservation> getReservations(UUID memberId, OffsetDateTime from, OffsetDateTime to, String sort, int limit, int offset, Boolean isUsed) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT r.id, r.member_id, r.storyboard_id, r.scheduled_at, r.created_at, r.is_used
+                FROM interview_reservation r
+                JOIN storyboard sb ON r.storyboard_id = sb.id
+                WHERE r.member_id = ?
+                  AND sb.status != 'DELETED'
+                """);
+
+        List<Object> params = new ArrayList<>();
+        params.add(memberId);
+
+        if (from != null) {
+            sql.append("  AND r.scheduled_at >= ?\n");
+            params.add(from);
+        }
+        if (to != null) {
+            sql.append("  AND r.scheduled_at < ?\n");
+            params.add(to);
+        }
+        if (isUsed != null) {
+            sql.append("  AND r.is_used = ?\n");
+            params.add(isUsed);
+        }
+
+        String direction = "desc".equalsIgnoreCase(sort) ? "DESC" : "ASC";
+        sql.append("ORDER BY r.scheduled_at ").append(direction).append("\n");
+        sql.append("LIMIT ? OFFSET ?");
+        params.add(limit);
+        params.add(offset);
+
+        return jdbcTemplate.query(sql.toString(), params.toArray(), new BeanPropertyRowMapper<>(InterviewReservation.class));
     }
 }

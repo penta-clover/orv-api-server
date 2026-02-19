@@ -21,4 +21,5 @@ public interface InterviewReservationService {
     boolean markInterviewAsDone(UUID interviewId);
     int countActiveReservations(UUID memberId, java.time.LocalDateTime startAt, java.time.LocalDateTime endAt);
     InterviewReservation markAsUsed(UUID reservationId);
+    List<InterviewReservation> getReservations(UUID memberId, OffsetDateTime from, OffsetDateTime to, String sort, int limit, int offset, Boolean isUsed);
 }
