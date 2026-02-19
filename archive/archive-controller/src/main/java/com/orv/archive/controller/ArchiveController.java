@@ -45,7 +45,7 @@ public class ArchiveController {
 
             return ApiResponse.success(videoId.get(), 201);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("uploadRecordedVideo failed storyboardId={}", storyboardId, e);
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
     }
@@ -82,7 +82,7 @@ public class ArchiveController {
 
             return ApiResponse.success(null, 200);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("changeVideoMetadata failed videoId={}", videoId, e);
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
     }
@@ -98,7 +98,7 @@ public class ArchiveController {
 
             return ApiResponse.success(null, 200);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("changeVideoThumbnail failed videoId={}", videoId, e);
             return ApiResponse.fail(ErrorCode.UNKNOWN, 500);
         }
     }

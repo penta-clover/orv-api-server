@@ -6,6 +6,7 @@ import com.orv.storyboard.orchestrator.TopicOrchestrator;
 import com.orv.common.dto.ApiResponse;
 import com.orv.common.dto.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v0/topic")
 @RequiredArgsConstructor
+@Slf4j
 public class TopicController {
     private final TopicOrchestrator topicOrchestrator;
 
@@ -24,7 +26,7 @@ public class TopicController {
             List<TopicResponse> topics = topicOrchestrator.getTopicsByCategory(categoryCode);
             return ApiResponse.success(topics, 200);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("getTopics failed categoryCode={}", categoryCode, e);
             return ApiResponse.fail(null, 500);
         }
     }
@@ -40,7 +42,7 @@ public class TopicController {
 
             return ApiResponse.success(storyboardOrEmpty.get(), 200);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("getNextStoryboard failed topicId={}", topicId, e);
             return ApiResponse.fail(null, 500);
         }
     }
@@ -56,7 +58,7 @@ public class TopicController {
 
             return ApiResponse.success(topicOrEmpty.get(), 200);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("getTopic failed topicId={}", topicId, e);
             return ApiResponse.fail(null, 500);
         }
     }

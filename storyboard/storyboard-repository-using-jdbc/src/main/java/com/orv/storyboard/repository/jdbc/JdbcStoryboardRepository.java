@@ -67,7 +67,6 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
             Scene scene = jdbcTemplate.queryForObject(sql, new Object[]{id}, new BeanPropertyRowMapper<>(Scene.class));
             return Optional.of(scene);
         } catch (EmptyResultDataAccessException e) {
-            e.printStackTrace();
             return Optional.empty();
         }
     }
@@ -85,7 +84,7 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
             List<Scene> scenes = jdbcTemplate.query(sql, new Object[]{id}, new BeanPropertyRowMapper<>(Scene.class));
             return Optional.of(scenes);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("findScenesByStoryboardId failed id={}", id, e);
             return Optional.empty();
         }
     }
@@ -139,7 +138,7 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
             StoryboardPreview storyboardPreview = jdbcTemplate.queryForObject(sql, new Object[]{storyboardId}, new BeanPropertyRowMapper<>(StoryboardPreview.class));
             return Optional.of((String[]) storyboardPreview.getExamples().getArray());
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("getStoryboardPreview failed storyboardId={}", storyboardId, e);
             return Optional.empty();
         }
     }
@@ -194,7 +193,7 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
             List<Topic> topics = jdbcTemplate.query(sql, new Object[]{storyboardId}, new TopicRowMapper());
             return Optional.of(topics);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("findTopicsOfStoryboard failed storyboardId={}", storyboardId, e);
             return Optional.empty();
         }
     }

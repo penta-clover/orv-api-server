@@ -41,7 +41,6 @@ public class JdbcMemberRepository implements MemberRepository {
             Member member = jdbcTemplate.queryForObject(sql, new Object[]{provider, socialId}, new BeanPropertyRowMapper<>(Member.class));
             return Optional.of(member);
         } catch (EmptyResultDataAccessException e) {
-            e.printStackTrace();
             return Optional.empty();
         }
     }
@@ -54,7 +53,6 @@ public class JdbcMemberRepository implements MemberRepository {
             Member member = jdbcTemplate.queryForObject(sql, new Object[]{nickname}, new BeanPropertyRowMapper<>(Member.class));
             return Optional.of(member);
         } catch (EmptyResultDataAccessException e) {
-            e.printStackTrace();
             return Optional.empty();
         }
     }
@@ -71,7 +69,7 @@ public class JdbcMemberRepository implements MemberRepository {
             log.info("Roles: {}", roles);
             return Optional.of(roles);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("findRolesById failed memberId={}", memberId, e);
             return Optional.empty();
         }
     }
@@ -104,7 +102,6 @@ public class JdbcMemberRepository implements MemberRepository {
             Member member = jdbcTemplate.queryForObject(sql, new Object[]{memberId}, new BeanPropertyRowMapper<>(Member.class));
             return Optional.of(member);
         } catch (EmptyResultDataAccessException e) {
-            e.printStackTrace();
             return Optional.empty();
         }
     }

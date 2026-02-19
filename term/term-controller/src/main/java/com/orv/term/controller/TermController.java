@@ -21,8 +21,8 @@ public class TermController {
 
     @PostMapping("/agreement")
     public ApiResponse createAgreement(@RequestBody TermAgreementRequest termAgreementRequest, HttpServletRequest request) {
+        String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
         try {
-            String memberId = SecurityContextHolder.getContext().getAuthentication().getName();
             String clientIp = extractClientIp(request);
 
             Optional<String> agreementId = termOrchestrator.createAgreement(
@@ -38,7 +38,7 @@ public class TermController {
 
             return ApiResponse.success(agreementId.get(), 201);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("createAgreement failed memberId={}", memberId, e);
             return ApiResponse.fail(null, 500);
         }
     }

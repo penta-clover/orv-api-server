@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,6 +17,7 @@ import com.orv.reservation.domain.ReservationStatus;
 import com.orv.reservation.domain.InterviewReservation;
 import com.orv.reservation.repository.InterviewReservationRepository;
 @Repository
+@Slf4j
 public class JdbcInterviewReservationRepository implements InterviewReservationRepository {
     private final JdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert simpleJdbcInsert;
@@ -70,7 +72,7 @@ public class JdbcInterviewReservationRepository implements InterviewReservationR
             List<InterviewReservation> reservations = jdbcTemplate.query(sql, new Object[]{memberId, from}, new BeanPropertyRowMapper<>(InterviewReservation.class));
             return Optional.of(reservations);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("getReservedInterviews failed memberId={}", memberId, e);
             return Optional.empty();
         }
     }

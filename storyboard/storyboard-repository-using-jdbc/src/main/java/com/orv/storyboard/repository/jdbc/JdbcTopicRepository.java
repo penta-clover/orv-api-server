@@ -15,6 +15,7 @@ import java.util.UUID;
 import com.orv.storyboard.repository.TopicRepository;
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class JdbcTopicRepository implements TopicRepository {
     private final JdbcTemplate jdbcTemplate;
 
@@ -31,8 +32,8 @@ public class JdbcTopicRepository implements TopicRepository {
         try {
             return jdbcTemplate.query(sql, new TopicRowMapper());
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException();
+            log.error("findTopics failed", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -59,8 +60,8 @@ public class JdbcTopicRepository implements TopicRepository {
         try {
             return jdbcTemplate.query(sql, new Object[]{categoryCode}, new TopicRowMapper());
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException();
+            log.error("findTopicsByCategoryCode failed code={}", categoryCode, e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -74,8 +75,8 @@ public class JdbcTopicRepository implements TopicRepository {
         try {
             return jdbcTemplate.query(sql, new Object[]{topicId}, new BeanPropertyRowMapper<>(Storyboard.class));
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException();
+            log.error("findStoryboardsByTopicId failed topicId={}", topicId, e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -92,8 +93,8 @@ public class JdbcTopicRepository implements TopicRepository {
             Topic topic = jdbcTemplate.queryForObject(sql, new Object[]{topicId}, new TopicRowMapper());
             return Optional.of(topic);
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException();
+            log.error("findTopicById failed topicId={}", topicId, e);
+            throw new RuntimeException(e);
         }
     }
 }
