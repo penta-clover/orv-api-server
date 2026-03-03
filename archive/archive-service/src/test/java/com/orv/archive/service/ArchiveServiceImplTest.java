@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.orv.archive.common.ArchiveErrorCode;
 import com.orv.archive.common.ArchiveException;
@@ -44,8 +43,8 @@ class ArchiveServiceImplTest {
     private VideoThumbnailExtractionJobRepository videoThumbnailExtractionJobRepository;
 
     @Test
-    @DisplayName("requestUploadUrl: PENDING 상태의 video 생성 후 Presigned URL 반환")
-    void requestUploadUrl_createsPendingVideoAndReturnsPresignedUrl() throws MalformedURLException {
+    @DisplayName("업로드 URL을 요청하면 PENDING 상태의 video가 생성되고 Presigned URL이 반환된다")
+    void requestUploadUrl_validRequest_createsPendingVideoAndReturnsPresignedUrl() throws MalformedURLException {
         // given
         UUID storyboardId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
@@ -65,23 +64,20 @@ class ArchiveServiceImplTest {
     }
 
     @Test
-    @DisplayName("confirmUpload: S3에 파일 존재 시 status를 UPLOADED로 변경")
-    void confirmUpload_returnsVideoIdWhenSuccessful() {
+    @DisplayName("S3에 파일이 존재하면 상태가 UPLOADED로 변경된다")
+    void confirmUpload_fileExistsInS3_updatesStatusToUploaded() {
         // given
         UUID videoId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
-        String cloudfrontDomain = "https://cdn.example.com";
 
         Video video = new Video();
         video.setId(videoId);
         video.setMemberId(memberId);
         video.setStatus(VideoStatus.PENDING.name());
 
-        ReflectionTestUtils.setField(archiveService, "cloudfrontDomain", cloudfrontDomain);
-
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
         when(videoRepository.checkUploadComplete(videoId)).thenReturn(true);
-        when(videoRepository.updateVideoUrlAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(true);
+        when(videoRepository.updateVideoFileKeyAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(true);
 
         // when
         String result = archiveService.confirmUpload(videoId, memberId);
@@ -91,8 +87,8 @@ class ArchiveServiceImplTest {
     }
 
     @Test
-    @DisplayName("confirmUpload: video가 존재하지 않으면 예외 발생")
-    void confirmUpload_throwsExceptionWhenVideoNotFound() {
+    @DisplayName("video가 존재하지 않으면 VIDEO_NOT_FOUND 예외가 발생한다")
+    void confirmUpload_videoNotFound_throwsVideoNotFoundException() {
         // given
         UUID videoId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
@@ -106,8 +102,8 @@ class ArchiveServiceImplTest {
     }
 
     @Test
-    @DisplayName("confirmUpload: 다른 사용자의 video면 예외 발생")
-    void confirmUpload_throwsExceptionWhenUnauthorized() {
+    @DisplayName("다른 사용자의 video이면 VIDEO_ACCESS_DENIED 예외가 발생한다")
+    void confirmUpload_differentMember_throwsAccessDeniedException() {
         // given
         UUID videoId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
@@ -127,8 +123,8 @@ class ArchiveServiceImplTest {
     }
 
     @Test
-    @DisplayName("confirmUpload: PENDING 상태가 아니면 예외 발생")
-    void confirmUpload_throwsExceptionWhenNotPending() {
+    @DisplayName("PENDING 상태가 아니면 VIDEO_STATUS_NOT_PENDING 예외가 발생한다")
+    void confirmUpload_notPendingStatus_throwsStatusNotPendingException() {
         // given
         UUID videoId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
@@ -147,8 +143,8 @@ class ArchiveServiceImplTest {
     }
 
     @Test
-    @DisplayName("confirmUpload: S3에 파일이 없으면 예외 발생")
-    void confirmUpload_throwsExceptionWhenFileNotInS3() {
+    @DisplayName("S3에 파일이 없으면 VIDEO_FILE_NOT_UPLOADED 예외가 발생한다")
+    void confirmUpload_fileNotInS3_throwsFileNotUploadedException() {
         // given
         UUID videoId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
@@ -168,23 +164,20 @@ class ArchiveServiceImplTest {
     }
 
     @Test
-    @DisplayName("confirmUpload: DB 업데이트 실패 시 예외 발생")
-    void confirmUpload_throwsExceptionWhenStatusUpdateFails() {
+    @DisplayName("DB 업데이트에 실패하면 VIDEO_STATUS_UPDATE_FAILED 예외가 발생한다")
+    void confirmUpload_dbUpdateFails_throwsStatusUpdateFailedException() {
         // given
         UUID videoId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
-        String cloudfrontDomain = "https://cdn.example.com";
 
         Video video = new Video();
         video.setId(videoId);
         video.setMemberId(memberId);
         video.setStatus(VideoStatus.PENDING.name());
 
-        ReflectionTestUtils.setField(archiveService, "cloudfrontDomain", cloudfrontDomain);
-
         when(videoRepository.findById(videoId)).thenReturn(Optional.of(video));
         when(videoRepository.checkUploadComplete(videoId)).thenReturn(true);
-        when(videoRepository.updateVideoUrlAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(false);
+        when(videoRepository.updateVideoFileKeyAndStatus(eq(videoId), any(), eq(VideoStatus.UPLOADED.name()))).thenReturn(false);
 
         // when & then
         assertThatThrownBy(() -> archiveService.confirmUpload(videoId, memberId))
