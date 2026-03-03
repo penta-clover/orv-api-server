@@ -124,6 +124,7 @@ ext {
 
 tasks.named('test') {
     outputs.dir snippetsDir
+    workingDir = rootProject.projectDir
 }
 
 asciidoctor {
