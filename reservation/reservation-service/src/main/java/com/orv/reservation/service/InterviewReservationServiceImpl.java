@@ -23,7 +23,7 @@ public class InterviewReservationServiceImpl implements InterviewReservationServ
     private final InterviewReservationRepository reservationRepository;
 
     private static final int BUSINESS_DAY_START_HOUR = 4; // Business day starts at 4:00 AM
-    private static final int DAILY_INTERVIEW_LIMIT = 1; // Daily interview limit per user
+    private static final int DAILY_INTERVIEW_LIMIT = 100; // Daily interview limit per user
 
     @Override
     public Optional<InterviewReservation> getInterviewReservationById(UUID reservationId) {

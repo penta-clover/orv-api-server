@@ -55,6 +55,23 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
     }
 
     @Override
+    public Optional<Storyboard> findByIdForNoKeyUpdate(UUID id) {
+        String sql = """
+                SELECT id, title, start_scene_id, status, participation_count, max_participation_limit
+                FROM storyboard
+                WHERE id = ? AND status != 'DELETED'
+                FOR NO KEY UPDATE
+                """;
+
+        try {
+            Storyboard storyboard = jdbcTemplate.queryForObject(sql, new Object[]{id}, new StoryboardRowMapper());
+            return Optional.of(storyboard);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public Optional<Scene> findSceneById(UUID id) {
         String sql = """
                 SELECT s.id, s.name, s.scene_type, s.content, s.storyboard_id
@@ -203,6 +220,16 @@ public class JdbcStoryboardRepository implements StoryboardRepository {
     public void saveUsageHistory(UUID storyboardId, UUID memberId, StoryboardUsageStatus status) {
         String sql = "INSERT INTO storyboard_usage_history (storyboard_id, member_id, status) VALUES (?, ?, ?)";
         jdbcTemplate.update(sql, storyboardId, memberId, status.getValue());
+    }
+
+    @Override
+    public int incrementParticipationCount(UUID id) {
+        String sql = """
+            UPDATE storyboard
+            SET participation_count = participation_count + 1
+            WHERE id = ?;
+            """;
+        return jdbcTemplate.update(sql, id);
     }
 
     @Override

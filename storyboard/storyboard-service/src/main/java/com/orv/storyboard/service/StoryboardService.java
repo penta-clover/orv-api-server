@@ -10,6 +10,7 @@ import com.orv.storyboard.domain.StoryboardStatus;
 import com.orv.storyboard.domain.StoryboardUsageStatus;
 import com.orv.storyboard.domain.Topic;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StoryboardService {
     private final StoryboardRepository storyboardRepository;
 
@@ -81,23 +83,118 @@ public class StoryboardService {
     }
 
     @Transactional
-    public void participateStoryboard(UUID storyboardId, UUID memberId) {
+    public void participateStoryboardO(UUID storyboardId, UUID memberId) {
+        long totalStart = System.nanoTime();
         storyboardRepository.saveUsageHistory(storyboardId, memberId, StoryboardUsageStatus.STARTED);
 
-        Storyboard storyboard = storyboardRepository.findById(storyboardId)
-                .orElseThrow(() -> new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_FOUND));
+        Long readLockPhaseNs = null;
+        Long updateLockStartNs = null;
+        boolean success = false;
 
-        validateStoryboardActive(storyboard);
-        validateParticipationLimit(storyboard);
-        
-        int updateCount = storyboardRepository.incrementParticipationCountSafely(storyboardId);
-        
-        if (updateCount > 0) {
-            // Storyboard is updated successfully
-            return;
+        try {
+            long readLockStart = System.nanoTime();
+            Storyboard storyboard = storyboardRepository.findById(storyboardId)
+                    .orElseThrow(() -> new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_FOUND));
+
+            validateStoryboardActive(storyboard);
+            validateParticipationLimit(storyboard);
+            readLockPhaseNs = toElapsedNanos(readLockStart);
+
+            updateLockStartNs = System.nanoTime();
+            int updateCount = storyboardRepository.incrementParticipationCountSafely(storyboardId);
+
+            if (updateCount > 0) {
+                success = true;
+                return;
+            }
+
+            throwExceptionWithFailureReason(storyboardId);
+        } finally {
+            long endNs = System.nanoTime();
+            long totalNs = endNs - totalStart;
+            log.info(
+                    "participateStoryboard metrics mode=B method=participateStoryboardO storyboardId={} memberId={} readLockPhaseNs={} updateLockHeldNs={} totalNs={} success={}",
+                    storyboardId,
+                    memberId,
+                    readLockPhaseNs != null ? readLockPhaseNs : -1,
+                    updateLockStartNs != null ? endNs - updateLockStartNs : -1,
+                    totalNs,
+                    success
+            );
         }
+    }
 
-        throwExceptionWithFailureReason(storyboardId);
+    @Transactional
+    public void participateStoryboard(UUID storyboardId, UUID memberId) {
+        long totalStart = System.nanoTime();
+        storyboardRepository.saveUsageHistory(storyboardId, memberId, StoryboardUsageStatus.STARTED);
+
+        Long readLockPhaseNs = null;
+        Long updateLockStartNs = null;
+        boolean success = false;
+
+        try {
+            long readLockStart = System.nanoTime();
+            updateLockStartNs = System.nanoTime();
+            Storyboard storyboard = storyboardRepository.findByIdForNoKeyUpdate(storyboardId)
+                    .orElseThrow(() -> new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_FOUND));
+
+            validateStoryboardActive(storyboard);
+            validateParticipationLimit(storyboard);
+            readLockPhaseNs = toElapsedNanos(readLockStart);
+
+            storyboardRepository.incrementParticipationCount(storyboardId);
+
+            success = true;
+        } finally {
+            long endNs = System.nanoTime();
+            long totalNs = endNs - totalStart;
+            log.info(
+                    "participateStoryboard metrics mode=A method=participateStoryboardP storyboardId={} memberId={} readLockPhaseNs={} updateLockHeldNs={} totalNs={} success={}",
+                    storyboardId,
+                    memberId,
+                    readLockPhaseNs != null ? readLockPhaseNs : -1,
+                    updateLockStartNs != null ? endNs - updateLockStartNs : -1,
+                    totalNs,
+                    success
+            );
+        }
+    }
+
+    public void participateStoryboardN(UUID storyboardId, UUID memberId) {
+        long totalStart = System.nanoTime();
+        storyboardRepository.saveUsageHistory(storyboardId, memberId, StoryboardUsageStatus.STARTED);
+
+        Long readLockPhaseNs = null;
+        Long updateLockStartNs = null;
+        boolean success = false;
+
+        try {
+            long readLockStart = System.nanoTime();
+            Storyboard storyboard = storyboardRepository.findById(storyboardId)
+                    .orElseThrow(() -> new StoryboardException(StoryboardErrorCode.STORYBOARD_NOT_FOUND));
+
+            validateStoryboardActive(storyboard);
+            validateParticipationLimit(storyboard);
+            readLockPhaseNs = toElapsedNanos(readLockStart);
+
+            updateLockStartNs = System.nanoTime();
+            storyboardRepository.incrementParticipationCount(storyboardId);
+
+            success = true;
+        } finally {
+            long endNs = System.nanoTime();
+            long totalNs = endNs - totalStart;
+            log.info(
+                    "participateStoryboard metrics mode=C method=participateStoryboardN storyboardId={} memberId={} readLockPhaseNs={} updateLockHeldNs={} totalNs={} success={}",
+                    storyboardId,
+                    memberId,
+                    readLockPhaseNs != null ? readLockPhaseNs : -1,
+                    updateLockStartNs != null ? endNs - updateLockStartNs : -1,
+                    totalNs,
+                    success
+            );
+        }
     }
 
     private void validateParticipationLimit(Storyboard storyboard) {
@@ -125,5 +222,8 @@ public class StoryboardService {
         validateParticipationLimit(storyboard);
 
         throw new RuntimeException("Unexpected Error while update storyboard participation count");
+    }
+    private long toElapsedNanos(long startNanoTime) {
+        return System.nanoTime() - startNanoTime;
     }
 }

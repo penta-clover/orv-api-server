@@ -7,8 +7,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -32,7 +32,7 @@ public class JdbcStoryboardRepositoryTest {
         storyboard.setId(storyboardId);
         storyboard.setTitle("testStoryboard");
 
-        when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(BeanPropertyRowMapper.class)))
+        when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(RowMapper.class)))
                 .thenReturn(storyboard);
 
         JdbcStoryboardRepository repository = new JdbcStoryboardRepository(jdbcTemplate);
@@ -52,7 +52,7 @@ public class JdbcStoryboardRepositoryTest {
         // given
         UUID storyboardId = UUID.randomUUID();
 
-        when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(BeanPropertyRowMapper.class)))
+        when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(RowMapper.class)))
                 .thenThrow(new EmptyResultDataAccessException(1));
 
         JdbcStoryboardRepository repository = new JdbcStoryboardRepository(jdbcTemplate);
