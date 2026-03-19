@@ -1,4 +1,4 @@
-# 영상 일기 기록 서비스, Orv의 API 서버
+# 영상 일기 기록 서비스, Orv의 API 서버입니다
 
 ### 사용한 기술
 Spring boot / PostgreSQL / Flyway / AWS (EC2·RDS·S3) / Wireguard / Github Action / Docker Compose
