@@ -19,7 +19,7 @@ public class JwtTokenService {
     @Value("${security.jwt.secret}")
     private String secretKey;
 
-    private long validityInMilliseconds = 604800000L; // 1 week
+    private long validityInMilliseconds = 3600000L; // 1 hour
 
     public String createToken(String subject, Map<String, ?> claims) {
         return createToken(subject, claims, this.validityInMilliseconds);
