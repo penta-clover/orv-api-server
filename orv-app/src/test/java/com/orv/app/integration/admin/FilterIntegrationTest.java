@@ -65,4 +65,25 @@ public class FilterIntegrationTest {
         // then
         resultActions.andExpect(status().isUnauthorized());
     }
+
+    @Test
+    public void testReservationForward_whenAnonymous_thenReturnUnauthorized() throws Exception {
+        // when
+        ResultActions resultActions = mockMvc.perform(get("/api/v0/reservation/interview/forward")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        // then
+        resultActions.andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testArchiveVideoUpdate_whenAnonymous_thenReturnUnauthorized() throws Exception {
+        // when
+        ResultActions resultActions = mockMvc.perform(patch("/api/v0/archive/video/054c3e8a-3387-4eb3-ac8a-31a48221f192")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"));
+
+        // then
+        resultActions.andExpect(status().isUnauthorized());
+    }
 }

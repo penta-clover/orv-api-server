@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -39,13 +40,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/v0/auth/nicknames").permitAll()
                         .requestMatchers("/api/v0/auth/join").permitAll()
                         .requestMatchers("/api/v0/auth/logout").permitAll()
-                        .requestMatchers("/api/v0/archive/video/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v0/archive/video/*").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/actuator/metrics/**").permitAll()
                         .requestMatchers("/actuator/prometheus/**").permitAll()
                         .requestMatchers("/api/v0/health").permitAll()
                         .requestMatchers("/api/v0/member/*/profile").permitAll()
-                        .requestMatchers("/api/v0/reservation/interview/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v0/reservation/interview/forward").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v0/reservation/interview/*").permitAll()
                         .requestMatchers("/api/v0/storyboard/*").permitAll()
                         .requestMatchers("/api/v0/storyboard/*/preview").permitAll()
                         .requestMatchers("/api/v0/storyboard/*/scene/all").permitAll()
