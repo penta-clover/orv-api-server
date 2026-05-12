@@ -6,7 +6,7 @@ v0.0.1-SNAPSHOT
 
 == 인증 및 로그인
 
-ORV API는 소셜 로그인을 사용하여 JWT 토큰 기반 인증을 지원합니다.
+ORV API는 소셜 로그인을 사용하여 DB 세션 기반 쿠키 인증을 지원합니다.
 아래는 주요 인증 관련 엔드포인트에 대한 설명입니다.
 
 === 1. 소셜 로그인 리다이렉트
@@ -24,9 +24,9 @@ include::{snippets}/auth/login-redirect/http-response.adoc[]
 === 2. 인증 콜백 - 기존 회원
 
 **엔드포인트:** `/api/v0/auth/callback/{provider}`
-**쿼리 파라미터:** `code` (소셜 로그인 인증 코드)
+**쿼리 파라미터:** `code` (소셜 로그인 인증 코드), `state` (로그인 요청 검증 값)
 
-이미 가입된 회원의 경우, 인증 후 JWT 토큰과 함께 프론트엔드로 리다이렉트됩니다.
+이미 가입된 회원의 경우, 인증 세션을 생성한 후 프론트엔드로 리다이렉트됩니다.
 
 ==== 요청 예시
 include::{snippets}/auth/callback-existing-user/http-request.adoc[]
@@ -37,9 +37,9 @@ include::{snippets}/auth/callback-existing-user/http-response.adoc[]
 === 3. 인증 콜백 - 신규 회원
 
 **엔드포인트:** `/api/v0/auth/callback/{provider}`
-**쿼리 파라미터:** `code` (소셜 로그인 인증 코드)
+**쿼리 파라미터:** `code` (소셜 로그인 인증 코드), `state` (로그인 요청 검증 값)
 
-가입되지 않은 신규 회원의 경우, 임시 ID를 생성한 후 JWT 토큰과 함께 신규 가입 처리를 진행합니다.
+가입되지 않은 신규 회원의 경우, 세션에 가입 대기 상태를 저장한 후 신규 가입 처리를 진행합니다.
 
 ==== 요청 예시
 include::{snippets}/auth/callback-new-user/http-request.adoc[]
@@ -63,10 +63,9 @@ include::{snippets}/auth/validate-nickname/http-response.adoc[]
 === 회원 가입
 
 **엔드포인트:** `/api/v0/auth/join`
-**헤더:** `Authorization` (JWT 토큰, Bearer 형식)
 **요청 본문:** 회원 가입 정보 (닉네임, 성별, 생년월일 등)
 
-회원 가입 요청을 처리하며, 성공 시 상태 코드와 결과를 반환합니다.
+소셜 인증 후 생성된 가입 대기 세션을 기반으로 회원 가입 요청을 처리하며, 성공 시 인증 세션으로 전환합니다.
 
 ==== 요청 예시
 include::{snippets}/auth/join/http-request.adoc[]

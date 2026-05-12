@@ -24,7 +24,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.orv.auth.service.JwtTokenService;
 import com.orv.reservation.controller.dto.InterviewReservationRequest;
 import com.orv.recap.controller.dto.RecapReservationRequest;
 import com.orv.recap.external.RecapClient;
@@ -34,6 +33,7 @@ import com.orv.recap.external.dto.RecapServerResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -55,9 +55,6 @@ public class ReservationIntegrationTest {
     @Autowired
     private Scheduler scheduler;
 
-    @Autowired
-    private JwtTokenService jwtTokenProvider;
-
     @MockitoBean
     private AmazonS3 amazonS3;
 
@@ -76,8 +73,6 @@ public class ReservationIntegrationTest {
 
     private String testScene2Id;
 
-    private static String token;
-
     @BeforeEach
     public void setUp() {
         testMemberId = UUID.randomUUID().toString();
@@ -90,8 +85,6 @@ public class ReservationIntegrationTest {
         // 테스트 실행 전, SecurityContext에 테스트용 회원 ID 설정
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(testMemberId, null));
-
-        token = jwtTokenProvider.createToken(testMemberId, Map.of("provider", "google", "socialId", "21342342523"));
 
         // 테스트를 위해 모든 관련 테이블 초기화 (CASCADE 옵션에 의존하지 않도록 순서를 고려)
         jdbcTemplate.update("DELETE FROM recap_reservation");
@@ -140,7 +133,8 @@ public class ReservationIntegrationTest {
 
         // API 호출: POST /api/v0/reservation/interview
         String responseContent = mockMvc.perform(post("/api/v0/reservation/interview")
-                        .header("Authorization", "Bearer " + token)
+                        .with(user(testMemberId))
+                        .header("Origin", "http://localhost:3000")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().is2xxSuccessful())
@@ -169,7 +163,7 @@ public class ReservationIntegrationTest {
 
         // API 호출: GET /api/v0/reservation/interview/forward
         mockMvc.perform(get("/api/v0/reservation/interview/forward")
-                        .header("Authorization", "Bearer " + token)
+                        .with(user(testMemberId))
                         .param("from", OffsetDateTime.now().toString()))
                 .andExpect(status().is2xxSuccessful())
                 .andExpect(jsonPath("$.data").isArray());
@@ -192,7 +186,8 @@ public class ReservationIntegrationTest {
 
         // API 호출: PATCH /api/v0/reservation/interview/{reservationId}/done
         mockMvc.perform(patch("/api/v0/reservation/interview/{interviewId}/done", reservationId.toString())
-                        .header("Authorization", "Bearer " + token))
+                        .with(user(testMemberId))
+                        .header("Origin", "http://localhost:3000"))
                 .andExpect(status().is2xxSuccessful())
                 .andExpect(jsonPath("$.statusCode").value(200));
 
@@ -228,7 +223,8 @@ public class ReservationIntegrationTest {
 
         // API 호출: POST /api/v0/reservation/recap/video
         String responseContent = mockMvc.perform(post("/api/v0/reservation/recap/video")
-                        .header("Authorization", "Bearer " + token)
+                        .with(user(testMemberId))
+                        .header("Origin", "http://localhost:3000")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().is2xxSuccessful())
@@ -280,7 +276,7 @@ public class ReservationIntegrationTest {
 
         // When & Then
         mockMvc.perform(get("/api/v0/reservation/recap/{recapReservationId}/result", recapReservationId.toString())
-                        .header("Authorization", "Bearer " + token)
+                        .with(user(testMemberId))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200))
@@ -302,7 +298,7 @@ public class ReservationIntegrationTest {
 
         // When & Then
         mockMvc.perform(get("/api/v0/reservation/recap/{nonExistentRecapReservationId}/result", nonExistentRecapReservationId.toString())
-                        .header("Authorization", "Bearer " + token)
+                        .with(user(testMemberId))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is2xxSuccessful())
                 .andExpect(jsonPath("$.statusCode").value(404));

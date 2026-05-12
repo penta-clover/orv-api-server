@@ -3,4 +3,5 @@ dependencies {
     implementation project(':auth:auth-external-api')
     implementation 'org.springframework:spring-web'
     implementation 'org.springframework:spring-context'
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
 }

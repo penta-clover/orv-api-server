@@ -1,7 +1,6 @@
 package com.orv.app.integration.storyboard;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.auth.service.JwtTokenService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,10 +12,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -35,10 +34,6 @@ public class TopicIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private JwtTokenService jwtTokenProvider;
-
-
     private static final String testTopicId = "ba4c3e8a-3387-4eb3-ac8a-31a48221f192";
     private static final String testMemberId = "054c3e8a-3387-4eb3-ac8a-31a48221f192";
     private static final String testStoryboardId = "614c3e8a-3387-4eb3-ac8a-31a48221f192";
@@ -47,8 +42,6 @@ public class TopicIntegrationTest {
     private static final String hashtagId = "e291d72d-f9b8-4725-b056-85a2a813c93f";
     private static final String testHashtagName = "test-hashtag";
     private static final String testHashtagColor = "#FF5733";
-
-    private String token;
 
     @BeforeEach
     public void setUp() {
@@ -75,7 +68,6 @@ public class TopicIntegrationTest {
         String insertStoryboardTopicSql = "INSERT INTO storyboard_topic (storyboard_id, topic_id) VALUES (?, ?)";
         jdbcTemplate.update(insertStoryboardTopicSql, UUID.fromString(testStoryboardId), UUID.fromString(testTopicId));
 
-        token = jwtTokenProvider.createToken(testMemberId, Map.of("provider", "google", "socialId", "12513412"));
     }
 
     /**
@@ -85,7 +77,7 @@ public class TopicIntegrationTest {
     @Test
     public void testGetTopics() throws Exception {
         mockMvc.perform(get("/api/v0/topic/list")
-                        .header("Authorization", "Bearer " + token))
+                        .with(user(testMemberId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.data").isArray())
@@ -103,7 +95,7 @@ public class TopicIntegrationTest {
     @Test
     public void testGetNextStoryboard() throws Exception {
         String url = "/api/v0/topic/" + testTopicId.toString() + "/storyboard/next";
-        mockMvc.perform(get(url).header("Authorization", "Bearer " + token))
+        mockMvc.perform(get(url).with(user(testMemberId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200))
                 // 반환된 Storyboard의 id와 title이 미리 삽입한 데이터와 일치하는지 확인
@@ -119,7 +111,7 @@ public class TopicIntegrationTest {
     public void testGetTopic() throws Exception {
         String url = "/api/v0/topic/" + testTopicId.toString();
         mockMvc.perform(get(url)
-                        .header("Authorization", "Bearer " + token))
+                        .with(user(testMemberId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200))
                 // 반환된 Topic의 정보가 미리 삽입한 값과 일치하는지 확인

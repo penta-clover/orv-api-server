@@ -18,7 +18,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,10 +27,10 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -57,10 +58,10 @@ public class AuthControllerTest {
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
                 .build();
         ReflectionTestUtils.setField(authController, "callbackUrl", callbackUrl);
-
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken("054c3e8a-3387-4eb3-ac8a-31a48221f192", null, Collections.emptyList());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        ReflectionTestUtils.setField(authController, "sessionCookieName", "ORVSESSION");
+        ReflectionTestUtils.setField(authController, "secureSessionCookie", true);
+        ReflectionTestUtils.setField(authController, "sessionCookieSameSite", "Lax");
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -82,6 +83,7 @@ public class AuthControllerTest {
         // given
         String provider = "kakao";
         String code = "dummyCode";
+        String state = "testState";
 
         SocialUserInfo socialUserInfo = new SocialUserInfo();
         socialUserInfo.setProvider(provider);
@@ -92,21 +94,24 @@ public class AuthControllerTest {
         existingMember.setProvider(provider);
         existingMember.setSocialId("12345");
 
-        String token = "dummyJwtToken";
+        MockHttpSession session = oauthSession(provider, state);
 
         when(authOrchestrator.getUserInfo(provider, code)).thenReturn(socialUserInfo);
         when(authOrchestrator.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.of(existingMember));
         when(authOrchestrator.findRolesById(existingMember.getId())).thenReturn(Optional.of(Collections.emptyList()));
-        when(authOrchestrator.createToken(eq(existingMember.getId().toString()), any(Map.class))).thenReturn(token);
 
         // 가입된 유저일 경우, isNewUser는 false
-        String expectedRedirectUrl = callbackUrl + "?isNewUser=false&jwtToken=" + token;
+        String expectedRedirectUrl = callbackUrl + "?isNewUser=false";
 
         // when & then
         mockMvc.perform(get("/api/v0/auth/callback/{provider}", provider)
-                        .param("code", code))
+                        .session(session)
+                        .param("code", code)
+                        .param("state", state))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(expectedRedirectUrl));
+
+        assertThat(session.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY)).isNotNull();
     }
 
 
@@ -115,6 +120,7 @@ public class AuthControllerTest {
         // given
         String provider = "kakao";
         String code = "dummyCode";
+        String state = "testState";
 
         SocialUserInfo socialUserInfo = new SocialUserInfo();
         socialUserInfo.setProvider(provider);
@@ -124,18 +130,22 @@ public class AuthControllerTest {
         when(authOrchestrator.getUserInfo(provider, code)).thenReturn(socialUserInfo);
         when(authOrchestrator.findByProviderAndSocialId(provider, "12345")).thenReturn(Optional.empty());
 
-        // 미가입 유저일 경우, 임시 ID가 생성되지만 테스트에서는 그 값을 신경쓰지 않고 토큰만 모킹
-        String token = "dummyJwtTokenNew";
-        when(authOrchestrator.createToken(anyString(), any(Map.class))).thenReturn(token);
+        MockHttpSession session = oauthSession(provider, state);
 
         // 가입되지 않은 경우, isNewUser는 true
-        String expectedRedirectUrl = callbackUrl + "?isNewUser=true&jwtToken=" + token;
+        String expectedRedirectUrl = callbackUrl + "?isNewUser=true";
 
         // when & then
         mockMvc.perform(get("/api/v0/auth/callback/{provider}", provider)
-                        .param("code", code))
+                        .session(session)
+                        .param("code", code)
+                        .param("state", state))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(expectedRedirectUrl));
+
+        assertThat(session.getAttribute(AuthController.PENDING_SIGNUP_MEMBER_ID_SESSION_ATTRIBUTE)).isNotNull();
+        assertThat(session.getAttribute(AuthController.PENDING_SIGNUP_PROVIDER_SESSION_ATTRIBUTE)).isEqualTo(provider);
+        assertThat(session.getAttribute(AuthController.PENDING_SIGNUP_SOCIAL_ID_SESSION_ATTRIBUTE)).isEqualTo("12345");
     }
 
     @Test
@@ -168,28 +178,45 @@ public class AuthControllerTest {
         joinForm.setGender("MALE");
         joinForm.setBirthDay(LocalDate.of(2002, 5, 31));
 
-        // Authorization 헤더에서 추출할 토큰과 페이로드 설정
-        String token = "dummyToken";
-        String bearerToken = "Bearer " + token;
-        Map<String, Object> payload = Map.of(
-                "id", UUID.randomUUID().toString(),
-                "provider", "testProvider",
-                "socialId", "testSocialId"
-        );
+        String pendingMemberId = UUID.randomUUID().toString();
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(AuthController.PENDING_SIGNUP_MEMBER_ID_SESSION_ATTRIBUTE, pendingMemberId);
+        session.setAttribute(AuthController.PENDING_SIGNUP_PROVIDER_SESSION_ATTRIBUTE, "testProvider");
+        session.setAttribute(AuthController.PENDING_SIGNUP_SOCIAL_ID_SESSION_ATTRIBUTE, "testSocialId");
 
-        // authOrchestrator.getPayload() 모킹
-        Mockito.when(authOrchestrator.getPayload(eq(token))).thenReturn((Map) payload);
         // authOrchestrator.join() 호출시 아무 동작 없음 (void)
         Mockito.doNothing().when(authOrchestrator).join(anyString(), anyString(), anyString(), any(), anyString(), anyString(), any());
 
         // when & then
         mockMvc.perform(post("/api/v0/auth/join")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", bearerToken)
+                        .session(session)
                         .content(objectMapper.writeValueAsString(joinForm)))
                 .andExpect(status().isOk())
                 // ApiResponse의 결과가 null로 반환되지만, 성공 코드 200을 전달한다고 가정
                 .andExpect(jsonPath("$.statusCode", equalTo("200")))
                 .andExpect(jsonPath("$.data").doesNotExist());
+
+        verify(authOrchestrator).join(eq(pendingMemberId), eq("testNick"), eq("MALE"), eq(LocalDate.of(2002, 5, 31)), eq("testProvider"), eq("testSocialId"), any());
+    }
+
+    @Test
+    public void testJoinEndpoint_withoutPendingSession_returnsUnauthorized() throws Exception {
+        JoinForm joinForm = new JoinForm();
+        joinForm.setNickname("testNick");
+        joinForm.setGender("MALE");
+        joinForm.setBirthDay(LocalDate.of(2002, 5, 31));
+
+        mockMvc.perform(post("/api/v0/auth/join")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(joinForm)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private MockHttpSession oauthSession(String provider, String state) {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(AuthController.OAUTH_STATE_SESSION_ATTRIBUTE, state);
+        session.setAttribute(AuthController.OAUTH_PROVIDER_SESSION_ATTRIBUTE, provider);
+        return session;
     }
 }

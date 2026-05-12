@@ -1,7 +1,6 @@
 package com.orv.app.integration.term;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.auth.service.JwtTokenService;
 import com.orv.term.domain.TermAgreementForm;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -39,10 +39,7 @@ public class TermIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private JwtTokenService jwtTokenProvider;
     private static final String testMemberId = "054c3e8a-3387-4eb3-ac8a-31a48221f192";
-    private String token;
 
 
     @BeforeEach
@@ -51,8 +48,6 @@ public class TermIntegrationTest {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(testMemberId, null)
         );
-
-        token = jwtTokenProvider.createToken(testMemberId, Map.of("provider", "google", "socialId", "12513412"));
 
         // 테스트를 위해 모든 관련 테이블 초기화 (CASCADE 옵션에 의존하지 않도록 순서를 고려)
         jdbcTemplate.update("DELETE FROM recap_reservation");
@@ -84,7 +79,8 @@ public class TermIntegrationTest {
 
         // when: POST 요청 실행 (X-Forwarded-For 헤더로 클라이언트 IP 전달)
         String responseContent = mockMvc.perform(post("/api/v0/term/agreement")
-                        .header("Authorization", "Bearer " + token)
+                        .with(user(testMemberId))
+                        .header("Origin", "http://localhost:3000")
                         .header("X-Forwarded-For", "192.168.1.100")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest))

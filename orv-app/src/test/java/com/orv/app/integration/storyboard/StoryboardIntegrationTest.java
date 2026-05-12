@@ -1,7 +1,6 @@
 package com.orv.app.integration.storyboard;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orv.auth.service.JwtTokenService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,16 +9,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -37,9 +34,6 @@ public class StoryboardIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private JwtTokenService jwtTokenProvider;
-
     // 테스트용 데이터
 
     private static final String testTopicId = "ba4c3e8a-3387-4eb3-ac8a-31a48221f192";
@@ -47,17 +41,9 @@ public class StoryboardIntegrationTest {
 
     private static final String testStoryboardId = "614c3e8a-3387-4eb3-ac8a-31a48221f192";
     private static final String testSceneId = "164c3e8a-3387-4eb3-ac8a-31a48221f192";
-    private String token;
 
     @BeforeEach
     public void setUp() {
-        // SecurityContext에 테스트 회원 ID 설정
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(testMemberId, null)
-        );
-        // token 발급 (필요한 추가 클레임은 Map.of()로 전달)
-        token = jwtTokenProvider.createToken(testMemberId, Map.of("provider", "google", "socialId", "1234"));
-
         // 1. 테스트용 Storyboard 삽입
         UUID storyboardId = UUID.randomUUID();
         jdbcTemplate.update("INSERT INTO storyboard (id, title, start_scene_id) VALUES (?, ?, ?)",
@@ -88,7 +74,7 @@ public class StoryboardIntegrationTest {
     public void testGetStoryboard() throws Exception {
         String url = "/api/v0/storyboard/" + testStoryboardId.toString();
         mockMvc.perform(get(url)
-                        .header("Authorization", "Bearer " + token))
+                        .with(user(testMemberId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.data.id").value(testStoryboardId.toString()))
@@ -103,7 +89,7 @@ public class StoryboardIntegrationTest {
     public void testGetScene() throws Exception {
         String url = "/api/v0/storyboard/scene/" + testSceneId.toString();
         mockMvc.perform(get(url)
-                        .header("Authorization", "Bearer " + token))
+                        .with(user(testMemberId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.data.id").value(testSceneId.toString()))
@@ -126,7 +112,7 @@ public class StoryboardIntegrationTest {
     public void testGetStoryboardPreview() throws Exception {
         String url = "/api/v0/storyboard/" + testStoryboardId.toString() + "/preview";
         mockMvc.perform(get(url)
-                        .header("Authorization", "Bearer " + token))
+                        .with(user(testMemberId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200))
                 // 반환된 데이터의 storyboardId와 questionCount 검증
@@ -146,7 +132,7 @@ public class StoryboardIntegrationTest {
     public void testGetTopicsOfStoryboard() throws Exception {
         String url = "/api/v0/storyboard/" + testStoryboardId.toString() + "/topic/list";
         mockMvc.perform(get(url)
-                        .header("Authorization", "Bearer " + token))
+                        .with(user(testMemberId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200))
                 // data가 배열이며, 미리 삽입한 Topic ID가 포함되어 있는지 확인

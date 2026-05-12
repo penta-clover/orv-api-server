@@ -1,7 +1,6 @@
 package com.orv.auth.orchestrator;
 
 import com.orv.auth.orchestrator.dto.ValidationResultResponse;
-import com.orv.auth.service.JwtTokenService;
 import com.orv.auth.service.MemberService;
 import com.orv.auth.external.SocialAuthService;
 import com.orv.auth.domain.Member;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,7 +20,6 @@ import java.util.UUID;
 public class AuthOrchestrator {
     private final SocialAuthServiceResolver socialAuthServiceResolver;
     private final MemberService memberService;
-    private final JwtTokenService jwtTokenService;
 
     public String getAuthorizationUrl(String provider, String state) {
         SocialAuthService socialAuthService = socialAuthServiceResolver.getSocialAuthService(provider);
@@ -40,14 +37,6 @@ public class AuthOrchestrator {
 
     public Optional<List<Role>> findRolesById(UUID memberId) {
         return memberService.findRolesById(memberId);
-    }
-
-    public String createToken(String subject, Map<String, ?> claims) {
-        return jwtTokenService.createToken(subject, claims);
-    }
-
-    public Map<String, ?> getPayload(String token) {
-        return jwtTokenService.getPayload(token);
     }
 
     public void join(String memberId, String nickname, String gender, LocalDate birthday, String provider, String socialId, String phoneNumber) {

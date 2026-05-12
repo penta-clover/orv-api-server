@@ -1,6 +1,8 @@
 package com.orv.auth.external.rest;
 
 import org.springframework.stereotype.Service;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 
 import com.orv.auth.external.SocialAuthService;
 import com.orv.auth.domain.SocialUserInfo;
@@ -11,8 +13,8 @@ import com.orv.auth.domain.SocialUserInfo;
  * 단, 현재 별도의 부하 테스트 환경이 없으므로 임시로 production을 통해 테스트함.
  */
 @Service
-// @ConditionalOnProperty(name = "test.auth.enabled", havingValue = "true")
-// @Profile({"loadtest", "test"})
+@ConditionalOnProperty(name = "test.auth.enabled", havingValue = "true")
+@Profile({"loadtest", "test"})
 public class TestAuthService implements SocialAuthService {
     
     private static final String TEST_USER_PREFIX = "test_user_";
