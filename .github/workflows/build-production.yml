@@ -1,9 +1,20 @@
 name: Build and deploy server on production environment
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      major:
+        description: 'Major version number'
+        required: true
+        type: string
+      minor:
+        description: 'Minor version number'
+        required: true
+        type: string
+      patch:
+        description: 'Patch version number'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -11,6 +22,27 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Validate version inputs
+        env:
+          MAJOR: ${{ inputs.major }}
+          MINOR: ${{ inputs.minor }}
+          PATCH: ${{ inputs.patch }}
+        run: |
+          set -euo pipefail
+
+          version_part_regex='^(0|[1-9][0-9]*)$'
+          for part_name in MAJOR MINOR PATCH; do
+            part_value="${!part_name}"
+            if [[ ! "$part_value" =~ $version_part_regex ]]; then
+              echo "::error::${part_name,,} must be a non-negative integer without leading zeroes."
+              exit 1
+            fi
+          done
+
+          image_tag="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "IMAGE_TAG=${image_tag}" >> "$GITHUB_ENV"
+          echo "Using Docker image tag: ${image_tag}"
 
       - name: Set up JDK 21
         uses: actions/setup-java@v3
@@ -30,18 +62,48 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      - name: Ensure version tag does not already exist
+        run: |
+          set -euo pipefail
+
+          repositories=(
+            "chj7239/orv-api-server"
+            "chj7239/orv-duration-calculation-worker"
+            "chj7239/orv-thumbnail-extraction-worker"
+            "chj7239/orv-audio-extraction-worker"
+          )
+
+          for repository in "${repositories[@]}"; do
+            if docker manifest inspect "${repository}:${IMAGE_TAG}" > /dev/null 2>&1; then
+              echo "::error::Docker image tag already exists: ${repository}:${IMAGE_TAG}"
+              exit 1
+            fi
+          done
+
       - name: Build and push API server Docker image
         run: |
-          docker buildx build --platform linux/amd64,linux/arm64 -t chj7239/orv-api-server:latest --push .
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -t chj7239/orv-api-server:latest \
+            -t chj7239/orv-api-server:${IMAGE_TAG} \
+            --push .
 
       - name: Build and push Duration Calculation Worker Docker image
         run: |
-          docker buildx build --platform linux/amd64,linux/arm64 -t chj7239/orv-duration-calculation-worker:latest --push duration-calculation-worker
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -t chj7239/orv-duration-calculation-worker:latest \
+            -t chj7239/orv-duration-calculation-worker:${IMAGE_TAG} \
+            --push duration-calculation-worker
 
       - name: Build and push Thumbnail Extraction Worker Docker image
         run: |
-          docker buildx build --platform linux/amd64,linux/arm64 -t chj7239/orv-thumbnail-extraction-worker:latest --push thumbnail-extraction-worker
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -t chj7239/orv-thumbnail-extraction-worker:latest \
+            -t chj7239/orv-thumbnail-extraction-worker:${IMAGE_TAG} \
+            --push thumbnail-extraction-worker
 
       - name: Build and push Audio Extraction Worker Docker image
         run: |
-          docker buildx build --platform linux/amd64,linux/arm64 -t chj7239/orv-audio-extraction-worker:latest --push audio-extraction-worker
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -t chj7239/orv-audio-extraction-worker:latest \
+            -t chj7239/orv-audio-extraction-worker:${IMAGE_TAG} \
+            --push audio-extraction-worker
