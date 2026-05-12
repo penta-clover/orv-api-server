@@ -66,7 +66,7 @@ public class JdbcTopicRepository implements TopicRepository {
 
     @Override
     public List<Storyboard> findStoryboardsByTopicId(UUID topicId) {
-        String sql = "SELECT s.id, s.title, s.start_scene_id AS startSceneId " +
+        String sql = "SELECT s.id, s.title, s.start_scene_id, s.status, s.participation_count, s.max_participation_limit " +
                 "FROM storyboard s " +
                 "JOIN storyboard_topic st ON s.id = st.storyboard_id " +
                 "WHERE st.topic_id = ?";
