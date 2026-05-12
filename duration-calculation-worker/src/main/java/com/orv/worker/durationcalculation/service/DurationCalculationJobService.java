@@ -46,11 +46,16 @@ public class DurationCalculationJobService {
                 return;
             }
 
-            jobRepository.markCompleted(job.getId());
-            log.info("[{}] Completed job #{} - duration: {}s", threadName, job.getId(), calculationResult.durationSeconds());
+            if (jobRepository.markCompleted(job.getId())) {
+                log.info("[{}] Completed job #{} - duration: {}s", threadName, job.getId(), calculationResult.durationSeconds());
+            } else {
+                log.warn("[{}] Job #{} already finalized by another worker; discarding result", threadName, job.getId());
+            }
         } catch (Exception e) {
             log.error("[{}] Failed to process job #{}", threadName, job.getId(), e);
-            jobRepository.markFailed(job.getId());
+            if (!jobRepository.markFailed(job.getId())) {
+                log.warn("[{}] Job #{} already finalized by another worker; failure discarded", threadName, job.getId());
+            }
         } finally {
             videoDownloader.deleteSafely(videoFile);
         }
@@ -58,11 +63,15 @@ public class DurationCalculationJobService {
 
     private void handleCalculationFailure(VideoDurationCalculationJob job, String errorMessage) {
         log.warn("Job #{} failed: {}", job.getId(), errorMessage);
-        jobRepository.markFailed(job.getId());
+        if (!jobRepository.markFailed(job.getId())) {
+            log.warn("Job #{} already finalized by another worker; failure discarded", job.getId());
+        }
     }
 
     private void handleUpdateFailure(VideoDurationCalculationJob job) {
         log.error("Failed to update running_time for job #{}", job.getId());
-        jobRepository.markFailed(job.getId());
+        if (!jobRepository.markFailed(job.getId())) {
+            log.warn("Job #{} already finalized by another worker; failure discarded", job.getId());
+        }
     }
 }

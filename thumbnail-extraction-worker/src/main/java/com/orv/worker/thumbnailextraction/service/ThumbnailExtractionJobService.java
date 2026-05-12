@@ -40,7 +40,9 @@ public class ThumbnailExtractionJobService {
             CandidateThumbnailExtractionResult result = thumbnailExtractor.extractCandidates(job.getVideoId());
             if (!result.success()) {
                 log.warn("Thumbnail job #{} failed: {}", job.getId(), result.errorMessage());
-                jobRepository.markFailed(job.getId());
+                if (!jobRepository.markFailed(job.getId())) {
+                    log.warn("[{}] Job #{} already finalized by another worker; failure discarded", threadName, job.getId());
+                }
                 return;
             }
 
@@ -50,13 +52,18 @@ public class ThumbnailExtractionJobService {
             log.info("perf operation=upload-and-save job_id={} duration_ms={} candidates={}",
                     job.getId(), uploadMs, result.candidates().size());
 
-            jobRepository.markCompleted(job.getId());
-            log.info("[{}] Completed thumbnail job #{} ({} candidates saved)",
-                    threadName, job.getId(), result.candidates().size());
+            if (jobRepository.markCompleted(job.getId())) {
+                log.info("[{}] Completed thumbnail job #{} ({} candidates saved)",
+                        threadName, job.getId(), result.candidates().size());
+            } else {
+                log.warn("[{}] Job #{} already finalized by another worker; discarding result", threadName, job.getId());
+            }
 
         } catch (Exception e) {
             log.error("[{}] Failed to process thumbnail job #{}", threadName, job.getId(), e);
-            jobRepository.markFailed(job.getId());
+            if (!jobRepository.markFailed(job.getId())) {
+                log.warn("[{}] Job #{} already finalized by another worker; failure discarded", threadName, job.getId());
+            }
         }
     }
 

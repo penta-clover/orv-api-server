@@ -40,8 +40,13 @@ public class AudioExtractionJobService {
                     job.getMemberId()
             );
 
-            // 3. Mark job completed with result
-            jobRepository.markCompleted(job.getId(), audioRecording.getId());
+            // 3. Mark job completed with result. If another worker already finalized it, discard.
+            boolean owned = jobRepository.markCompleted(job.getId(), audioRecording.getId());
+            if (!owned) {
+                log.warn("[{}] Job #{} already finalized by another worker; discarding result and skipping recap link",
+                        threadName, job.getId());
+                return;
+            }
             log.info("[{}] Completed audio extraction job #{}, audioRecordingId={}", threadName, job.getId(), audioRecording.getId());
 
             // 4. Link audio to recap reservation (best-effort)
@@ -57,7 +62,9 @@ public class AudioExtractionJobService {
 
         } catch (Exception e) {
             log.error("[{}] Failed to process audio extraction job #{}", threadName, job.getId(), e);
-            jobRepository.markFailed(job.getId());
+            if (!jobRepository.markFailed(job.getId())) {
+                log.warn("[{}] Job #{} already finalized by another worker; failure discarded", threadName, job.getId());
+            }
         } finally {
             videoDownloader.deleteSafely(videoFile);
         }

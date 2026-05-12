@@ -2,6 +2,7 @@ package com.orv.media.repository.jdbc;
 
 import com.orv.media.domain.AudioExtractionJob;
 import com.orv.media.domain.AudioExtractionJobStatus;
+import com.orv.media.domain.ClaimedAudioJob;
 import com.orv.media.repository.AudioExtractionJobRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -34,20 +36,24 @@ public class JdbcAudioExtractionJobRepository implements AudioExtractionJobRepos
             FOR UPDATE SKIP LOCKED
             """;
 
-    private static final String UPDATE_TO_PROCESSING_SQL = """
+    private static final String UPDATE_CLAIMED_STATUS_SQL = """
             UPDATE audio_extraction_job
-            SET status = 'PROCESSING', started_at = ?
+            SET status = CASE status
+                            WHEN 'PENDING' THEN 'PROCESSING'
+                            WHEN 'PROCESSING' THEN 'RETRYING'
+                         END,
+                started_at = ?
             WHERE id = ?
             """;
 
     private static final String UPDATE_TO_COMPLETED_SQL =
-            "UPDATE audio_extraction_job SET status = 'COMPLETED', result_audio_recording_id = ? WHERE id = ?";
+            "UPDATE audio_extraction_job SET status = 'COMPLETED', result_audio_recording_id = ? WHERE id = ? AND status IN ('PROCESSING', 'RETRYING')";
 
     private static final String UPDATE_TO_FAILED_SQL =
-            "UPDATE audio_extraction_job SET status = 'FAILED' WHERE id = ?";
+            "UPDATE audio_extraction_job SET status = 'FAILED' WHERE id = ? AND status IN ('PROCESSING', 'RETRYING')";
 
-    private static final String RESET_TO_PENDING_SQL =
-            "UPDATE audio_extraction_job SET status = 'PENDING', started_at = NULL WHERE id = ?";
+    private static final String RESET_TO_PRE_CLAIM_SQL =
+            "UPDATE audio_extraction_job SET status = ?, started_at = ? WHERE id = ? AND status IN ('PROCESSING', 'RETRYING')";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -62,7 +68,7 @@ public class JdbcAudioExtractionJobRepository implements AudioExtractionJobRepos
 
     @Override
     @Transactional
-    public Optional<AudioExtractionJob> claimNext(Duration stuckThreshold) {
+    public Optional<ClaimedAudioJob> claimNext(Duration stuckThreshold) {
         try {
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime stuckThresholdTime = now.minus(stuckThreshold);
@@ -77,29 +83,47 @@ public class JdbcAudioExtractionJobRepository implements AudioExtractionJobRepos
                 return Optional.empty();
             }
 
-            jdbcTemplate.update(UPDATE_TO_PROCESSING_SQL, Timestamp.valueOf(now), job.getId());
+            AudioExtractionJobStatus previousStatus = job.getStatus();
+            LocalDateTime previousStartedAt = job.getStartedAt();
 
-            job.setStatus(AudioExtractionJobStatus.PROCESSING);
+            jdbcTemplate.update(UPDATE_CLAIMED_STATUS_SQL, Timestamp.valueOf(now), job.getId());
+
+            AudioExtractionJobStatus claimedStatus =
+                    (previousStatus == AudioExtractionJobStatus.PENDING)
+                            ? AudioExtractionJobStatus.PROCESSING
+                            : AudioExtractionJobStatus.RETRYING;
+            job.setStatus(claimedStatus);
             job.setStartedAt(now);
 
-            return Optional.of(job);
+            return Optional.of(new ClaimedAudioJob(job, previousStatus, previousStartedAt));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
     }
 
     @Override
-    public void markCompleted(Long jobId, UUID resultAudioRecordingId) {
-        jdbcTemplate.update(UPDATE_TO_COMPLETED_SQL, resultAudioRecordingId, jobId);
+    public boolean markCompleted(Long jobId, UUID resultAudioRecordingId) {
+        return jdbcTemplate.update(UPDATE_TO_COMPLETED_SQL, resultAudioRecordingId, jobId) == 1;
     }
 
     @Override
-    public void markFailed(Long jobId) {
-        jdbcTemplate.update(UPDATE_TO_FAILED_SQL, jobId);
+    public boolean markFailed(Long jobId) {
+        return jdbcTemplate.update(UPDATE_TO_FAILED_SQL, jobId) == 1;
     }
 
     @Override
-    public void resetToPending(Long jobId) {
-        jdbcTemplate.update(RESET_TO_PENDING_SQL, jobId);
+    public void resetToPreClaimState(Long jobId, AudioExtractionJobStatus previousStatus, LocalDateTime previousStartedAt) {
+        Timestamp startedAt = previousStartedAt == null ? null : Timestamp.valueOf(previousStartedAt);
+        jdbcTemplate.update(con -> {
+            var ps = con.prepareStatement(RESET_TO_PRE_CLAIM_SQL);
+            ps.setString(1, previousStatus.name());
+            if (startedAt == null) {
+                ps.setNull(2, Types.TIMESTAMP);
+            } else {
+                ps.setTimestamp(2, startedAt);
+            }
+            ps.setLong(3, jobId);
+            return ps;
+        });
     }
 }

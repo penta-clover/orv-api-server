@@ -1,5 +1,6 @@
 package com.orv.archive.repository.jdbc;
 
+import com.orv.archive.domain.ClaimedArchiveJob;
 import com.orv.archive.domain.JobStatus;
 import com.orv.archive.domain.VideoDurationCalculationJob;
 import com.orv.archive.repository.VideoDurationCalculationJobRepository;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -32,9 +34,13 @@ public class JdbcVideoDurationCalculationJobRepository implements VideoDurationC
             FOR UPDATE SKIP LOCKED
             """;
 
-    private static final String UPDATE_TO_PROCESSING_SQL = """
+    private static final String UPDATE_CLAIMED_STATUS_SQL = """
             UPDATE video_duration_extraction_job
-            SET status = 'PROCESSING', started_at = ?
+            SET status = CASE status
+                            WHEN 'PENDING' THEN 'PROCESSING'
+                            WHEN 'PROCESSING' THEN 'RETRYING'
+                         END,
+                started_at = ?
             WHERE id = ?
             """;
 
@@ -42,13 +48,13 @@ public class JdbcVideoDurationCalculationJobRepository implements VideoDurationC
             "INSERT INTO video_duration_extraction_job (video_id, status) VALUES (?, 'PENDING')";
 
     private static final String UPDATE_TO_COMPLETED_SQL =
-            "UPDATE video_duration_extraction_job SET status = 'COMPLETED' WHERE id = ?";
+            "UPDATE video_duration_extraction_job SET status = 'COMPLETED' WHERE id = ? AND status IN ('PROCESSING', 'RETRYING')";
 
     private static final String UPDATE_TO_FAILED_SQL =
-            "UPDATE video_duration_extraction_job SET status = 'FAILED' WHERE id = ?";
+            "UPDATE video_duration_extraction_job SET status = 'FAILED' WHERE id = ? AND status IN ('PROCESSING', 'RETRYING')";
 
-    private static final String RESET_TO_PENDING_SQL =
-            "UPDATE video_duration_extraction_job SET status = 'PENDING', started_at = NULL WHERE id = ?";
+    private static final String RESET_TO_PRE_CLAIM_SQL =
+            "UPDATE video_duration_extraction_job SET status = ?, started_at = ? WHERE id = ? AND status IN ('PROCESSING', 'RETRYING')";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -63,7 +69,7 @@ public class JdbcVideoDurationCalculationJobRepository implements VideoDurationC
 
     @Override
     @Transactional
-    public Optional<VideoDurationCalculationJob> claimNext(Duration stuckThreshold) {
+    public Optional<ClaimedArchiveJob<VideoDurationCalculationJob>> claimNext(Duration stuckThreshold) {
         try {
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime stuckThresholdTime = now.minus(stuckThreshold);
@@ -78,30 +84,45 @@ public class JdbcVideoDurationCalculationJobRepository implements VideoDurationC
                 return Optional.empty();
             }
 
-            jdbcTemplate.update(UPDATE_TO_PROCESSING_SQL, Timestamp.valueOf(now), job.getId());
+            JobStatus previousStatus = job.getStatus();
+            LocalDateTime previousStartedAt = job.getStartedAt();
 
-            job.setStatus(JobStatus.PROCESSING);
+            jdbcTemplate.update(UPDATE_CLAIMED_STATUS_SQL, Timestamp.valueOf(now), job.getId());
+
+            JobStatus claimedStatus = (previousStatus == JobStatus.PENDING) ? JobStatus.PROCESSING : JobStatus.RETRYING;
+            job.setStatus(claimedStatus);
             job.setStartedAt(now);
 
-            return Optional.of(job);
+            return Optional.of(new ClaimedArchiveJob<>(job, previousStatus, previousStartedAt));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
     }
 
     @Override
-    public void markCompleted(Long jobId) {
-        jdbcTemplate.update(UPDATE_TO_COMPLETED_SQL, jobId);
+    public boolean markCompleted(Long jobId) {
+        return jdbcTemplate.update(UPDATE_TO_COMPLETED_SQL, jobId) == 1;
     }
 
     @Override
-    public void markFailed(Long jobId) {
-        jdbcTemplate.update(UPDATE_TO_FAILED_SQL, jobId);
+    public boolean markFailed(Long jobId) {
+        return jdbcTemplate.update(UPDATE_TO_FAILED_SQL, jobId) == 1;
     }
 
     @Override
-    public void resetToPending(Long jobId) {
-        jdbcTemplate.update(RESET_TO_PENDING_SQL, jobId);
+    public void resetToPreClaimState(Long jobId, JobStatus previousStatus, LocalDateTime previousStartedAt) {
+        Timestamp startedAt = previousStartedAt == null ? null : Timestamp.valueOf(previousStartedAt);
+        jdbcTemplate.update(con -> {
+            var ps = con.prepareStatement(RESET_TO_PRE_CLAIM_SQL);
+            ps.setString(1, previousStatus.name());
+            if (startedAt == null) {
+                ps.setNull(2, Types.TIMESTAMP);
+            } else {
+                ps.setTimestamp(2, startedAt);
+            }
+            ps.setLong(3, jobId);
+            return ps;
+        });
     }
 
     private static class VideoDurationCalculationJobRowMapper implements RowMapper<VideoDurationCalculationJob> {

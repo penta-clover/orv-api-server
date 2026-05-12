@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
+import com.orv.archive.domain.ClaimedArchiveJob;
 import com.orv.archive.domain.VideoThumbnailExtractionJob;
 import com.orv.archive.repository.VideoThumbnailExtractionJobRepository;
 import com.orv.worker.thumbnailextraction.service.ThumbnailExtractionJobService;
@@ -40,20 +41,23 @@ public class VideoThumbnailExtractionWorker {
     @Scheduled(fixedDelayString = "${worker.thumbnail-extraction.poll-interval-ms:1000}")
     public void poll() {
         while (hasAvailableThread()) {
-            Optional<VideoThumbnailExtractionJob> jobOpt = jobRepository.claimNext(stuckThreshold);
+            Optional<ClaimedArchiveJob<VideoThumbnailExtractionJob>> claimedOpt = jobRepository.claimNext(stuckThreshold);
 
-            if (jobOpt.isEmpty()) {
+            if (claimedOpt.isEmpty()) {
                 return;
             }
 
-            VideoThumbnailExtractionJob job = jobOpt.get();
-            log.info("Dispatching thumbnail job #{} for video {}", job.getId(), job.getVideoId());
+            ClaimedArchiveJob<VideoThumbnailExtractionJob> claimed = claimedOpt.get();
+            VideoThumbnailExtractionJob job = claimed.job();
+            log.info("Dispatching thumbnail job #{} for video {} (claimed as {})",
+                    job.getId(), job.getVideoId(), job.getStatus());
 
             try {
                 executor.execute(() -> jobService.processJob(job));
             } catch (org.springframework.core.task.TaskRejectedException e) {
-                log.warn("Thread pool full, resetting thumbnail job #{} to PENDING", job.getId());
-                jobRepository.resetToPending(job.getId());
+                log.warn("Thread pool full, restoring thumbnail job #{} to {}",
+                        job.getId(), claimed.previousStatus());
+                jobRepository.resetToPreClaimState(job.getId(), claimed.previousStatus(), claimed.previousStartedAt());
                 return;
             }
         }

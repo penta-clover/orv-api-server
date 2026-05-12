@@ -11,6 +11,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import com.orv.media.domain.AudioExtractionJob;
+import com.orv.media.domain.ClaimedAudioJob;
 import com.orv.media.repository.AudioExtractionJobRepository;
 import com.orv.worker.audioextraction.service.AudioExtractionJobService;
 
@@ -40,20 +41,23 @@ public class AudioExtractionWorker {
     @Scheduled(fixedDelayString = "${worker.audio-extraction.poll-interval-ms:1000}")
     public void poll() {
         while (hasAvailableThread()) {
-            Optional<AudioExtractionJob> jobOpt = jobRepository.claimNext(stuckThreshold);
+            Optional<ClaimedAudioJob> claimedOpt = jobRepository.claimNext(stuckThreshold);
 
-            if (jobOpt.isEmpty()) {
+            if (claimedOpt.isEmpty()) {
                 return;
             }
 
-            AudioExtractionJob job = jobOpt.get();
-            log.info("Dispatching audio extraction job #{} for video {}", job.getId(), job.getVideoId());
+            ClaimedAudioJob claimed = claimedOpt.get();
+            AudioExtractionJob job = claimed.job();
+            log.info("Dispatching audio extraction job #{} for video {} (claimed as {})",
+                    job.getId(), job.getVideoId(), job.getStatus());
 
             try {
                 executor.execute(() -> jobService.processJob(job));
             } catch (org.springframework.core.task.TaskRejectedException e) {
-                log.warn("Thread pool full, resetting audio extraction job #{} to PENDING", job.getId());
-                jobRepository.resetToPending(job.getId());
+                log.warn("Thread pool full, restoring audio extraction job #{} to {}",
+                        job.getId(), claimed.previousStatus());
+                jobRepository.resetToPreClaimState(job.getId(), claimed.previousStatus(), claimed.previousStartedAt());
                 return;
             }
         }

@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
+import com.orv.archive.domain.ClaimedArchiveJob;
 import com.orv.archive.domain.VideoDurationCalculationJob;
 import com.orv.archive.repository.VideoDurationCalculationJobRepository;
 import com.orv.worker.durationcalculation.service.DurationCalculationJobService;
@@ -40,20 +41,23 @@ public class VideoDurationCalculationWorker {
     @Scheduled(fixedDelayString = "${worker.duration-calculation.poll-interval-ms:1000}")
     public void poll() {
         while (hasAvailableThread()) {
-            Optional<VideoDurationCalculationJob> jobOpt = jobRepository.claimNext(stuckThreshold);
+            Optional<ClaimedArchiveJob<VideoDurationCalculationJob>> claimedOpt = jobRepository.claimNext(stuckThreshold);
 
-            if (jobOpt.isEmpty()) {
+            if (claimedOpt.isEmpty()) {
                 return;
             }
 
-            VideoDurationCalculationJob job = jobOpt.get();
-            log.info("Dispatching duration calculation job #{} for video {}", job.getId(), job.getVideoId());
+            ClaimedArchiveJob<VideoDurationCalculationJob> claimed = claimedOpt.get();
+            VideoDurationCalculationJob job = claimed.job();
+            log.info("Dispatching duration calculation job #{} for video {} (claimed as {})",
+                    job.getId(), job.getVideoId(), job.getStatus());
 
             try {
                 executor.execute(() -> jobService.processJob(job));
             } catch (org.springframework.core.task.TaskRejectedException e) {
-                log.warn("Thread pool full, resetting duration calculation job #{} to PENDING", job.getId());
-                jobRepository.resetToPending(job.getId());
+                log.warn("Thread pool full, restoring duration calculation job #{} to {}",
+                        job.getId(), claimed.previousStatus());
+                jobRepository.resetToPreClaimState(job.getId(), claimed.previousStatus(), claimed.previousStartedAt());
                 return;
             }
         }

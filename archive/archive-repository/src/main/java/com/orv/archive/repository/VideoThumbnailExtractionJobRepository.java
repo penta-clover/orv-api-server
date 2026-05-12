@@ -1,19 +1,22 @@
 package com.orv.archive.repository;
 
+import com.orv.archive.domain.ClaimedArchiveJob;
+import com.orv.archive.domain.JobStatus;
 import com.orv.archive.domain.VideoThumbnailExtractionJob;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface VideoThumbnailExtractionJobRepository {
     void create(UUID videoId);
 
-    Optional<VideoThumbnailExtractionJob> claimNext(Duration stuckThreshold);
+    Optional<ClaimedArchiveJob<VideoThumbnailExtractionJob>> claimNext(Duration stuckThreshold);
 
-    void markCompleted(Long jobId);
+    boolean markCompleted(Long jobId);
 
-    void markFailed(Long jobId);
+    boolean markFailed(Long jobId);
 
-    void resetToPending(Long jobId);
+    void resetToPreClaimState(Long jobId, JobStatus previousStatus, LocalDateTime previousStartedAt);
 }
