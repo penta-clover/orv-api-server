@@ -12,7 +12,8 @@ import java.util.Optional;
 @Component
 public class Mp4MetadataFetcher {
 
-    private static final int INITIAL_PROBE_SIZE = 4096;
+    // Keep the first range request below 10 MSS on common paths so it usually fits in the initial response flight.
+    private static final int INITIAL_PROBE_SIZE = 13 * 1024;
 
     public VideoTrackInfo fetch(VideoFileReader reader, String fileKey) {
         long fileSize = reader.getFileSize(fileKey);
